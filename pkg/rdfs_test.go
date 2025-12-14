@@ -54,17 +54,21 @@ func TestIsClassFalse(t *testing.T) {
 
 func TestProperties(t *testing.T) {
 	eqGraph := equipmentRdfsGraph()
+	propertyList := eqGraph.Properties()
+	assert.Greater(t, len(propertyList.properties), 0)
+	assert.Greater(t, len(propertyList.superclass), 0)
 	stmt := FindFirstMatch(eqGraph.Graph, SubjectEndswith("#Terminal>"))
 	assert.NotNil(t, stmt)
 
 	assert.Equal(t, eqGraph.IsClass(stmt.Subject), true)
 
-	terminalProps := eqGraph.Properties(stmt.Subject)
-	assert.Equal(t, 11, len(terminalProps))
+	terminalProps := propertyList.GetProperties(stmt.Subject)
+	assert.Equal(t, 14, len(terminalProps))
 
 	// Smoke test some known
 	exist := map[string]bool{
 		"Terminal.ConductingEquipment": false,
+		"IdentifiedObject.name":        false,
 	}
 
 	for _, item := range terminalProps {
