@@ -52,3 +52,21 @@ func (r *RdfsGraph) IsClass(term rdf.Term) bool {
 	}
 	return false
 }
+
+// Extract all subjects having 'term' as their domain
+func (r *RdfsGraph) Properties() *PropertyList {
+	properties := NewPropertyList()
+	rdfDomain := Must(rdf.NewIRITerm(Rdfs + "domain")).Value
+	subClassOf := Must(rdf.NewIRITerm(Rdfs + "subClassOf")).Value
+	iter := r.Graph.AllStatements()
+	for iter.Next() {
+		statement := iter.Statement()
+		switch statement.Predicate.Value {
+		case rdfDomain:
+			properties.AddProperty(statement.Object, statement.Subject)
+		case subClassOf:
+			properties.SetSuperClass(statement.Subject, statement.Object)
+		}
+	}
+	return properties
+}
