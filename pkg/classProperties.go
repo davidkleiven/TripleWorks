@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"iter"
+
 	"gonum.org/v1/gonum/graph/formats/rdf"
 )
 
@@ -43,4 +45,8 @@ func (p *PropertyList) GetProperties(term rdf.Term) []rdf.Term {
 		return directProps
 	}
 	return append(directProps, p.GetProperties(superclass)...)
+}
+
+func (p *PropertyList) Classes() iter.Seq[rdf.Term] {
+	return Keys(p.properties)
 }
