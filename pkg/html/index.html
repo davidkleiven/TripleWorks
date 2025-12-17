@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TripleWorks</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+    />
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  </head>
+  <body>
+    <div class="container is-fluid">
+      <header class="hero is-primary is-small">
+        <div class="hero-body">
+          <h1 class="title">TripleWorks</h1>
+        </div>
+      </header>
+
+      <div class="columns is-fullheight">
+        <div class="column is-half" id="left-panel">
+          <div class="px-4 py-3">
+            <div class="field">
+              <p class="control">
+                <input
+                  class="input is-rounded"
+                  type="text"
+                  placeholder="Search..."
+                />
+              </p>
+            </div>
+          </div>
+          <!-- Left panel content will be loaded via HTMX -->
+        </div>
+        <div class="column is-half" id="right-panel">
+          <!-- Right panel content will be loaded via HTMX -->
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
