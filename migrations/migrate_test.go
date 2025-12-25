@@ -27,15 +27,36 @@ func TestAllMigrations(t *testing.T) {
 	var tableCount int
 	err = db.NewSelect().ColumnExpr("COUNT(*)").
 		Table("sqlite_master").
-		Where("type='table' AND name='commit'").
+		Where("type='table' AND name='commits'").
 		Scan(ctx, &tableCount)
 	assert.Nil(t, err)
 	assert.Equal(t, tableCount, 1)
 
-	migrator := migrate.NewMigrator(db, nil)
+	migrator := migrate.NewMigrator(db, migrations)
 
 	rolledBack, err := migrator.Rollback(ctx)
 	t.Logf("Rolled back %d", len(rolledBack.Migrations))
 	assert.Nil(t, err)
 	assert.Equal(t, len(rolledBack.Migrations), len(applied.Migrations))
+}
+
+func TestRunUp_CancelledContext(t *testing.T) {
+	ctx := context.Background()
+
+	// Create a cancelled context
+	cancelledCtx, cancel := context.WithCancel(ctx)
+	cancel() // Cancel immediately
+
+	sqldb, err := sql.Open("sqlite3", "file::memory:?cache-shared")
+	assert.Nil(t, err)
+
+	db := bun.NewDB(sqldb, sqlitedialect.New())
+
+	// This should fail due to cancelled context
+	applied, err := RunUp(cancelledCtx, db)
+
+	// Verify error path is taken
+	assert.Error(t, err)
+	assert.Nil(t, applied)
+	assert.Contains(t, err.Error(), "Failed to initialize migrator")
 }
