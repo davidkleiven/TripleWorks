@@ -14,7 +14,7 @@ func init() {
 func createCommitTable(ctx context.Context, db *bun.DB) error {
 	var commit models.Commit
 	_, err := db.NewCreateTable().
-		Model(commit).
+		Model(&commit).
 		IfNotExists().
 		Exec(ctx)
 	return err
@@ -22,6 +22,6 @@ func createCommitTable(ctx context.Context, db *bun.DB) error {
 
 func revertCreateCommitTable(ctx context.Context, db *bun.DB) error {
 	var commit models.Commit
-	_, err := db.NewDropTable().Model(commit).Exec(ctx)
+	_, err := db.NewDropTable().Model(&commit).Exec(ctx)
 	return err
 }
