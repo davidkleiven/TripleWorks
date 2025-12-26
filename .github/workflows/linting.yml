@@ -31,3 +31,12 @@ jobs:
     # Step 3: Run Prettier Check via npx
     - name: Prettier Lint (check formatting)
       run: npx prettier --check "**/*.{html,js,json,md}"
+
+    - name: Check existing migrations are not altered
+      run: | 
+        git diff --name-status origin/main...HEAD migrations/ \
+        | grep -E '^[MD]' \
+        | grep -v '^migrations/migrations.go' \
+        | grep -v '^migrations/migration_test.go' \
+        && echo "❌ Existing migration modified or deleted" && exit 1 || true
+
