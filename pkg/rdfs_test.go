@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gonum.org/v1/gonum/graph/formats/rdf"
 )
 
 func TestLoadEquipmentRdfs(t *testing.T) {
@@ -63,7 +64,7 @@ func TestProperties(t *testing.T) {
 	assert.Equal(t, eqGraph.IsClass(stmt.Subject), true)
 
 	terminalProps := propertyList.GetProperties(stmt.Subject)
-	assert.Equal(t, 14, len(terminalProps))
+	assert.Equal(t, 9, len(terminalProps))
 
 	// Smoke test some known
 	exist := map[string]bool{
@@ -83,4 +84,30 @@ func TestProperties(t *testing.T) {
 	for _, v := range exist {
 		assert.True(t, v)
 	}
+}
+
+func TestGolangTypes(t *testing.T) {
+	eqGraph := equipmentRdfsGraph()
+	dtypes := eqGraph.GolangTypes()
+
+	highVoltageLimit := Must(rdf.NewIRITerm(Cim16 + "VoltageLevel.highVoltageLimit")).Value
+	dtype, ok := dtypes[highVoltageLimit]
+	assert.True(t, ok)
+	assert.Equal(t, "float64", dtype)
+
+	name := Must(rdf.NewIRITerm(Cim16 + "IdentifiedObject.name")).Value
+	dtype, ok = dtypes[name]
+	assert.True(t, ok)
+	assert.Equal(t, "string", dtype)
+
+	normalOpen := Must(rdf.NewIRITerm(Cim16 + "Switch.normalOpen")).Value
+	dtype, ok = dtypes[normalOpen]
+	assert.True(t, ok)
+	assert.Equal(t, "bool", dtype)
+}
+
+func TestUnusedAssociations(t *testing.T) {
+	eqGraph := equipmentRdfsGraph()
+	unused := eqGraph.UnusedAssociations()
+	assert.Greater(t, len(unused), 0)
 }
