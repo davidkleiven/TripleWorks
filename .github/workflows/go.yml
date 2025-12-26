@@ -29,6 +29,9 @@ jobs:
     - name: Test
       run: go test -failfast ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
 
+    - name: Test rdfsgen
+      run: go run cmd/rdfsgen/main.go pkg/resources/equipment.nq bunModels.go
+
     - name: Check coverage
       uses: vladopajic/go-test-coverage@v2
       with:
