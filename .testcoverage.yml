@@ -36,3 +36,4 @@ exclude:
   paths:
     - ^main.go$
     - ^testutils/.*
+    - ^cmd/.*
