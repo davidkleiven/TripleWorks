@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gonum.org/v1/gonum/graph/formats/rdf"
 )
 
@@ -110,4 +111,18 @@ func TestUnusedAssociations(t *testing.T) {
 	eqGraph := equipmentRdfsGraph()
 	unused := eqGraph.UnusedAssociations()
 	assert.Greater(t, len(unused), 0)
+}
+
+func TestGeographicalRegionInSuperclasses(t *testing.T) {
+	eqGraph := equipmentRdfsGraph()
+	properties := eqGraph.Properties()
+	geo := "<" + Cim16 + "GeographicalRegion>"
+	exists := false
+	for k := range properties.superclass {
+		if k.Value == geo {
+			exists = true
+			break
+		}
+	}
+	require.True(t, exists)
 }

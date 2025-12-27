@@ -36,7 +36,7 @@ func TestWriteBunModel(t *testing.T) {
 		t.Fatal("Could not create temp file")
 	}
 	defer f.Close()
-	//defer os.Remove(f.Name())
+	defer os.Remove(f.Name())
 
 	types := eqGraph.GolangTypes()
 	properties.WriteAllBunModels(f, *NewTypes(types), "")
