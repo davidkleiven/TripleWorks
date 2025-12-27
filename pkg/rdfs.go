@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
 	"gonum.org/v1/gonum/graph/formats/rdf"
@@ -96,58 +97,76 @@ func (r *RdfsGraph) Properties() *PropertyList {
 func (r *RdfsGraph) GolangTypes() map[string]string {
 	iter := r.Graph.AllStatements()
 	dataType := Must(rdf.NewIRITerm(RdfsExt + "dataType")).Value
-	rdfDomain := Must(rdf.NewIRITerm(Rdfs + "domain")).Value
-	rdfDtype := make(map[rdf.Term]rdf.Term)
-	domains := make(map[rdf.Term][]rdf.Term)
+	rangePred := Must(rdf.NewIRITerm(Rdfs + "range")).Value
+	stereoType := Must(rdf.NewIRITerm(RdfsExt + "stereotype")).Value
+	rdfDtype := make(map[string]string)
+	rdfRange := make(map[string]string)
 	for iter.Next() {
 		statement := iter.Statement()
 		switch statement.Predicate.Value {
-		case rdfDomain:
-			// Voltage.value <domain> Voltage
-			// Used to traverse multiple levels of voltages
-			v, ok := domains[statement.Object]
-			if !ok {
-				v = []rdf.Term{statement.Subject}
-			} else {
-				v = append(v, statement.Subject)
-			}
-			domains[statement.Object] = v
 		case dataType:
-			// <subject> dataType Voltage
-			rdfDtype[statement.Subject] = statement.Object
+			rdfDtype[iriValue(statement.Subject.Value)] = iriValue(statement.Object.Value)
+		case rangePred:
+			rdfRange[iriValue(statement.Subject.Value)] = iriValue(statement.Object.Value)
+		case stereoType:
+			v := iriValue(statement.Subject.Value)
+			_, exists := rdfDtype[v]
+			if !exists && strings.Contains(statement.Object.Value, "enumeration") {
+				rdfDtype[v] = iriValue(statement.Object.Value)
+			}
 		}
 	}
 
-	golangTypes := make(map[string]string)
-	for subj, dtype := range rdfDtype {
-		currentType := dtype
-		for {
-			alternatives, ok := domains[currentType]
-			if ok {
-				for _, candidate := range alternatives {
-					newType, ok := rdfDtype[candidate]
-					if ok {
-						currentType = newType
-						break
-					}
-				}
-			} else {
-				break
-			}
+	getDtype := func(v string) string {
+		value := strings.Trim(v, "<>") + ".value"
+		valueDtype, ok := rdfDtype[value]
+		if ok {
+			return valueDtype
 		}
+		valueDtype, ok = rdfDtype[v]
+		if ok {
+			return valueDtype
+		}
+		return v
+	}
+
+	golangTypes := make(map[string]string)
+
+	// Merge dtypes with range
+	for k, v := range rdfDtype {
+		_, ok := rdfRange[k]
+		if !ok {
+			rdfRange[k] = v
+		}
+	}
+
+	for subj, rng := range rdfRange {
+		dtype := getDtype(rng)
 
 		var goDtype string
-		rdfType := strings.ToLower(currentType.Value)
-		if strings.Contains(rdfType, "float") {
+		timeMatch := regexp.MustCompile("date|time")
+		floatMatch := regexp.MustCompile("float|decimal")
+		stringMatch := regexp.MustCompile("string|enumeration")
+
+		rdfType := strings.ToLower(dtype)
+		if floatMatch.MatchString(rdfType) {
 			goDtype = "float64"
 		} else if strings.Contains(rdfType, "int") {
 			goDtype = "int"
 		} else if strings.Contains(rdfType, "bool") {
 			goDtype = "bool"
-		} else {
+		} else if stringMatch.MatchString(rdfType) {
 			goDtype = "string"
+		} else if timeMatch.MatchString(rdfType) {
+			goDtype = "time.Time"
+		} else {
+			goDtype = dtype
 		}
-		golangTypes[subj.Value] = goDtype
+		golangTypes[subj] = goDtype
 	}
 	return golangTypes
+}
+
+func iriValue(v string) string {
+	return strings.Trim(v, "<>")
 }

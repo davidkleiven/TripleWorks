@@ -64,10 +64,19 @@ func (p *PropertyList) WriteBunModel(w io.Writer, term rdf.Term, types Types, cl
 	for _, prop := range props {
 		name := bunName(prop.Value)
 		dbName := camelToSnake(name)
-		dataType := types.Get(prop.Value)
-		iri := strings.ReplaceAll(prop.Value, "<", "")
-		iri = strings.ReplaceAll(iri, ">", "")
-		fmt.Fprintf(w, "\t%s %s `bun:\"%s\" json:\"%s\" iri:\"%s\"`\n", name, dataType, dbName, dbName, iri)
+		iri := iriValue(prop.Value)
+		dataType := types.Get(iri)
+
+		if strings.Contains(dataType, "#") {
+			// Class type
+			splitted := strings.Split(dataType, "#")
+			className := iriValue(splitted[len(splitted)-1])
+			className = capitalizeFirst(className)
+			fmt.Fprintf(w, "\t%sId int `bun:\"%s_id\" json:\"%s_id\"`\n", name, dbName, dbName)
+			fmt.Fprintf(w, "\t%s *%s `bun:\"rel:belongs-to,join:%s_id=id\" json:\"%s,omitempty\"`\n", name, className, dbName, dbName)
+		} else {
+			fmt.Fprintf(w, "\t%s %s `bun:\"%s\" json:\"%s\" iri:\"%s\"`\n", name, dataType, dbName, dbName, iri)
+		}
 	}
 
 	super, ok := p.superclass[term]
@@ -79,26 +88,32 @@ func (p *PropertyList) WriteBunModel(w io.Writer, term rdf.Term, types Types, cl
 		fmt.Fprintf(w, "\t%sId int `bun:\"%s_id\" json:\"%s_id\"`\n", name, dbName, dbName)
 
 		// Add relationship
-		fmt.Fprintf(w, "\t%s *%s `bun:\"rel:belongs-to,join:%s_id=id\" json:\"%s,omitempty\"`\n", name, name, dbName, dbName)
+		fmt.Fprintf(w, "\t%s *%s `bun:\"rel:belongs-to,join:%s_id=id\" json:\"%s,omitempty\" rdfs:\"subClassOf\"`\n", name, name, dbName, dbName)
 	}
 	fmt.Fprintf(w, "}\n")
 }
 
 func (p *PropertyList) WriteAllBunModels(w io.Writer, types Types, classPrefix string) {
 	fmt.Fprint(w, "package tripleworks_rdf\n")
+	fmt.Fprintf(w, "import (\n\t\"time\"\n)\n")
 	seen := make(map[rdf.Term]struct{})
 	for term := range p.properties {
 		seen[term] = struct{}{}
 		p.WriteBunModel(w, term, types, classPrefix)
 	}
 
-	// Add super classes
-	for _, superclass := range p.superclass {
-		_, ok := seen[superclass]
+	addTerm := func(term rdf.Term) {
+		_, ok := seen[term]
 		if !ok {
-			seen[superclass] = struct{}{}
-			p.WriteBunModel(w, superclass, types, classPrefix)
+			seen[term] = struct{}{}
+			p.WriteBunModel(w, term, types, classPrefix)
 		}
+	}
+
+	// Add super classes
+	for baseclass, superclass := range p.superclass {
+		addTerm(baseclass)
+		addTerm(superclass)
 	}
 }
 
