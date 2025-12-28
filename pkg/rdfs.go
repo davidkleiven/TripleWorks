@@ -112,7 +112,7 @@ func (r *RdfsGraph) GolangTypes() map[string]string {
 			v := iriValue(statement.Subject.Value)
 			_, exists := rdfDtype[v]
 			if !exists && strings.Contains(statement.Object.Value, "enumeration") {
-				rdfDtype[v] = iriValue(statement.Object.Value)
+				rdfDtype[v] = v + "_enumeration" // Add tag for special handling of enums
 			}
 		}
 	}
@@ -146,7 +146,7 @@ func (r *RdfsGraph) GolangTypes() map[string]string {
 		var goDtype string
 		timeMatch := regexp.MustCompile("date|time")
 		floatMatch := regexp.MustCompile("float|decimal")
-		stringMatch := regexp.MustCompile("string|enumeration")
+		stringMatch := regexp.MustCompile("string")
 
 		rdfType := strings.ToLower(dtype)
 		if floatMatch.MatchString(rdfType) {

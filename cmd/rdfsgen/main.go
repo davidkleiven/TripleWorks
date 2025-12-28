@@ -39,6 +39,14 @@ func main() {
 	rdfsGraph := pkg.RdfsGraph{Graph: graph}
 	properties := rdfsGraph.Properties()
 	types := rdfsGraph.GolangTypes()
-	properties.WriteAllBunModels(outfile, *pkg.NewTypes(types), prefix)
+
+	params := pkg.WriteBunModelParams{
+		Types:       *pkg.NewTypes(types),
+		Package:     "models",
+		UuidType:    "Entity",
+		ClassPrefix: prefix,
+	}
+
+	properties.WriteAllBunModels(outfile, params)
 	log.Printf("Golang data models written to %s\n", out)
 }

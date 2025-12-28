@@ -21,11 +21,13 @@ type Model struct {
 	Name          string `bun:"name"`
 }
 
-type BaseEntity struct {
-	Id       int64 `bun:"id,pk,autoincrement"`
-	ModelId  int64 `bun:"model_id"`
-	CommitId int64 `bun:"commit_id"`
+type ModelEntity struct {
+	ModelId int    `bun:"model_id"`
+	Model   *Model `bun:"rel:belongs-to,join:model_id=id"`
+}
 
-	Commit *Commit `bun:"rel:belongs-to,join:commit_id=id"`
-	Model  *Model  `bun:"rel:belongs-to,join:model_id=id"`
+type BaseEntity struct {
+	Id       int     `bun:"id,pk,autoincrement"`
+	CommitId int     `bun:"commit_id"`
+	Commit   *Commit `bun:"rel:belongs-to,join:commit_id=id"`
 }

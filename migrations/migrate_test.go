@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"com.github/davidkleiven/tripleworks/models"
+	"com.github/davidkleiven/tripleworks/testutils"
+	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +17,6 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
-	"github.com/uptrace/bun/migrate"
 )
 
 func setupSqliteTestDb(t *testing.T) *bun.DB {
@@ -74,14 +76,12 @@ func TestAllMigrations(t *testing.T) {
 			applied, err := RunUp(ctx, test.db)
 			t.Logf("Applied migrations: %d", len(applied.Migrations))
 
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 
-			migrator := migrate.NewMigrator(test.db, migrations)
-
-			rolledBack, err := migrator.Rollback(ctx)
+			rolledBack, err := RunDown(ctx, test.db)
 			t.Logf("Rolled back %d", len(rolledBack.Migrations))
-			assert.Nil(t, err)
-			assert.Equal(t, len(rolledBack.Migrations), len(applied.Migrations))
+			require.NoError(t, err)
+			require.Equal(t, len(rolledBack.Migrations), len(applied.Migrations))
 		})
 	}
 
@@ -138,4 +138,140 @@ func TestRunUp_CancelledContext(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, applied)
 	assert.Contains(t, err.Error(), "Failed to initialize migrator")
+}
+
+type SqliteForeignKey struct {
+	Id       int    `bun:"id"`
+	Seq      int    `bun:"seq"`
+	Table    string `bun:"table"`
+	From     string `bun:"from"`
+	To       string `bun:"to"`
+	OnUpdate string `bun:"on_update"`
+	OnDelete string `bun:"on_delete"`
+	Match    string `bun:"match"`
+}
+
+func TestCreateCim16TablesSqlite(t *testing.T) {
+	ctx := context.Background()
+	sqldb := setupSqliteTestDb(t)
+	err := createCim16Tables(ctx, sqldb)
+	require.NoError(t, err)
+
+	_, err = sqldb.NewRaw("PRAGMA foreign_keys = ON").Exec(ctx)
+	require.NoError(t, err)
+
+	var fks []SqliteForeignKey
+	err = sqldb.NewRaw("PRAGMA foreign_key_list(terminals)").Scan(ctx, &fks)
+	require.NoError(t, err)
+
+	has_equipment := false
+	for _, fk := range fks {
+		if fk.From == "conducting_equipment_mrid" {
+			has_equipment = true
+		}
+	}
+	require.True(t, has_equipment)
+}
+
+func invalidTerminal() *models.Terminal {
+	return &models.Terminal{
+		Phases:                  "phase",
+		ConductingEquipmentMrid: uuid.New(),
+	}
+}
+
+func TestInvalidInsertFails(t *testing.T) {
+	ctx := context.Background()
+	sqldb := setupSqliteTestDb(t)
+	err := createCim16Tables(ctx, sqldb)
+	require.NoError(t, err)
+
+	_, err = sqldb.NewRaw("PRAGMA foreign_keys = ON").Exec(ctx)
+	require.NoError(t, err)
+	terminal := invalidTerminal()
+	_, err = sqldb.NewInsert().Model(terminal).Exec(ctx)
+	require.Error(t, err)
+}
+
+func TestValidInsertOkSqlite(t *testing.T) {
+	ctx := context.Background()
+	for _, test := range []struct {
+		db   *bun.DB
+		name string
+	}{
+		{
+			db:   setupSqliteTestDb(t),
+			name: "Sqlite",
+		},
+		{
+			db:   setupPostgresTestDb(t),
+			name: "Postgres",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if test.name == "Postgres" {
+				skipLocallyIfNoConnection(t)
+			}
+			_, err := RunUp(ctx, test.db)
+			defer RunDown(ctx, test.db)
+
+			require.NoError(t, err)
+
+			data := testutils.CreateValidTerminal()
+			err = test.db.RunInTx(ctx, nil, testutils.InsertTerminalFactory(data))
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestInvalidInsertPostgres(t *testing.T) {
+	skipLocallyIfNoConnection(t)
+	ctx := context.Background()
+	sqldb := setupPostgresTestDb(t)
+	_, err := RunUp(ctx, sqldb)
+	defer RunDown(ctx, sqldb)
+	require.NoError(t, err)
+	terminal := invalidTerminal()
+	_, err = sqldb.NewInsert().Model(terminal).Exec(ctx)
+	require.Error(t, err)
+}
+
+func TestCreateCim16Error(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel to trigger error
+	sqldb := setupSqliteTestDb(t)
+	err := createCim16Tables(ctx, sqldb)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "no. 0")
+}
+
+func TestCreateCim16ErrorDown(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel to trigger error
+	sqldb := setupSqliteTestDb(t)
+	err := revertCreateCim16Tables(ctx, sqldb)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "no. 143")
+}
+
+func TestRunDownErrorCtx(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel to trigger error
+	sqldb := setupSqliteTestDb(t)
+	_, err := RunDown(ctx, sqldb)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "Failed to initialize")
+}
+
+func TestPopulateEnumWithErrorContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel to trigger error
+	sqldb := setupSqliteTestDb(t)
+	err := populateEnumTables(ctx, sqldb)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "Failed to insert enum")
+
+	err = revertPopulateEnumTables(ctx, sqldb)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "Failed to clear table")
 }
