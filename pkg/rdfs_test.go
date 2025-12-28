@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gonum.org/v1/gonum/graph/formats/rdf"
 )
 
 func TestLoadEquipmentRdfs(t *testing.T) {
@@ -91,17 +90,17 @@ func TestGolangTypes(t *testing.T) {
 	eqGraph := equipmentRdfsGraph()
 	dtypes := eqGraph.GolangTypes()
 
-	highVoltageLimit := Must(rdf.NewIRITerm(Cim16 + "VoltageLevel.highVoltageLimit")).Value
+	highVoltageLimit := Cim16 + "VoltageLevel.highVoltageLimit"
 	dtype, ok := dtypes[highVoltageLimit]
 	assert.True(t, ok)
 	assert.Equal(t, "float64", dtype)
 
-	name := Must(rdf.NewIRITerm(Cim16 + "IdentifiedObject.name")).Value
+	name := Cim16 + "IdentifiedObject.name"
 	dtype, ok = dtypes[name]
 	assert.True(t, ok)
 	assert.Equal(t, "string", dtype)
 
-	normalOpen := Must(rdf.NewIRITerm(Cim16 + "Switch.normalOpen")).Value
+	normalOpen := Cim16 + "Switch.normalOpen"
 	dtype, ok = dtypes[normalOpen]
 	assert.True(t, ok)
 	assert.Equal(t, "bool", dtype)
