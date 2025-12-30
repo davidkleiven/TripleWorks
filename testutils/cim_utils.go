@@ -40,8 +40,10 @@ func CreateValidTerminal() *ValidTerminal {
 			ConductingEquipmentMrid: condEquipment.Mrid,
 			ACDCTerminal: models.ACDCTerminal{
 				BusNameMarkerMrid: busNameMarker.Mrid,
+				SequenceNumber:    1,
 				IdentifiedObject:  models.IdentifiedObject{BaseEntity: models.BaseEntity{CommitId: 1}},
 			},
+			PhasesId: 1,
 		},
 		Model:  &model,
 		Commit: &commit,
