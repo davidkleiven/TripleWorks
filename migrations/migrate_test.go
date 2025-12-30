@@ -78,8 +78,9 @@ func TestAllMigrations(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			err = RunDownAll(ctx, test.db)
+			rolledBack, err := RunDown(ctx, test.db)
 			require.NoError(t, err)
+			require.Equal(t, len(applied.Migrations), len(rolledBack.Migrations))
 		})
 	}
 
@@ -221,7 +222,7 @@ func TestValidInsertOkSqlite(t *testing.T) {
 			// Must delete terminal to ensure rollback works
 			_, err = test.db.NewDelete().Table("terminals").Where("1=1").Exec(ctx)
 			assert.NoError(t, err)
-			err = RunDownAll(ctx, test.db)
+			_, err = RunDown(ctx, test.db)
 			assert.NoError(t, err)
 		})
 	}
@@ -232,7 +233,7 @@ func TestInvalidInsertPostgres(t *testing.T) {
 	ctx := context.Background()
 	sqldb := setupPostgresTestDb(t)
 	_, err := RunUp(ctx, sqldb)
-	defer RunDownAll(ctx, sqldb)
+	defer RunDown(ctx, sqldb)
 	require.NoError(t, err)
 	terminal := invalidTerminal()
 	_, err = sqldb.NewInsert().Model(terminal).Exec(ctx)
@@ -284,7 +285,7 @@ func TestEnumsArePopulated(t *testing.T) {
 	ctx := context.Background()
 	sqldb := setupPostgresTestDb(t)
 	_, err := RunUp(ctx, sqldb)
-	defer RunDownAll(ctx, sqldb)
+	defer RunDown(ctx, sqldb)
 	require.NoError(t, err)
 
 	var phaseCodes []models.PhaseCode
