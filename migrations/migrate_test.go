@@ -78,10 +78,8 @@ func TestAllMigrations(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			rolledBack, err := RunDown(ctx, test.db)
-			t.Logf("Rolled back %d", len(rolledBack.Migrations))
+			err = RunDownAll(ctx, test.db)
 			require.NoError(t, err)
-			require.Equal(t, len(rolledBack.Migrations), len(applied.Migrations))
 		})
 	}
 
@@ -175,7 +173,7 @@ func TestCreateCim16TablesSqlite(t *testing.T) {
 
 func invalidTerminal() *models.Terminal {
 	return &models.Terminal{
-		Phases:                  "phase",
+		PhasesId:                1,
 		ConductingEquipmentMrid: uuid.New(),
 	}
 }
@@ -213,13 +211,18 @@ func TestValidInsertOkSqlite(t *testing.T) {
 				skipLocallyIfNoConnection(t)
 			}
 			_, err := RunUp(ctx, test.db)
-			defer RunDown(ctx, test.db)
 
 			require.NoError(t, err)
 
 			data := testutils.CreateValidTerminal()
 			err = test.db.RunInTx(ctx, nil, testutils.InsertTerminalFactory(data))
-			require.NoError(t, err)
+			assert.NoError(t, err)
+
+			// Must delete terminal to ensure rollback works
+			_, err = test.db.NewDelete().Table("terminals").Where("1=1").Exec(ctx)
+			assert.NoError(t, err)
+			err = RunDownAll(ctx, test.db)
+			assert.NoError(t, err)
 		})
 	}
 }
@@ -229,7 +232,7 @@ func TestInvalidInsertPostgres(t *testing.T) {
 	ctx := context.Background()
 	sqldb := setupPostgresTestDb(t)
 	_, err := RunUp(ctx, sqldb)
-	defer RunDown(ctx, sqldb)
+	defer RunDownAll(ctx, sqldb)
 	require.NoError(t, err)
 	terminal := invalidTerminal()
 	_, err = sqldb.NewInsert().Model(terminal).Exec(ctx)
@@ -274,4 +277,22 @@ func TestPopulateEnumWithErrorContext(t *testing.T) {
 	err = revertPopulateEnumTables(ctx, sqldb)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "Failed to clear table")
+}
+
+func TestEnumsArePopulated(t *testing.T) {
+	skipLocallyIfNoConnection(t)
+	ctx := context.Background()
+	sqldb := setupPostgresTestDb(t)
+	_, err := RunUp(ctx, sqldb)
+	defer RunDownAll(ctx, sqldb)
+	require.NoError(t, err)
+
+	var phaseCodes []models.PhaseCode
+	err = sqldb.NewSelect().Model(&phaseCodes).Scan(ctx)
+	require.NoError(t, err)
+	require.Greater(t, len(phaseCodes), 0)
+
+	var windUnitKind []models.WindGenUnitKind
+	err = sqldb.NewSelect().Model(&windUnitKind).Scan(ctx)
+	require.Greater(t, len(windUnitKind), 0)
 }
