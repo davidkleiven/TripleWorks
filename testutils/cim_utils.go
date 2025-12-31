@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"com.github/davidkleiven/tripleworks/models"
+	"com.github/davidkleiven/tripleworks/pkg"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
@@ -22,16 +23,19 @@ func CreateValidTerminal() *ValidTerminal {
 	terminalEntity := models.Entity{
 		Mrid:        uuid.New(),
 		ModelEntity: models.ModelEntity{ModelId: 1},
+		EntityType:  pkg.StructName(models.Terminal{}),
 	}
 
 	condEquipment := models.Entity{
 		Mrid:        uuid.New(),
 		ModelEntity: models.ModelEntity{ModelId: 1},
+		EntityType:  pkg.StructName(models.ConductingEquipment{}),
 	}
 
 	busNameMarker := models.Entity{
 		Mrid:        uuid.New(),
 		ModelEntity: models.ModelEntity{ModelId: 1},
+		EntityType:  pkg.StructName(models.BusNameMarker{}),
 	}
 
 	return &ValidTerminal{

@@ -4,7 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"com.github/davidkleiven/tripleworks/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMustPanicOnErr(t *testing.T) {
@@ -30,4 +32,11 @@ func TestStopEarly(t *testing.T) {
 		}
 	}
 	assert.Equal(t, len(result), 2)
+}
+
+func TestStructName(t *testing.T) {
+	model := models.ACLineSegment{}
+	name := StructName(model)
+	require.Equal(t, name, "ACLineSegment")
+	require.Equal(t, name, StructName(&model))
 }
