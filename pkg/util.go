@@ -1,6 +1,9 @@
 package pkg
 
-import "iter"
+import (
+	"iter"
+	"reflect"
+)
 
 func Must[T any](v T, err error) T {
 	if err != nil {
@@ -18,4 +21,13 @@ func Keys[K comparable, V any](m map[K]V) iter.Seq[K] {
 			}
 		}
 	}
+}
+
+func StructName(v any) string {
+	t := reflect.TypeOf(v)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	return t.Name()
 }

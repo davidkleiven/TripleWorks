@@ -7,7 +7,8 @@ import (
 
 type Entity struct {
 	ModelEntity
-	Mrid uuid.UUID `bun:"mrid,type:uuid,pk"`
+	Mrid       uuid.UUID `bun:"mrid,type:uuid,pk"`
+	EntityType string    `bun:"entity_type"`
 }
 type DCBaseTerminal struct {
 	ACDCTerminal

@@ -297,3 +297,26 @@ func TestEnumsArePopulated(t *testing.T) {
 	err = sqldb.NewSelect().Model(&windUnitKind).Scan(ctx)
 	require.Greater(t, len(windUnitKind), 0)
 }
+
+func TestIsSqliteDuplicateColumnError(t *testing.T) {
+	sqldb := setupSqliteTestDb(t)
+	create := "CREATE TABLE duplication (name TEXT)"
+	alter := "ALTER TABLE duplication ADD COLUMN name TEXT"
+	_, err := sqldb.Exec(create)
+	require.NoError(t, err)
+	_, err = sqldb.Exec(alter)
+	require.Error(t, err)
+	require.True(t, isSQLiteDuplicateColumn(err))
+}
+
+func TestIsSqliteErrorNoErrorIsFalse(t *testing.T) {
+	require.False(t, isSQLiteDuplicateColumn(nil))
+}
+
+func TestErrorDuringSqlMigrationOfAddColumn(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	sqldb := setupSqliteTestDb(t)
+	err := addTypeToEntities(ctx, sqldb)
+	require.Error(t, err)
+}
