@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
 
@@ -30,4 +31,31 @@ type BaseEntity struct {
 	Id       int     `bun:"id,pk,autoincrement"`
 	CommitId int     `bun:"commit_id"`
 	Commit   *Commit `bun:"rel:belongs-to,join:commit_id=id"`
+	Deleted  bool    `bun:"deleted" json:"deleted"`
+}
+
+func (b *BaseEntity) SetCommitId(commitId int) {
+	b.CommitId = commitId
+}
+
+func (b BaseEntity) GetCommitId() int {
+	return b.CommitId
+}
+
+type MridGetter interface {
+	GetMrid() uuid.UUID
+}
+
+type VersionedIdentifiedObject interface {
+	MridGetter
+	GetCommitId() int
+}
+
+type MridNameGetter interface {
+	MridGetter
+	GetName() string
+}
+
+type CommitIdSetter interface {
+	SetCommitId(commitId int)
 }

@@ -24,7 +24,7 @@ func main() {
 	config := pkg.NewDefaultConfig()
 
 	mux := http.NewServeMux()
-	api.Setup(mux)
+	api.Setup(mux, config)
 
 	slog.Info("Starting server", "port", config.Port)
 	server := &http.Server{Addr: fmt.Sprintf(":%d", config.Port), Handler: api.LogRequest(mux)}

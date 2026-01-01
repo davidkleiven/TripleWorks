@@ -8,7 +8,7 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
     />
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.7"></script>
   </head>
   <body>
     <div class="container is-fluid">
@@ -26,17 +26,143 @@
                 <input
                   class="input is-rounded"
                   type="text"
-                  placeholder="Search..."
+                  placeholder="Search existing types..."
                 />
               </p>
             </div>
+            <div class="field has-addons">
+              <div class="select">
+                <select
+                  id="type-select"
+                  name="type"
+                  hx-trigger="load"
+                  hx-get="/cim-types"
+                  hx-target="this"
+                  hx-swap="innerHTML"
+                ></select>
+                <div class="control">
+                  <button
+                    class="button is-primary"
+                    hx-target="#entity-form"
+                    hx-swap="innerHTML"
+                    hx-get="/entity-form"
+                    hx-include="#type-select"
+                    hx-trigger="click"
+                  >
+                    New
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
           <!-- Left panel content will be loaded via HTMX -->
+          <div id="entity-form"></div>
         </div>
         <div class="column is-half" id="right-panel">
           <!-- Right panel content will be loaded via HTMX -->
         </div>
       </div>
+
+      <!-- Commit section at bottom of page -->
+      <div class="field has-addons mt-4">
+        <div class="control is-expanded">
+          <input
+            class="input is-rounded"
+            id="commit-input"
+            type="text"
+            placeholder="Commit message..."
+          />
+        </div>
+        <div class="control">
+          <button class="button is-primary" onclick="commitChanges()">
+            Commit
+          </button>
+        </div>
+      </div>
     </div>
   </body>
+  <script>
+    function commitChanges() {
+      payload = collectEditorValues();
+      if (!payload || Object.keys(payload).length === 0) return;
+
+      payload["cim_type"] = document.getElementById("type-select").value;
+      payload["modelId"] = 1;
+      payload["modelName"] = "national grid model";
+      console.log("Commit payload", payload);
+
+      fetch("/commit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+        .then((response) => response.text())
+        .then((data) => {
+          console.log("Server response: ", data);
+        })
+        .catch((err) => console.error("Failed to post commit:", err));
+    }
+
+    function collectEditorValues() {
+      const editor = document.getElementById("entity-editor");
+      if (!editor) return {};
+
+      const commitMsg = document.getElementById("commit-input");
+      if (!commitMsg || !commitMsg.value?.trim()) {
+        alert("Please enter a commit message!");
+        return {};
+      }
+
+      const result = {
+        checksum: editor.getAttribute("checksum"),
+        commitMessage: commitMsg.value,
+      };
+
+      // Select all divs with class "field" inside editor
+      editor.querySelectorAll(".field").forEach((fieldDiv) => {
+        const idBase = fieldDiv.id.replace("-field", "");
+        const label = document.getElementById(idBase + "-label");
+        const valueInput = document.getElementById(idBase + "-value");
+        console.log(idBase);
+
+        if (!label || !valueInput) return; // skip if missing
+
+        const key = label.getAttribute("json-tag"); // from data-json-tag
+        const value =
+          valueInput.type === "number"
+            ? Number(valueInput.value)
+            : valueInput.value;
+        const isChecked = valueInput.checked; // Checkboxes
+
+        result[key] = valueInput.type === "checkbox" ? isChecked : value;
+      });
+      return result;
+    }
+
+    function handleChangeEvent(e) {
+      const select = e.target;
+      if (!select.matches("select[value-field]")) return;
+      const inputId = select.getAttribute("value-field");
+      const targetInput = document.getElementById(inputId);
+      const selectedOption = select.options[select.selectedIndex];
+
+      if (targetInput && selectedOption) {
+        const valuesCandiates = [
+          selectedOption.getAttribute("mrid"),
+          selectedOption.value,
+        ];
+        targetInput.value = valuesCandiates.find(
+          (v) => v !== null && v !== undefined,
+        );
+
+        if (targetInput.value !== null) {
+          targetInput.classList.remove("is-danger");
+        }
+      }
+    }
+
+    document.addEventListener("change", handleChangeEvent);
+  </script>
 </html>
