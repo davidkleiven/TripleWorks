@@ -10,6 +10,7 @@ type Entity struct {
 	Mrid       uuid.UUID `bun:"mrid,type:uuid,pk"`
 	EntityType string    `bun:"entity_type"`
 }
+
 type DCBaseTerminal struct {
 	ACDCTerminal
 	DCNodeMrid uuid.UUID `bun:"dcnode_mrid,type:uuid" json:"dcnode_mrid"`
@@ -282,6 +283,15 @@ type IdentifiedObject struct {
 	Name               string    `bun:"name" json:"name" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.name"`
 	EnergyIdentCodeEic string    `bun:"energy_ident_code_eic" json:"energy_ident_code_eic" iri:"http://entsoe.eu/CIM/SchemaExtension/3/1#IdentifiedObject.energyIdentCodeEic"`
 }
+
+func (i IdentifiedObject) GetMrid() uuid.UUID {
+	return i.Mrid
+}
+
+func (i IdentifiedObject) GetName() string {
+	return i.Name
+}
+
 type Resistance struct {
 	UnitId       int             `bun:"unit_id" json:"unit_id"`
 	Unit         *UnitSymbol     `bun:"rel:belongs-to,join:unit_id=id" json:"unit,omitempty"`

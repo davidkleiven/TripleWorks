@@ -7,6 +7,19 @@ type RdfsEnum struct {
 	Comment string `bun:"comment"`
 }
 
+func (r RdfsEnum) GetId() int {
+	return r.Id
+}
+
+func (r RdfsEnum) GetCode() string {
+	return r.Code
+}
+
+type Enum interface {
+	GetId() int
+	GetCode() string
+}
+
 type ControlAreaTypeKind struct{ RdfsEnum }
 type Currency struct{ RdfsEnum }
 type CurveStyle struct{ RdfsEnum }
