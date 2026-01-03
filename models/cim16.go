@@ -103,8 +103,8 @@ type BaseVoltage struct {
 }
 type Substation struct {
 	EquipmentContainer
-	RegionMrid uuid.UUID `bun:"region_mrid,type:uuid" json:"region_mrid"`
-	Region     *Entity   `bun:"rel:belongs-to,join:region_mrid=mrid" json:"region,omitempty"`
+	SubGeographicalRegionMrid uuid.UUID `bun:"region_mrid,type:uuid" json:"region_mrid"`
+	SubGeographicalRegion     *Entity   `bun:"rel:belongs-to,join:region_mrid=mrid" json:"region,omitempty"`
 }
 type DCLine struct {
 	DCEquipmentContainer
@@ -401,8 +401,8 @@ type ApparentPower struct {
 }
 type SubGeographicalRegion struct {
 	IdentifiedObject
-	RegionMrid uuid.UUID `bun:"region_mrid,type:uuid" json:"region_mrid"`
-	Region     *Entity   `bun:"rel:belongs-to,join:region_mrid=mrid" json:"region,omitempty"`
+	GeographicalRegionMrid uuid.UUID `bun:"region_mrid,type:uuid" json:"region_mrid"`
+	GeographicalRegion     *Entity   `bun:"rel:belongs-to,join:region_mrid=mrid" json:"region,omitempty"`
 }
 type CurrentFlow struct {
 	Value        float64         `bun:"value" json:"value" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#CurrentFlow.value"`
@@ -720,6 +720,10 @@ type EnergyConsumer struct {
 	ConductingEquipment
 	LoadResponseMrid uuid.UUID `bun:"load_response_mrid,type:uuid" json:"load_response_mrid"`
 	LoadResponse     *Entity   `bun:"rel:belongs-to,join:load_response_mrid=mrid" json:"load_response,omitempty"`
+	Qfixed           float64   `bun:"qfixed" json:"qfixed" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#EnergyConsumer.qfixed"`
+	QfixedPct        float64   `bun:"qfixed_pct" json:"qfixed_pct" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#EnergyConsumer.qfixedPct"`
+	PfixedPct        float64   `bun:"pfixed_pct" json:"pfixed_pct" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#EnergyConsumer.pfixedPct"`
+	Pfixed           float64   `bun:"pfixed" json:"pfixed" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#EnergyConsumer.pfixed"`
 }
 type Money struct {
 	MultiplierId int             `bun:"multiplier_id" json:"multiplier_id"`
