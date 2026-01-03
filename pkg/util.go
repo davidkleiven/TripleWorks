@@ -126,3 +126,9 @@ func Subtypes(model any) []any {
 	}
 	return result
 }
+
+func RequireStruct(v reflect.Type) {
+	if v.Kind() != reflect.Struct {
+		panic(fmt.Sprintf("'%v' is not a struct", v))
+	}
+}

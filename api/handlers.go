@@ -40,6 +40,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.HandleFunc("/entity-form", EntityForm)
 	mux.HandleFunc("/entities", entityHandler.GetEntityForKind)
 	mux.HandleFunc("/enum", entityHandler.GetEnumOptions)
+	mux.HandleFunc("/entity-list", entityHandler.EntityList)
 	mux.HandleFunc("POST /commit", entityHandler.Commit)
 }
 
