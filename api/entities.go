@@ -261,11 +261,11 @@ func NewEntityStore(db *bun.DB, timeout time.Duration) *EntityStore {
 		db:      db,
 		timeout: timeout,
 		allowedUnset: map[string]struct{}{
-			"Id":        struct{}{},
-			"CommitId":  struct{}{},
-			"id":        struct{}{},
-			"commit_id": struct{}{},
-			"deleted":   struct{}{},
+			"Id":        {},
+			"CommitId":  {},
+			"id":        {},
+			"commit_id": {},
+			"deleted":   {},
 		},
 	}
 }
