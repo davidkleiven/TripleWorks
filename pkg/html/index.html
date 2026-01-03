@@ -40,7 +40,7 @@
                   hx-target="this"
                   hx-swap="innerHTML"
                 ></select>
-                <div class="control">
+                <div class="control has-addons">
                   <button
                     class="button is-primary"
                     hx-target="#entity-form"
@@ -51,12 +51,22 @@
                   >
                     New
                   </button>
+                  <button
+                    class="button is-primary"
+                    hx-target="#entity-form"
+                    hx-swap="innerHTML"
+                    hx-get="/entity-list"
+                    hx-include="#type-select"
+                    hx-trigger="click"
+                  >
+                    List
+                  </button>
                 </div>
               </div>
             </div>
           </div>
           <!-- Left panel content will be loaded via HTMX -->
-          <div id="entity-form"></div>
+          <div id="entity-form" class="mt-4"></div>
         </div>
         <div class="column is-half" id="right-panel">
           <!-- Right panel content will be loaded via HTMX -->

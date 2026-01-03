@@ -6,9 +6,9 @@ import (
 )
 
 //go:embed html/*
-var html embed.FS
+var htmlPages embed.FS
 
 func Index(w io.Writer) {
-	reader := Must(html.Open("html/index.html"))
+	reader := Must(htmlPages.Open("html/index.html"))
 	io.Copy(w, reader)
 }

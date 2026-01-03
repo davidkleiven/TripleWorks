@@ -256,6 +256,27 @@ func (e *EntityStore) CheckUnsetFields(unset []string) error {
 	return nil
 }
 
+func (e *EntityStore) EntityList(w http.ResponseWriter, r *http.Request) {
+	entityType := r.URL.Query().Get("type")
+	finder, ok := pkg.Finders[entityType]
+	if !ok {
+		slog.ErrorContext(r.Context(), "Could not locate a finder", "type", entityType)
+		http.Error(w, "Could not locate a finder for the provided type", http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+	defer cancel()
+
+	items, err := finder(ctx, e.db, 0)
+	if err != nil {
+		slog.ErrorContext(ctx, "Could not retrieve items", "error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	pkg.CreateList(w, items)
+}
+
 func NewEntityStore(db *bun.DB, timeout time.Duration) *EntityStore {
 	return &EntityStore{
 		db:      db,
