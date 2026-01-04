@@ -176,7 +176,8 @@ func TestGetEnumItems(t *testing.T) {
 }
 
 func TestNoPanicInGetFinderForSubtype(t *testing.T) {
-	for name := range pkg.FormTypes {
+	formTypes := pkg.FormTypes()
+	for name := range formTypes {
 		require.NotPanics(t, func() { getFinderForAllSubtypes(name) }, name)
 	}
 }
@@ -203,4 +204,36 @@ func TestCheckUnsetFields(t *testing.T) {
 	store := setupStore(t)
 	err := store.CheckUnsetFields([]string{"reqruiedField"})
 	require.Error(t, err)
+}
+
+func TestSubstationReturnedWhenRequestingEquipmentContainer(t *testing.T) {
+	store := setupStore(t)
+	uuid, err := uuid.NewUUID()
+	require.NoError(t, err)
+	substation := models.Substation{
+		EquipmentContainer: models.EquipmentContainer{
+			ConnectivityNodeContainer: models.ConnectivityNodeContainer{
+				PowerSystemResource: models.PowerSystemResource{
+					IdentifiedObject: models.IdentifiedObject{Mrid: uuid, Name: "Demo Substation"},
+				},
+			},
+		},
+	}
+
+	ctx := context.Background()
+	_, err = store.db.NewInsert().Model(&substation).Exec(ctx)
+	require.NoError(t, err)
+
+	finder := pkg.MustGet(pkg.Finders, "Substation")
+	result, err := finder(ctx, store.db, 0)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(result))
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/entities?kind=EquipmentContainer", nil)
+	store.GetEntityForKind(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	content := rec.Body.String()
+	require.Contains(t, content, "Demo Substation")
 }

@@ -98,6 +98,7 @@ func (e *EntityStore) GetEntityForKind(w http.ResponseWriter, r *http.Request) {
 
 	result, err := getFinderForAllSubtypes(kind)
 	if err != nil {
+
 		slog.ErrorContext(ctx, "Failed to locate a finder", "kind", kind)
 		http.Error(w, "Failed to locate a finder for "+kind, http.StatusBadRequest)
 		return
@@ -128,6 +129,10 @@ func (e *EntityStore) GetEntityForKind(w http.ResponseWriter, r *http.Request) {
 		}
 		return cmp.Compare(a.GetName(), b.GetName())
 	})
+
+	if !choiceExists(items, choice) {
+		fmt.Fprintf(w, "<option mrid=\"no-mrid\"></option>")
+	}
 
 	for _, item := range items {
 		fmt.Fprintf(w, "<option mrid=\"%s\">%s</option>\n", item.GetMrid(), item.GetName())
@@ -327,7 +332,7 @@ func getFinderForAllSubtypes(kind string) (*finderForSubtypesResult, error) {
 	subtypes := pkg.Subtypes(current)
 	subtypes = append(subtypes, current)
 	for _, subtype := range subtypes {
-		finder, ok := pkg.Finders[kind]
+		finder, ok := pkg.Finders[pkg.StructName(subtype)]
 		if !ok {
 			result.notFound = append(result.notFound, pkg.StructName(subtype))
 			continue
@@ -335,4 +340,13 @@ func getFinderForAllSubtypes(kind string) (*finderForSubtypesResult, error) {
 		result.finders = append(result.finders, finder)
 	}
 	return result, nil
+}
+
+func choiceExists(items []models.MridNameGetter, choice string) bool {
+	for _, item := range items {
+		if item.GetMrid().String() == choice {
+			return true
+		}
+	}
+	return false
 }

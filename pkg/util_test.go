@@ -108,6 +108,18 @@ func TestSubtypes(t *testing.T) {
 		"SynchronousMachine":  {},
 	}
 	require.Equal(t, want, names)
+
+	t.Run("Substation is EquipmentContainer", func(t *testing.T) {
+		subtypes := Subtypes(&models.EquipmentContainer{})
+		isSubtype := false
+		for _, subtype := range subtypes {
+			if StructName(subtype) == "Substation" {
+				isSubtype = true
+				break
+			}
+		}
+		require.True(t, isSubtype, fmt.Sprintf("%v\n", subtypes))
+	})
 }
 
 func TestMustGet(t *testing.T) {

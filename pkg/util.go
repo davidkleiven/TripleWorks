@@ -109,7 +109,8 @@ func Subtypes(model any) []any {
 	targetType := baseType(model)
 	var result []any
 
-	for _, v := range FormTypes {
+	fTypes := FormTypes()
+	for _, v := range fTypes {
 		vType := baseType(v)
 		for i := range vType.NumField() {
 			f := vType.Field(i)
