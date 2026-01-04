@@ -42,6 +42,7 @@ func FormTypes() map[string]any {
 		"ConformLoad":                    &models.ConformLoad{},
 		"ConformLoadGroup":               &models.ConformLoadGroup{},
 		"ConformLoadSchedule":            &models.ConformLoadSchedule{},
+		"ConnectivityNode":               &models.ConnectivityNode{},
 		"ConnectivityNodeContainer":      &models.ConnectivityNodeContainer{},
 		"Connector":                      &models.Connector{},
 		"ControlArea":                    &models.ControlArea{},
