@@ -70,6 +70,7 @@ type Frequency struct {
 }
 type Terminal struct {
 	ACDCTerminal
+	TerminalOperations
 	ConductingEquipmentMrid uuid.UUID  `bun:"conducting_equipment_mrid,type:uuid" json:"conducting_equipment_mrid"`
 	ConductingEquipment     *Entity    `bun:"rel:belongs-to,join:conducting_equipment_mrid=mrid" json:"conducting_equipment,omitempty"`
 	PhasesId                int        `bun:"phases_id" json:"phases_id"`
@@ -886,6 +887,7 @@ type NonConformLoadGroup struct {
 }
 type LoadGroup struct {
 	IdentifiedObject
+	LoadGroupOperations
 }
 type DCEquipmentContainer struct {
 	EquipmentContainer
