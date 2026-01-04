@@ -121,6 +121,9 @@ var Finders = map[string]Finder{
 	"ConformLoadGroup": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
 		return FindNameAndMrid[models.ConformLoadGroup](db, ctx, modelId)
 	},
+	"ConnectivityNode": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+		return FindNameAndMrid[models.ConnectivityNode](db, ctx, modelId)
+	},
 	"ConnectivityNodeContainer": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
 		return FindNameAndMrid[models.ConnectivityNodeContainer](db, ctx, modelId)
 	},

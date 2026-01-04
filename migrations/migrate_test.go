@@ -320,3 +320,33 @@ func TestErrorDuringSqlMigrationOfAddColumn(t *testing.T) {
 	err := addTypeToEntities(ctx, sqldb)
 	require.Error(t, err)
 }
+
+func TestAddConNodeExistingTerminals(t *testing.T) {
+	sqldb := setupSqliteTestDb(t)
+	terminal := models.Terminal{}
+
+	ctx := context.Background()
+	_, err := sqldb.NewCreateTable().Model((*models.Terminal)(nil)).Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = sqldb.NewCreateTable().Model((*models.ConnectivityNode)(nil)).Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = sqldb.NewInsert().Model(&terminal).Exec(context.Background())
+	require.NoError(t, err)
+
+	addConNodeToTerminals(ctx, sqldb)
+
+	num, err := sqldb.NewSelect().Model((*models.ConnectivityNode)(nil)).Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 1, num)
+
+}
+
+func TestAddNodeErrorOnCancelledContext(t *testing.T) {
+	sqldb := setupSqliteTestDb(t)
+	ctx := context.Background()
+	err := addConNodeToTerminals(ctx, sqldb)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "no such table")
+}
