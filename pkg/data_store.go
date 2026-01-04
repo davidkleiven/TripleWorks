@@ -346,6 +346,9 @@ var Finders = map[string]Finder{
 	"ReportingGroup": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
 		return FindNameAndMrid[models.ReportingGroup](db, ctx, modelId)
 	},
+	"RotatingMachine": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+		return FindNameAndMrid[models.RotatingMachine](db, ctx, modelId)
+	},
 	"SeriesCompensator": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
 		return FindNameAndMrid[models.SeriesCompensator](db, ctx, modelId)
 	},

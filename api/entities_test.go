@@ -70,12 +70,12 @@ func TestGetEntityForKind(t *testing.T) {
 	})
 
 	store.timeout = 0
-	t.Run("error on timeout", func(t *testing.T) {
+	t.Run("no error on timeout", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/entities?kind=BaseVoltage", nil)
 
 		store.GetEntityForKind(rec, req)
-		require.Equal(t, http.StatusInternalServerError, rec.Code)
+		require.Equal(t, http.StatusOK, rec.Code)
 	})
 
 }
@@ -236,4 +236,58 @@ func TestSubstationReturnedWhenRequestingEquipmentContainer(t *testing.T) {
 
 	content := rec.Body.String()
 	require.Contains(t, content, "Demo Substation")
+}
+
+func TestACLineSegmentReturnedWhenRequestingConductingEquipment(t *testing.T) {
+	store := setupStore(t)
+	acLine := models.ACLineSegment{
+		Conductor: models.Conductor{
+			ConductingEquipment: models.ConductingEquipment{
+				Equipment: models.Equipment{
+					PowerSystemResource: models.PowerSystemResource{
+						IdentifiedObject: models.IdentifiedObject{Name: "Demo line"},
+					},
+				},
+			},
+		},
+	}
+	ctx := context.Background()
+	_, err := store.db.NewInsert().Model(&acLine).Exec(ctx)
+	require.NoError(t, err)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/entities?kind=ConductingEquipment", nil)
+	store.GetEntityForKind(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	content := rec.Body.String()
+	require.Contains(t, content, "Demo line")
+}
+
+func TestEntityListBadRequestOnUnknownType(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/entities?type=NonExistentType", nil)
+	store := setupStore(t)
+	store.EntityList(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+func TestInternalServerErrorOnTimeoutInEntityList(t *testing.T) {
+	store := setupStore(t)
+	store.timeout = 0
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/entities?type=BaseVoltage", nil)
+	store.EntityList(rec, req)
+	require.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestBaseVoltageContainsName(t *testing.T) {
+	store := setupStore(t)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/entities?type=BaseVoltage", nil)
+	store.EntityList(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Contains(t, rec.Body.String(), "No items")
 }

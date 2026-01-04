@@ -297,10 +297,7 @@ func writeInputItem(w io.Writer, config *writeInputConfig) {
 	isEnum := strings.HasSuffix(config.name, "Id")
 	isExternalId := strings.HasSuffix(config.name, "Mrid") && config.name != "Mrid"
 	endpoint := ""
-
-	if isExternalId || isEnum {
-		fmt.Fprintf(w, "<div class=\"is-flex\">\n")
-	}
+	fmt.Fprintf(w, "<div class=\"is-flex\">\n")
 
 	if isEnum {
 		endpoint = "enum"
@@ -340,8 +337,10 @@ func writeInputItem(w io.Writer, config *writeInputConfig) {
 		`
 		selectTempl := template.Must(template.New("selectField").Parse(selectHtml))
 		PanicOnErr(selectTempl.Execute(w, data))
-		fmt.Fprintf(w, "</div>\n")
+	} else {
+		maybeWriteAutofillCheckbox(w, config.name, config.value, data.Id)
 	}
+	fmt.Fprintf(w, "</div>\n")
 }
 
 func FlattenStruct(v any) map[string]formField {
@@ -396,4 +395,57 @@ func MustGetHash(item any) string {
 	data := Must(json.Marshal(item))
 	hash := md5.Sum(data)
 	return string(hex.EncodeToString(hash[:]))
+}
+
+func isEmptyString(v any) bool {
+	asString, ok := v.(string)
+	return ok && asString == ""
+}
+
+func isNumberZero(v any) bool {
+	asInt, ok := v.(int)
+	asFloat, okFloat := v.(float64)
+	return (ok && asInt == 0) || (okFloat && asFloat == 0.0)
+}
+
+func isBool(v any) bool {
+	_, ok := v.(bool)
+	return ok
+}
+
+func maybeWriteAutofillCheckbox(w io.Writer, name string, value any, valueId string) {
+	if isBool(value) {
+		return
+	}
+	skipAutoFill := map[string]struct{}{
+		"Name":   {},
+		"Length": {},
+	}
+	isMrid := strings.Contains(name, "Mrid")
+	_, skip := skipAutoFill[name]
+	if skip || isMrid {
+		return
+	}
+
+	content := Must(io.ReadAll(Must(htmlPages.Open("html/autofill_checkbox.html"))))
+
+	templ := Must(template.New("root").Parse(string(content)))
+	data := NewAutofillCheckboxData(value, valueId, isEmptyString(value) || isNumberZero(value))
+	templ.ExecuteTemplate(w, "autofill-checkbox", data)
+}
+
+type AutofillCheckboxData struct {
+	Value    any
+	TargetId string
+	Checked  bool
+	Checksum string
+}
+
+func NewAutofillCheckboxData(value any, targetId string, checked bool) AutofillCheckboxData {
+	return AutofillCheckboxData{
+		Value:    value,
+		TargetId: targetId,
+		Checked:  checked,
+		Checksum: MustGetHash(value),
+	}
 }

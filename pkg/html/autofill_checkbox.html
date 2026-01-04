@@ -1,0 +1,11 @@
+{{ define "autofill-checkbox" }}
+<input
+  type="checkbox"
+  id="{{.TargetId}}-autofill"
+  value="true"
+  target="{{.TargetId}}"
+  checksum="{{.Checksum}}"
+  {{if
+  .Checked}}checked{{end}}
+/>
+{{end}}

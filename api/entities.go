@@ -110,8 +110,6 @@ func (e *EntityStore) GetEntityForKind(w http.ResponseWriter, r *http.Request) {
 		newItems, err := finder(ctx, e.db, 0)
 		if err != nil {
 			slog.ErrorContext(ctx, "Failed to find all items of type: %v", "error", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
 		}
 		items = append(items, newItems...)
 	}

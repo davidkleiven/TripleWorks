@@ -9,6 +9,7 @@
       href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
     />
     <script src="https://unpkg.com/htmx.org@2.0.7"></script>
+    <script src="/js/autofill.js"></script>
     <style>
       .status-footer {
         position: fixed;
@@ -114,6 +115,11 @@
     </footer>
   </body>
   <script>
+    let autofillInProgress = false;
+    function delay(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
     function commitChanges() {
       payload = collectEditorValues();
       if (!payload || Object.keys(payload).length === 0) return;
@@ -174,6 +180,7 @@
     }
 
     function handleChangeEvent(e) {
+      performAutofill(e);
       const select = e.target;
       if (!select.matches("select[value-field]")) return;
       const inputId = select.getAttribute("value-field");
@@ -193,6 +200,14 @@
           targetInput.classList.remove("is-danger");
         }
       }
+    }
+
+    async function performAutofill(e) {
+      if (autofillInProgress) return;
+      autofillInProgress = true;
+      await delay(500);
+      doAutofill(); // From autofill.js
+      autofillInProgress = false;
     }
 
     document.addEventListener("change", handleChangeEvent);
