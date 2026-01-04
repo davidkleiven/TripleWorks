@@ -280,6 +280,40 @@ func (e *EntityStore) EntityList(w http.ResponseWriter, r *http.Request) {
 	pkg.CreateList(w, items)
 }
 
+func (e *EntityStore) SubstationDiagram(w http.ResponseWriter, r *http.Request) {
+	substationMrid := r.PathValue("mrid")
+
+	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+	defer cancel()
+
+	var (
+		substation models.Substation
+		data       pkg.SubstationDiagramData
+	)
+	failedNo, err := pkg.ReturnOnFirstError(
+		func() error {
+			return e.db.NewSelect().Model(&substation).Where("mrid = ?", substationMrid).OrderBy("CommitId", bun.OrderDesc).Limit(1).Scan(ctx)
+		},
+		func() error {
+			var ierr error
+			data, ierr = pkg.CollectSubstationData(ctx, e.db, &substation)
+			return ierr
+		},
+	)
+	if err != nil {
+		slog.ErrorContext(ctx, "Failed to get data from database", "error", err, "failedNo", failedNo)
+		http.Error(w, "Failed to get substation from database "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	image := pkg.Substation(&data)
+	w.Header().Set("Content-Type", "image/svg+xml")
+	_, err = image.WriteTo(w)
+	if err != nil {
+		slog.ErrorContext(ctx, "Failed to write image", "error", err)
+	}
+}
+
 func NewEntityStore(db *bun.DB, timeout time.Duration) *EntityStore {
 	return &EntityStore{
 		db:      db,

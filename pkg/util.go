@@ -133,3 +133,9 @@ func RequireStruct(v reflect.Type) {
 		panic(fmt.Sprintf("'%v' is not a struct", v))
 	}
 }
+
+func AssertNotNil(v any) {
+	if v == nil {
+		panic("Value should not be nil")
+	}
+}
