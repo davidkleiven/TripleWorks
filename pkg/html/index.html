@@ -96,6 +96,16 @@
         </div>
         <div class="column is-half" id="right-panel">
           <!-- Right panel content will be loaded via HTMX -->
+          <div class="select mt-5">
+            <select
+              id="substation-select"
+              hx-get="/entities?kind=Substation"
+              hx-target="this"
+              hx-swap="innerHTML"
+              hx-trigger="load"
+            ></select>
+          </div>
+          <div id="draw-area" class="image is-fullwidth"></div>
         </div>
       </div>
 
@@ -187,7 +197,11 @@
       return result;
     }
 
-    function handleChangeEvent(e) {
+    async function handleChangeEvent(e) {
+      if (e.target.id === "substation-select") {
+        loadStationDrawing(e);
+        return;
+      }
       performAutofill(e);
       const select = e.target;
       if (!select.matches("select[value-field]")) return;
@@ -208,6 +222,20 @@
           targetInput.classList.remove("is-danger");
         }
       }
+    }
+
+    async function loadStationDrawing(e) {
+      const select = document.getElementById("substation-select");
+      const selectedOption = select.options[select.selectedIndex];
+      const mrid = selectedOption.getAttribute("mrid");
+      if (mrid === null || mrid === "no-mrid") return;
+
+      const resp = await fetch("/substations/" + mrid + "/diagram", {
+        method: "GET",
+      });
+
+      const drawArea = document.getElementById("draw-area");
+      drawArea.innerHTML = await resp.text();
     }
 
     async function performAutofill(e) {
