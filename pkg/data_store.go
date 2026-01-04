@@ -328,6 +328,9 @@ var Finders = map[string]Finder{
 	"ReactiveCapabilityCurve": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
 		return FindNameAndMrid[models.ReactiveCapabilityCurve](db, ctx, modelId)
 	},
+	"Region": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+		return FindNameAndMrid[models.SubGeographicalRegion](db, ctx, modelId)
+	},
 	"RegularIntervalSchedule": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
 		return FindNameAndMrid[models.RegularIntervalSchedule](db, ctx, modelId)
 	},
