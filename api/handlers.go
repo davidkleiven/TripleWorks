@@ -42,6 +42,9 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.HandleFunc("/enum", entityHandler.GetEnumOptions)
 	mux.HandleFunc("/entity-list", entityHandler.EntityList)
 	mux.HandleFunc("POST /commit", entityHandler.Commit)
+	mux.HandleFunc("POST /autofill", AutofillHandler)
+
+	mux.Handle("/js/", pkg.JsServer())
 }
 
 func mustPerformMigrations(db *bun.DB, timeout time.Duration) {
@@ -50,10 +53,8 @@ func mustPerformMigrations(db *bun.DB, timeout time.Duration) {
 
 	executed, err := migrations.RunUp(ctx, db)
 
-	if executed != nil {
-		slog.Info("Executed migrations", "num", len(executed.Migrations))
-	}
 	if err != nil {
 		panic(err)
 	}
+	slog.Info("Executed migrations", "num", len(executed.Migrations))
 }
