@@ -38,18 +38,9 @@
 
       <div class="columns is-fullheight">
         <div class="column is-half" id="left-panel">
-          <div class="px-4 py-3">
-            <div class="field">
-              <p class="control">
-                <input
-                  class="input is-rounded"
-                  type="text"
-                  placeholder="Search existing types..."
-                />
-              </p>
-            </div>
-            <div class="field has-addons">
-              <div class="select">
+          <div class="columns mt-4">
+            <div id="kind-select-column" class="column">
+              <div class="select is-fullwidth">
                 <select
                   id="type-select"
                   name="type"
@@ -58,9 +49,14 @@
                   hx-target="this"
                   hx-swap="innerHTML"
                 ></select>
-                <div class="control has-addons">
+              </div>
+            </div>
+            <div id="kind-btn-column" class="column">
+              <div class="columns">
+                <div class="column">
                   <button
-                    class="button is-primary"
+                    id="new-btn"
+                    class="button is-success is-fullwidth"
                     hx-target="#entity-form"
                     hx-swap="innerHTML"
                     hx-get="/entity-form"
@@ -69,8 +65,11 @@
                   >
                     New
                   </button>
+                </div>
+                <div class="column">
                   <button
-                    class="button is-primary"
+                    id="list-btn"
+                    class="button is-info is-fullwidth"
                     hx-target="#entity-form"
                     hx-swap="innerHTML"
                     hx-get="/entity-list"
@@ -83,6 +82,15 @@
               </div>
             </div>
           </div>
+          <div id="search-field" class="field is-hidden">
+            <p class="control">
+              <input
+                class="input is-rounded"
+                type="text"
+                placeholder="Search existing types..."
+              />
+            </p>
+          </div>
           <!-- Left panel content will be loaded via HTMX -->
           <div id="entity-form" class="mt-4"></div>
         </div>
@@ -92,7 +100,7 @@
       </div>
 
       <!-- Commit section at bottom of page -->
-      <div class="field has-addons mt-4">
+      <div id="commit-field" class="field has-addons mt-4 is-hidden">
         <div class="control is-expanded">
           <input
             class="input is-rounded"
@@ -101,8 +109,8 @@
             placeholder="Commit message..."
           />
         </div>
-        <div class="control">
-          <button class="button is-primary" onclick="commitChanges()">
+        <div class="control ml-2">
+          <button class="button is-success" onclick="commitChanges()">
             Commit
           </button>
         </div>
@@ -114,7 +122,7 @@
       </div>
     </footer>
   </body>
-  <script>
+  <script defer>
     let autofillInProgress = false;
     function delay(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms));
@@ -210,6 +218,32 @@
       autofillInProgress = false;
     }
 
+    function makeFieldVisible(fieldId) {
+      const item = document.getElementById(fieldId);
+      if (item) {
+        item.classList.remove("is-hidden");
+      }
+    }
+
+    function hideField(fieldId) {
+      const item = document.getElementById(fieldId);
+      if (item) {
+        item.classList.add("is-hidden");
+      }
+    }
+
+    function handleAfterSwapEvent(evt) {
+      console.log(evt);
+      if (evt.detail.elt.id === "list-btn") {
+        hideField("commit-field");
+        makeFieldVisible("search-field");
+      } else if (evt.detail.elt.id === "new-btn") {
+        hideField("search-field");
+        makeFieldVisible("commit-field");
+      }
+    }
+
     document.addEventListener("change", handleChangeEvent);
+    document.addEventListener("htmx:afterRequest", handleAfterSwapEvent);
   </script>
 </html>
