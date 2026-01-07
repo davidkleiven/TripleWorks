@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"com.github/davidkleiven/tripleworks/migrations"
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/pkg"
+	"com.github/davidkleiven/tripleworks/testutils"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -290,4 +292,41 @@ func TestBaseVoltageContainsName(t *testing.T) {
 	store.EntityList(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.Contains(t, rec.Body.String(), "No items")
+}
+
+func TestDrawDiagram(t *testing.T) {
+	store := setupStore(t)
+
+	var substation models.Substation
+	substation.Mrid = uuid.New()
+	_, err := store.db.NewInsert().Model(&substation).Exec(context.Background())
+	require.NoError(t, err)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /substation/{mrid}/diagram", store.SubstationDiagram)
+
+	t.Run("success", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", fmt.Sprintf("/substation/%s/diagram", substation.Mrid), nil)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, "image/svg+xml", rec.Header().Get("Content-Type"))
+	})
+
+	t.Run("no substation", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/substation/0000-0000/diagram", nil)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+
+	t.Run("fail on write", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		respWriter := testutils.FailingResponseWriter{ResponseWriter: rec, WriteErr: errors.New("what is this??")}
+		req := httptest.NewRequest("GET", fmt.Sprintf("/substation/%s/diagram", substation.Mrid), nil)
+		mux.ServeHTTP(&respWriter, req)
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
+		require.Contains(t, string(respWriter.WantToWrite), "write image")
+
+	})
 }
