@@ -36,67 +36,50 @@
         </div>
       </header>
 
-      <div class="columns is-fullheight">
-        <div class="column is-half" id="left-panel">
-          <div class="columns mt-4">
-            <div id="kind-select-column" class="column">
-              <div class="select is-fullwidth">
-                <select
-                  id="type-select"
-                  name="type"
-                  hx-trigger="load"
-                  hx-get="/cim-types"
-                  hx-target="this"
-                  hx-swap="innerHTML"
-                ></select>
-              </div>
-            </div>
-            <div id="kind-btn-column" class="column">
-              <div class="columns">
-                <div class="column">
-                  <button
-                    id="new-btn"
-                    class="button is-success is-fullwidth"
-                    hx-target="#entity-form"
-                    hx-swap="innerHTML"
-                    hx-get="/entity-form"
-                    hx-include="#type-select"
-                    hx-trigger="click"
-                  >
-                    New
-                  </button>
-                </div>
-                <div class="column">
-                  <button
-                    id="list-btn"
-                    class="button is-info is-fullwidth"
-                    hx-target="#entity-form"
-                    hx-swap="innerHTML"
-                    hx-get="/entity-list"
-                    hx-include="#type-select"
-                    hx-trigger="click"
-                  >
-                    List
-                  </button>
-                </div>
-              </div>
-            </div>
+      <div class="columns is-fullwidth mt-4">
+        <div id="kind-select-column" class="column is-one-quarter">
+          <div class="select is-fullwidth">
+            <select
+              id="type-select"
+              name="type"
+              hx-trigger="load"
+              hx-get="/cim-types"
+              hx-target="this"
+              hx-swap="innerHTML"
+            ></select>
           </div>
-          <div id="search-field" class="field is-hidden">
-            <p class="control">
-              <input
-                class="input is-rounded"
-                type="text"
-                placeholder="Search existing types..."
-              />
-            </p>
-          </div>
-          <!-- Left panel content will be loaded via HTMX -->
-          <div id="entity-form" class="mt-4"></div>
         </div>
-        <div class="column is-half" id="right-panel">
-          <!-- Right panel content will be loaded via HTMX -->
-          <div class="select mt-5">
+        <div class="column is-one-quarter">
+          <button
+            id="new-btn"
+            class="button is-success is-fullwidth"
+            hx-target="#entity-form"
+            hx-swap="innerHTML"
+            hx-get="/entity-form"
+            hx-include="#type-select"
+            hx-trigger="click"
+          >
+            New
+          </button>
+        </div>
+        <div class="column is-one-quarter">
+          <button
+            id="list-btn"
+            class="button is-info is-fullwidth"
+            hx-target="#list-content"
+            hx-swap="innerHTML"
+            hx-get="/entity-list"
+            hx-include="#type-select"
+            hx-trigger="click"
+          >
+            List
+          </button>
+        </div>
+        <div
+          class="column is-one-quarter is-flex is-justify-content-center is-align-items-center"
+        >
+          <span class="has-text-weight-bold mr-2">Diagram:</span>
+          <div class="select">
             <select
               id="substation-select"
               hx-get="/entities?kind=Substation"
@@ -105,6 +88,29 @@
               hx-trigger="load"
             ></select>
           </div>
+        </div>
+      </div>
+
+      <div id="one-col-content" class="is-hidden">
+        <div id="search-field" class="field">
+          <p class="control">
+            <input
+              class="input is-rounded"
+              type="text"
+              placeholder="Search existing types..."
+            />
+          </p>
+        </div>
+        <div id="list-content" class="table-container"></div>
+      </div>
+
+      <!-- Left panel content will be loaded via HTMX -->
+      <div id="two-col-content" class="columns is-fullwidth">
+        <div class="column is-half">
+          <div id="entity-form" class="mt-4"></div>
+        </div>
+        <div class="column is-half" id="right-panel">
+          <!-- Right panel content will be loaded via HTMX -->
           <div id="draw-area" class="image is-fullwidth"></div>
         </div>
       </div>
@@ -264,9 +270,11 @@
       console.log(evt);
       if (evt.detail.elt.id === "list-btn") {
         hideField("commit-field");
-        makeFieldVisible("search-field");
+        hideField("two-col-content");
+        makeFieldVisible("one-col-content");
       } else if (evt.detail.elt.id === "new-btn") {
-        hideField("search-field");
+        hideField("one-col-content");
+        makeFieldVisible("two-col-content");
         makeFieldVisible("commit-field");
       }
     }
