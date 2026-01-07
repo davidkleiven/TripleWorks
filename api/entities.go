@@ -208,38 +208,41 @@ func (e *EntityStore) Commit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = e.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(&commit).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
-		_, err = tx.NewInsert().
-			Model(&entity).
-			On("CONFLICT DO NOTHING").
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
+		_, dberr := pkg.ReturnOnFirstError(
+			func() error {
+				_, ierr := tx.NewInsert().
+					Model(&commit).
+					Exec(ctx)
+				return ierr
+			},
+			func() error {
+				_, ierr := tx.NewInsert().
+					Model(&entity).
+					On("CONFLICT DO NOTHING").
+					Exec(ctx)
+				return ierr
+			},
+			func() error {
+				_, ierr := tx.NewInsert().
+					Model(&gridModel).
+					On("CONFLICT DO NOTHING").
+					Exec(ctx)
+				return ierr
+			},
+			func() error {
+				return pkg.SetCommitId(model, int(commit.Id))
+			},
+			func() error {
+				_, ierr := tx.NewInsert().
+					Model(model).
+					Exec(ctx)
+				return ierr
 
-		_, err = tx.NewInsert().
-			Model(&gridModel).
-			On("CONFLICT DO NOTHING").
-			Exec(ctx)
-
-		if err != nil {
-			return err
-		}
-
-		if err := pkg.SetCommitId(model, int(commit.Id)); err != nil {
-			return err
-		}
-
-		_, err = tx.NewInsert().
-			Model(model).
-			Exec(ctx)
-		return err
+			},
+		)
+		return dberr
 	})
+
 	if err != nil {
 		slog.ErrorContext(ctx, "Could not insert data", "error", err)
 		http.Error(w, "Could not insert data: "+err.Error(), http.StatusInternalServerError)
