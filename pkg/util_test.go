@@ -129,3 +129,13 @@ func TestMustGet(t *testing.T) {
 	require.True(t, MustGet(mapping, "field"))
 	require.Panics(t, func() { MustGet(mapping, "field2") })
 }
+
+func TestAssertNotNil(t *testing.T) {
+	require.NotPanics(t, func() { AssertNotNil("what") })
+	require.Panics(t, func() { AssertNotNil(nil) })
+}
+
+func TestRequireStruct(t *testing.T) {
+	require.NotPanics(t, func() { RequireStruct(reflect.TypeOf(struct{}{})) })
+	require.Panics(t, func() { RequireStruct(reflect.TypeOf(2)) })
+}
