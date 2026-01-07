@@ -127,6 +127,16 @@ func CollectSubstationData(ctx context.Context, db *bun.DB, s *models.Substation
 				Where("mrid IN (?)", bun.In(mrids)).Scan(ctx)
 			return err
 		},
+		func() error {
+			mrids := make([]uuid.UUID, len(result.Terminals))
+			for i, terminal := range result.Terminals {
+				mrids[i] = terminal.ConductingEquipmentMrid
+			}
+			err := db.NewSelect().
+				Model(&result.SyncMachines).
+				Where("mrid IN (?)", bun.In(mrids)).Scan(ctx)
+			return err
+		},
 	)
 	slog.InfoContext(
 		ctx,
@@ -136,6 +146,7 @@ func CollectSubstationData(ctx context.Context, db *bun.DB, s *models.Substation
 		"ConnectivityNodes", len(result.ConnectivityNodes),
 		"Terminals", len(result.Terminals),
 		"ACLineSegments", len(result.ACLineSegments),
+		"SyncMachines", len(result.SyncMachines),
 	)
 	return result, overallErr
 }

@@ -311,6 +311,8 @@ func (e *EntityStore) SubstationDiagram(w http.ResponseWriter, r *http.Request) 
 	_, err = image.WriteTo(w)
 	if err != nil {
 		slog.ErrorContext(ctx, "Failed to write image", "error", err)
+		http.Error(w, "Failed to write image "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
