@@ -330,3 +330,49 @@ func TestDrawDiagram(t *testing.T) {
 
 	})
 }
+
+func TestEditComponentForm(t *testing.T) {
+	store := setupStore(t)
+
+	entity := models.Entity{Mrid: uuid.New(), EntityType: pkg.StructName(models.Substation{})}
+	var substation models.Substation
+	substation.Mrid = entity.Mrid
+
+	ctx := context.Background()
+	_, err := store.db.NewInsert().Model(&entity).Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = store.db.NewInsert().Model(&substation).Exec(ctx)
+	require.NoError(t, err)
+
+	invalidEntity := models.Entity{Mrid: uuid.New(), EntityType: "UnknownDataType"}
+	_, err = store.db.NewInsert().Model(&invalidEntity).Exec(ctx)
+	require.NoError(t, err)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/entity-form/{mrid}", store.EditComponentForm)
+
+	t.Run("success", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", fmt.Sprintf("/entity-form/%s", entity.Mrid), nil)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Contains(t, rec.Body.String(), "hx-get")
+	})
+
+	t.Run("non existing mrid", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/entity-form/0000-0000", nil)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusBadRequest, rec.Code)
+		require.Contains(t, rec.Body.String(), "Failed to find entity")
+	})
+
+	t.Run("non existing type", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", fmt.Sprintf("/entity-form/%s", invalidEntity.Mrid), nil)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusBadRequest, rec.Code)
+		require.Contains(t, rec.Body.String(), "for type")
+	})
+}

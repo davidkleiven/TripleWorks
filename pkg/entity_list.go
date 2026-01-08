@@ -54,8 +54,8 @@ func CreateList(w io.Writer, items []models.MridNameGetter) {
 			val = val.Elem()
 		}
 
-		fmt.Fprint(w, "<tr>")
 		fields := FlattenStruct(item)
+		fmt.Fprint(w, createHtmxClickableRow(fields))
 		for _, name := range fieldNames {
 			field := MustGet(fields, name)
 			cell := fmt.Sprint(field.Value)
@@ -66,4 +66,12 @@ func CreateList(w io.Writer, items []models.MridNameGetter) {
 	}
 	fmt.Fprintln(w, "</tbody>")
 	fmt.Fprintln(w, "</table>")
+}
+
+func createHtmxClickableRow(fields map[string]formField) string {
+	mridField, ok := fields["Mrid"]
+	if !ok {
+		return "<tr>"
+	}
+	return fmt.Sprintf("<tr hx-get=\"/entity-form/%s\" hx-trigger=\"click\" hx-target=\"#entity-form\" style=\"cursor:pointer\">", mridField.Value)
 }
