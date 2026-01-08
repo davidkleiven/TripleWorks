@@ -319,6 +319,36 @@ func (e *EntityStore) SubstationDiagram(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+func (e *EntityStore) EditComponentForm(w http.ResponseWriter, r *http.Request) {
+	mrid := r.PathValue("mrid")
+
+	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+	defer cancel()
+
+	var entity models.Entity
+	err := e.db.NewSelect().Model(&entity).Where("mrid = ?", mrid).Limit(1).Scan(ctx)
+	if err != nil {
+		slog.ErrorContext(ctx, "Failed find entity", "error", err, "mrid", mrid)
+		http.Error(w, "Failed to find entity for passed mrid "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	resource, ok := pkg.FormTypes()[entity.EntityType]
+	if !ok {
+		slog.ErrorContext(ctx, "Could not find a form type", "entityType", entity.EntityType)
+		http.Error(w, fmt.Sprintf("Failed to find entity for type %s", entity.EntityType), http.StatusBadRequest)
+		return
+	}
+
+	err = e.db.NewSelect().Model(resource).Where("mrid = ?", mrid).OrderBy("commit_id", bun.OrderDesc).Limit(1).Scan(ctx)
+	if err != nil {
+		slog.ErrorContext(ctx, "Failed to collect data for editing resource", "error", err)
+		http.Error(w, "Failed to collect data for editing resource "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	pkg.FormInputFields(w, resource)
+}
+
 func NewEntityStore(db *bun.DB, timeout time.Duration) *EntityStore {
 	return &EntityStore{
 		db:      db,

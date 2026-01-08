@@ -267,12 +267,11 @@
     }
 
     function handleAfterSwapEvent(evt) {
-      console.log(evt);
       if (evt.detail.elt.id === "list-btn") {
         hideField("commit-field");
         hideField("two-col-content");
         makeFieldVisible("one-col-content");
-      } else if (evt.detail.elt.id === "new-btn") {
+      } else if (evt.detail.target.id === "entity-form") {
         hideField("one-col-content");
         makeFieldVisible("two-col-content");
         makeFieldVisible("commit-field");
