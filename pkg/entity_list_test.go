@@ -11,13 +11,13 @@ import (
 
 func TestCreateList(t *testing.T) {
 	bvs := []models.BaseVoltage{{}, {}}
-	mridGetter := make([]models.MridNameGetter, len(bvs))
+	versionedObject := make([]models.VersionedObject, len(bvs))
 	for i, bv := range bvs {
-		mridGetter[i] = &bv
+		versionedObject[i] = &bv
 	}
 
 	var buf bytes.Buffer
-	CreateList(&buf, mridGetter)
+	CreateList(&buf, versionedObject)
 
 	content := buf.String()
 	require.Contains(t, content, "NominalVoltage")
@@ -26,9 +26,9 @@ func TestCreateList(t *testing.T) {
 }
 
 func TestCreateListEmpty(t *testing.T) {
-	var mridGetter []models.MridNameGetter
+	var versionedObject []models.VersionedObject
 	var buf bytes.Buffer
 
-	CreateList(&buf, mridGetter)
+	CreateList(&buf, versionedObject)
 	require.Contains(t, buf.String(), "No items")
 }

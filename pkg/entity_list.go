@@ -11,7 +11,7 @@ import (
 )
 
 // CreateList writes an HTML table of the given items using Bulma CSS.
-func CreateList(w io.Writer, items []models.MridNameGetter) {
+func CreateList(w io.Writer, items []models.VersionedObject) {
 	if len(items) == 0 {
 		fmt.Fprintln(w, `<table class="table is-striped is-hoverable"><tr><td>No items</td></tr></table>`)
 		return
