@@ -41,9 +41,20 @@ func (b *BaseEntity) SetCommitId(commitId int) {
 func (b BaseEntity) GetCommitId() int {
 	return b.CommitId
 }
+func (b BaseEntity) GetDeleted() bool {
+	return b.Deleted
+}
 
 type MridGetter interface {
 	GetMrid() uuid.UUID
+}
+
+type NameGetter interface {
+	GetName() string
+}
+
+type DeletedGetter interface {
+	GetDeleted() bool
 }
 
 type VersionedIdentifiedObject interface {
@@ -53,7 +64,7 @@ type VersionedIdentifiedObject interface {
 
 type MridNameGetter interface {
 	MridGetter
-	GetName() string
+	NameGetter
 }
 
 type CommitIdSetter interface {
@@ -63,4 +74,5 @@ type CommitIdSetter interface {
 type VersionedObject interface {
 	MridNameGetter
 	VersionedIdentifiedObject
+	DeletedGetter
 }
