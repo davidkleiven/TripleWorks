@@ -250,6 +250,9 @@ var Finders = map[string]Finder{
 	"IdentifiedObject": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
 		return FindNameAndMrid[models.IdentifiedObject](db, ctx, modelId)
 	},
+	"InitialReactiveCapabilityCurve": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+		return FindNameAndMrid[models.ReactiveCapabilityCurve](db, ctx, modelId)
+	},
 	"Junction": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
 		return FindNameAndMrid[models.Junction](db, ctx, modelId)
 	},

@@ -91,6 +91,7 @@ func FormTypes() map[string]any {
 		"IdentifiedObject":               &models.IdentifiedObject{},
 		"Inductance":                     &models.Inductance{},
 		"InductancePerLength":            &models.InductancePerLength{},
+		"InitialReactiveCapabilityCurve": &models.ReactiveCapabilityCurve{},
 		"Junction":                       &models.Junction{},
 		"Length":                         &models.Length{},
 		"Line":                           &models.Line{},
