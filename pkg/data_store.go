@@ -71,6 +71,35 @@ func OnlyLatestVersion[T models.VersionedIdentifiedObject](items []T) []T {
 	})
 }
 
+func OnlyActiveLatest[T models.VersionedObject](items []T) []T {
+	latest := OnlyLatestVersion(items)
+	toDelete := DeletedIndices(latest)
+	return RemoveIndices(latest, toDelete)
+}
+
+func DeletedIndices[T models.DeletedGetter](items []T) []int {
+	result := []int{}
+	for i, item := range items {
+		if item.GetDeleted() {
+			result = append(result, i)
+		}
+	}
+	return result
+}
+
+func RemoveIndices[T any](items []T, indices []int) []T {
+	out := items[:0]
+	idx := 0
+	for i, v := range items {
+		if (idx < len(indices)) && (i == indices[idx]) {
+			idx++
+			continue
+		}
+		out = append(out, v)
+	}
+	return out
+}
+
 type MridAndName struct {
 	Mrid uuid.UUID
 	Name string
