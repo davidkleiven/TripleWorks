@@ -105,7 +105,7 @@ func (e *EntityStore) GetEntityForKind(w http.ResponseWriter, r *http.Request) {
 	}
 	result.LogNotfound(ctx)
 
-	var items []models.MridNameGetter
+	var items []models.VersionedObject
 	for _, finder := range result.finders {
 		newItems, err := finder(ctx, e.db, 0)
 		if err != nil {
@@ -113,9 +113,10 @@ func (e *EntityStore) GetEntityForKind(w http.ResponseWriter, r *http.Request) {
 		}
 		items = append(items, newItems...)
 	}
+	items = pkg.OnlyLatestVersion(items)
 
 	// Sort result such that the current choice is first, and the remaining are in alphabetic order
-	slices.SortFunc(items, func(a, b models.MridNameGetter) int {
+	slices.SortFunc(items, func(a, b models.VersionedObject) int {
 		mridA := a.GetMrid().String()
 		mridB := b.GetMrid().String()
 		if mridA == choice {
@@ -409,7 +410,7 @@ func getFinderForAllSubtypes(kind string) (*finderForSubtypesResult, error) {
 	return result, nil
 }
 
-func choiceExists(items []models.MridNameGetter, choice string) bool {
+func choiceExists(items []models.VersionedObject, choice string) bool {
 	for _, item := range items {
 		if item.GetMrid().String() == choice {
 			return true

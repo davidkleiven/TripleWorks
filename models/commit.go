@@ -59,3 +59,8 @@ type MridNameGetter interface {
 type CommitIdSetter interface {
 	SetCommitId(commitId int)
 }
+
+type VersionedObject interface {
+	MridNameGetter
+	VersionedIdentifiedObject
+}

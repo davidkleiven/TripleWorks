@@ -27,13 +27,13 @@ func FindAll[T any](db *bun.DB, ctx context.Context, modelId int) ([]T, error) {
 	return entities, err
 }
 
-func FindNameAndMrid[T models.MridNameGetter](db *bun.DB, ctx context.Context, modelId int) ([]models.MridNameGetter, error) {
+func FindNameAndMrid[T models.VersionedObject](db *bun.DB, ctx context.Context, modelId int) ([]models.VersionedObject, error) {
 	result, err := FindAll[T](db, ctx, modelId)
 	if err != nil {
-		return []models.MridNameGetter{}, fmt.Errorf("Failed to fetch all items: %w", err)
+		return []models.VersionedObject{}, fmt.Errorf("Failed to fetch all items: %w", err)
 	}
 
-	resultInterfaces := make([]models.MridNameGetter, len(result))
+	resultInterfaces := make([]models.VersionedObject, len(result))
 	for i, item := range result {
 		resultInterfaces[i] = item
 	}
@@ -76,334 +76,334 @@ type MridAndName struct {
 	Name string
 }
 
-type Finder func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error)
+type Finder func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error)
 
 var Finders = map[string]Finder{
-	"ACDCConverter": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ACDCConverter": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ACDCConverter](db, ctx, modelId)
 	},
-	"ACDCConverterDCTerminal": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ACDCConverterDCTerminal": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ACDCConverterDCTerminal](db, ctx, modelId)
 	},
-	"ACDCTerminal": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ACDCTerminal": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ACDCTerminal](db, ctx, modelId)
 	},
-	"ACLineSegment": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ACLineSegment": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ACLineSegment](db, ctx, modelId)
 	},
-	"AsynchronousMachine": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"AsynchronousMachine": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.AsynchronousMachine](db, ctx, modelId)
 	},
-	"BaseVoltage": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"BaseVoltage": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.BaseVoltage](db, ctx, modelId)
 	},
-	"BasicIntervalSchedule": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"BasicIntervalSchedule": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.BasicIntervalSchedule](db, ctx, modelId)
 	},
-	"Breaker": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"Breaker": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.Breaker](db, ctx, modelId)
 	},
-	"BusNameMarker": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"BusNameMarker": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.BusNameMarker](db, ctx, modelId)
 	},
-	"BusbarSection": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"BusbarSection": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.BusbarSection](db, ctx, modelId)
 	},
-	"ConductingEquipment": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ConductingEquipment": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ConductingEquipment](db, ctx, modelId)
 	},
-	"Conductor": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"Conductor": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.Conductor](db, ctx, modelId)
 	},
-	"ConformLoad": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ConformLoad": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ConformLoad](db, ctx, modelId)
 	},
-	"ConformLoadGroup": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ConformLoadGroup": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ConformLoadGroup](db, ctx, modelId)
 	},
-	"ConnectivityNode": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ConnectivityNode": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ConnectivityNode](db, ctx, modelId)
 	},
-	"ConnectivityNodeContainer": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ConnectivityNodeContainer": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ConnectivityNodeContainer](db, ctx, modelId)
 	},
-	"Connector": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"Connector": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.Connector](db, ctx, modelId)
 	},
-	"ControlArea": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ControlArea": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ControlArea](db, ctx, modelId)
 	},
-	"ControlAreaGeneratingUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ControlAreaGeneratingUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ControlAreaGeneratingUnit](db, ctx, modelId)
 	},
-	"CsConverter": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"CsConverter": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.CsConverter](db, ctx, modelId)
 	},
-	"CurrentLimit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"CurrentLimit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.CurrentLimit](db, ctx, modelId)
 	},
-	"Curve": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"Curve": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.Curve](db, ctx, modelId)
 	},
-	"DCBaseTerminal": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCBaseTerminal": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCBaseTerminal](db, ctx, modelId)
 	},
-	"DCBreaker": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCBreaker": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCBreaker](db, ctx, modelId)
 	},
-	"DCBusbar": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCBusbar": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCBusbar](db, ctx, modelId)
 	},
-	"DCChopper": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCChopper": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCChopper](db, ctx, modelId)
 	},
-	"DCConductingEquipment": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCConductingEquipment": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCConductingEquipment](db, ctx, modelId)
 	},
-	"DCConverterUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCConverterUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCConverterUnit](db, ctx, modelId)
 	},
-	"DCDisconnector": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCDisconnector": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCDisconnector](db, ctx, modelId)
 	},
-	"DCEquipmentContainer": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCEquipmentContainer": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCEquipmentContainer](db, ctx, modelId)
 	},
-	"DCGround": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCGround": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCGround](db, ctx, modelId)
 	},
-	"DCLine": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCLine": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCLine](db, ctx, modelId)
 	},
-	"DCLineSegment": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCLineSegment": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCLineSegment](db, ctx, modelId)
 	},
-	"DCNode": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCNode": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCNode](db, ctx, modelId)
 	},
-	"DCSeriesDevice": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCSeriesDevice": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCSeriesDevice](db, ctx, modelId)
 	},
-	"DCShunt": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCShunt": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCShunt](db, ctx, modelId)
 	},
-	"DCSwitch": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCSwitch": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCSwitch](db, ctx, modelId)
 	},
-	"DCTerminal": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"DCTerminal": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.DCTerminal](db, ctx, modelId)
 	},
-	"Disconnector": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"Disconnector": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.Disconnector](db, ctx, modelId)
 	},
-	"EnergyConsumer": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"EnergyConsumer": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.EnergyConsumer](db, ctx, modelId)
 	},
-	"EnergySchedulingType": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"EnergySchedulingType": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.EnergySchedulingType](db, ctx, modelId)
 	},
-	"EnergySource": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"EnergySource": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.EnergySource](db, ctx, modelId)
 	},
-	"Equipment": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"Equipment": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.Equipment](db, ctx, modelId)
 	},
-	"EquipmentContainer": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"EquipmentContainer": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.EquipmentContainer](db, ctx, modelId)
 	},
-	"EquivalentBranch": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"EquivalentBranch": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.EquivalentBranch](db, ctx, modelId)
 	},
-	"EquivalentEquipment": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"EquivalentEquipment": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.EquivalentEquipment](db, ctx, modelId)
 	},
-	"EquivalentInjection": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"EquivalentInjection": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.EquivalentInjection](db, ctx, modelId)
 	},
-	"EquivalentNetwork": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"EquivalentNetwork": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.EquivalentNetwork](db, ctx, modelId)
 	},
-	"EquivalentShunt": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"EquivalentShunt": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.EquivalentShunt](db, ctx, modelId)
 	},
-	"ExternalNetworkInjection": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ExternalNetworkInjection": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ExternalNetworkInjection](db, ctx, modelId)
 	},
-	"FossilFuel": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"FossilFuel": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.FossilFuel](db, ctx, modelId)
 	},
-	"GeneratingUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"GeneratingUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.GeneratingUnit](db, ctx, modelId)
 	},
-	"GeographicalRegion": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"GeographicalRegion": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.GeographicalRegion](db, ctx, modelId)
 	},
-	"HydroGeneratingUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"HydroGeneratingUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.HydroGeneratingUnit](db, ctx, modelId)
 	},
-	"HydroPowerPlant": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"HydroPowerPlant": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.HydroPowerPlant](db, ctx, modelId)
 	},
-	"HydroPump": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"HydroPump": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.HydroPump](db, ctx, modelId)
 	},
-	"IdentifiedObject": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"IdentifiedObject": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.IdentifiedObject](db, ctx, modelId)
 	},
-	"InitialReactiveCapabilityCurve": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"InitialReactiveCapabilityCurve": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ReactiveCapabilityCurve](db, ctx, modelId)
 	},
-	"Junction": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"Junction": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.Junction](db, ctx, modelId)
 	},
-	"Line": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"Line": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.Line](db, ctx, modelId)
 	},
-	"LinearShuntCompensator": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"LinearShuntCompensator": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.LinearShuntCompensator](db, ctx, modelId)
 	},
-	"LoadBreakSwitch": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"LoadBreakSwitch": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.LoadBreakSwitch](db, ctx, modelId)
 	},
-	"LoadGroup": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"LoadGroup": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.LoadGroup](db, ctx, modelId)
 	},
-	"LoadResponseCharacteristic": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"LoadResponseCharacteristic": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.LoadResponseCharacteristic](db, ctx, modelId)
 	},
-	"NonConformLoad": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"NonConformLoad": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.NonConformLoad](db, ctx, modelId)
 	},
-	"NonConformLoadGroup": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"NonConformLoadGroup": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.NonConformLoadGroup](db, ctx, modelId)
 	},
-	"NonlinearShuntCompensator": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"NonlinearShuntCompensator": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.NonlinearShuntCompensator](db, ctx, modelId)
 	},
-	"NuclearGeneratingUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"NuclearGeneratingUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.NuclearGeneratingUnit](db, ctx, modelId)
 	},
-	"OperationalLimit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"OperationalLimit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.OperationalLimit](db, ctx, modelId)
 	},
-	"OperationalLimitSet": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"OperationalLimitSet": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.OperationalLimitSet](db, ctx, modelId)
 	},
-	"OperationalLimitType": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"OperationalLimitType": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.OperationalLimitType](db, ctx, modelId)
 	},
-	"PhaseTapChanger": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"PhaseTapChanger": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.PhaseTapChanger](db, ctx, modelId)
 	},
-	"PhaseTapChangerAsymmetrical": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"PhaseTapChangerAsymmetrical": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.PhaseTapChangerAsymmetrical](db, ctx, modelId)
 	},
-	"PhaseTapChangerLinear": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"PhaseTapChangerLinear": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.PhaseTapChangerLinear](db, ctx, modelId)
 	},
-	"PhaseTapChangerNonLinear": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"PhaseTapChangerNonLinear": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.PhaseTapChangerNonLinear](db, ctx, modelId)
 	},
-	"PhaseTapChangerSymmetrical": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"PhaseTapChangerSymmetrical": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.PhaseTapChangerSymmetrical](db, ctx, modelId)
 	},
-	"PhaseTapChangerTable": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"PhaseTapChangerTable": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.PhaseTapChangerTable](db, ctx, modelId)
 	},
-	"PhaseTapChangerTabular": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"PhaseTapChangerTabular": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.PhaseTapChangerTabular](db, ctx, modelId)
 	},
-	"PowerSystemResource": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"PowerSystemResource": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.PowerSystemResource](db, ctx, modelId)
 	},
-	"PowerTransformer": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"PowerTransformer": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.PowerTransformer](db, ctx, modelId)
 	},
-	"PowerTransformerEnd": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"PowerTransformerEnd": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.PowerTransformerEnd](db, ctx, modelId)
 	},
-	"ProtectedSwitch": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ProtectedSwitch": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ProtectedSwitch](db, ctx, modelId)
 	},
-	"RatioTapChanger": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"RatioTapChanger": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.RatioTapChanger](db, ctx, modelId)
 	},
-	"RatioTapChangerTable": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"RatioTapChangerTable": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.RatioTapChangerTable](db, ctx, modelId)
 	},
-	"ReactiveCapabilityCurve": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ReactiveCapabilityCurve": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ReactiveCapabilityCurve](db, ctx, modelId)
 	},
-	"Region": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"Region": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.SubGeographicalRegion](db, ctx, modelId)
 	},
-	"RegularIntervalSchedule": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"RegularIntervalSchedule": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.RegularIntervalSchedule](db, ctx, modelId)
 	},
-	"RegulatingCondEq": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"RegulatingCondEq": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.RegulatingCondEq](db, ctx, modelId)
 	},
-	"RegulatingControl": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"RegulatingControl": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.RegulatingControl](db, ctx, modelId)
 	},
-	"ReportingGroup": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ReportingGroup": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ReportingGroup](db, ctx, modelId)
 	},
-	"RotatingMachine": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"RotatingMachine": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.RotatingMachine](db, ctx, modelId)
 	},
-	"SeriesCompensator": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"SeriesCompensator": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.SeriesCompensator](db, ctx, modelId)
 	},
-	"ShuntCompensator": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ShuntCompensator": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ShuntCompensator](db, ctx, modelId)
 	},
-	"SolarGeneratingUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"SolarGeneratingUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.SolarGeneratingUnit](db, ctx, modelId)
 	},
-	"StaticVarCompensator": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"StaticVarCompensator": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.StaticVarCompensator](db, ctx, modelId)
 	},
-	"SubGeographicalRegion": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"SubGeographicalRegion": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.SubGeographicalRegion](db, ctx, modelId)
 	},
-	"Substation": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"Substation": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.Substation](db, ctx, modelId)
 	},
-	"Switch": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"Switch": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.Switch](db, ctx, modelId)
 	},
-	"SynchronousMachine": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"SynchronousMachine": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.SynchronousMachine](db, ctx, modelId)
 	},
-	"TapChanger": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"TapChanger": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.TapChanger](db, ctx, modelId)
 	},
-	"TapChangerControl": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"TapChangerControl": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.TapChangerControl](db, ctx, modelId)
 	},
-	"Terminal": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"Terminal": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.Terminal](db, ctx, modelId)
 	},
-	"ThermalGeneratingUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"ThermalGeneratingUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ThermalGeneratingUnit](db, ctx, modelId)
 	},
-	"TransformerEnd": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"TransformerEnd": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.TransformerEnd](db, ctx, modelId)
 	},
-	"VoltageLevel": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"VoltageLevel": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.VoltageLevel](db, ctx, modelId)
 	},
-	"VoltageLimit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"VoltageLimit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.VoltageLimit](db, ctx, modelId)
 	},
-	"VsCapabilityCurve": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"VsCapabilityCurve": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.VsCapabilityCurve](db, ctx, modelId)
 	},
-	"VsConverter": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"VsConverter": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.VsConverter](db, ctx, modelId)
 	},
-	"WindGeneratingUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.MridNameGetter, error) {
+	"WindGeneratingUnit": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.WindGeneratingUnit](db, ctx, modelId)
 	},
 }
