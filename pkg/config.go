@@ -39,8 +39,17 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-func NewTestConfig() *Config {
+func NewTestConfig(opts ...func(c *Config)) *Config {
 	config := NewDefaultConfig()
-	config.DbUrl = "file::memory:?cache-shared"
+	config.DbUrl = "file:memdb?mode=memory&cache=shared"
+	for _, opt := range opts {
+		opt(config)
+	}
 	return config
+}
+
+func WithDbName(name string) func(c *Config) {
+	return func(c *Config) {
+		c.DbUrl = strings.ReplaceAll(c.DbUrl, "memdb", name)
+	}
 }
