@@ -32,7 +32,7 @@ func TestOnlyLatest(t *testing.T) {
 
 func TestFindAll(t *testing.T) {
 	ctx := context.Background()
-	db := NewTestConfig().DatabaseConnection()
+	db := NewTestConfig(WithDbName(t.Name())).DatabaseConnection()
 	_, err := migrations.RunUp(ctx, db)
 	require.NoError(t, err)
 

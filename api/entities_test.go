@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"com.github/davidkleiven/tripleworks/migrations"
 	"com.github/davidkleiven/tripleworks/models"
@@ -21,7 +22,8 @@ import (
 )
 
 func setupStore(t *testing.T) *EntityStore {
-	config := pkg.NewTestConfig()
+	dbName := fmt.Sprintf("%s_%d", t.Name(), time.Now().UnixNano())
+	config := pkg.NewTestConfig(pkg.WithDbName(dbName))
 	store := NewEntityStore(config.DatabaseConnection(), config.Timeout)
 
 	_, err := migrations.RunUp(context.Background(), store.db)
