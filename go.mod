@@ -12,7 +12,8 @@ require (
 	github.com/uptrace/bun v1.2.16
 	github.com/uptrace/bun/dialect/pgdialect v1.2.16
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.16
-	gonum.org/v1/gonum v0.16.0
+	gonum.org/v1/gonum v0.17.0
+	gonum.org/v1/plot v0.16.0
 )
 
 require (
@@ -38,7 +39,5 @@ require (
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
-	gonum.org/v1/plot v0.16.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	rsc.io/pdf v0.1.1 // indirect
 )
