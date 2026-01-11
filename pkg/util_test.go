@@ -139,3 +139,8 @@ func TestRequireStruct(t *testing.T) {
 	require.NotPanics(t, func() { RequireStruct(reflect.TypeOf(struct{}{})) })
 	require.Panics(t, func() { RequireStruct(reflect.TypeOf(2)) })
 }
+
+func TestAssertDifferent(t *testing.T) {
+	require.Panics(t, func() { AssertDifferent(1, 1) })
+	require.NotPanics(t, func() { AssertDifferent(2, 1) })
+}

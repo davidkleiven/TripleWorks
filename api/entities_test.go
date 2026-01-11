@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"com.github/davidkleiven/tripleworks/migrations"
 	"com.github/davidkleiven/tripleworks/models"
@@ -21,7 +22,8 @@ import (
 )
 
 func setupStore(t *testing.T) *EntityStore {
-	config := pkg.NewTestConfig()
+	dbName := fmt.Sprintf("%s_%d", t.Name(), time.Now().UnixNano())
+	config := pkg.NewTestConfig(pkg.WithDbName(dbName))
 	store := NewEntityStore(config.DatabaseConnection(), config.Timeout)
 
 	_, err := migrations.RunUp(context.Background(), store.db)
@@ -85,7 +87,7 @@ func TestCommit(t *testing.T) {
 	store := setupStore(t)
 	data := `{"mrid": "530dfa65-3158-4bdc-845f-3483a24374b9", "name": "Base voltage 420kV", "cim_type": "BaseVoltage",
 	"checksum": "00", "modelId": 0, "modelName": "national", "energy_ident_code_eic": "EIC", "description": "Desc",
-	"short_name": "name", "nominal_voltage": 22.0}`
+	"short_name": "name", "nominal_voltage": 22.0, "deleted": false}`
 
 	t.Run("successful commit", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -94,6 +96,17 @@ func TestCommit(t *testing.T) {
 		store.Commit(rec, req)
 		require.Equal(t, http.StatusOK, rec.Code)
 		require.Contains(t, rec.Body.String(), "Successfully")
+	})
+
+	t.Run("successful deletion", func(t *testing.T) {
+		deleteBody := strings.ReplaceAll(data, "false}", "true}")
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("POST", "/commit", bytes.NewBufferString(deleteBody))
+
+		req.Header.Set("Content-Type", "application/json")
+		store.Commit(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Contains(t, rec.Body.String(), "deleted")
 	})
 
 	t.Run("invalid json", func(t *testing.T) {

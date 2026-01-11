@@ -71,12 +71,80 @@ func OnlyLatestVersion[T models.VersionedIdentifiedObject](items []T) []T {
 	})
 }
 
+func OnlyActiveLatest[T models.VersionedObject](items []T) []T {
+	latest := OnlyLatestVersion(items)
+	toDelete := DeletedIndices(latest)
+	return RemoveIndices(latest, toDelete)
+}
+
+func DeletedIndices[T models.DeletedGetter](items []T) []int {
+	result := []int{}
+	for i, item := range items {
+		if item.GetDeleted() {
+			result = append(result, i)
+		}
+	}
+	return result
+}
+
+func RemoveIndices[T any](items []T, indices []int) []T {
+	out := items[:0]
+	idx := 0
+	for i, v := range items {
+		if (idx < len(indices)) && (i == indices[idx]) {
+			idx++
+			continue
+		}
+		out = append(out, v)
+	}
+	return out
+}
+
 type MridAndName struct {
 	Mrid uuid.UUID
 	Name string
 }
 
+func AllFinder(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
+	limit := 100
+	result := make([]models.VersionedObject, 0, limit)
+	for name, finder := range Finders {
+		items, err := finder(ctx, db, modelId)
+		if err != nil {
+			return result, fmt.Errorf("Failed to find data for %s: %w", name, err)
+		}
+
+		for _, item := range items {
+			obj := models.IdentifiedObject{
+				Mrid: item.GetMrid(),
+				Name: item.GetName(),
+				BaseEntity: models.BaseEntity{
+					CommitId: item.GetCommitId(),
+					Deleted:  item.GetDeleted(),
+				},
+			}
+
+			result = append(result, obj)
+			if len(result) >= limit {
+				return result, nil
+			}
+		}
+	}
+	return result, nil
+}
+
 type Finder func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error)
+
+func GetFinder(name string) (Finder, error) {
+	if name == "all" {
+		return AllFinder, nil
+	}
+	finder, ok := Finders[name]
+	if !ok {
+		return nil, fmt.Errorf("Could not find a finder for %s", name)
+	}
+	return finder, nil
+}
 
 var Finders = map[string]Finder{
 	"ACDCConverter": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {

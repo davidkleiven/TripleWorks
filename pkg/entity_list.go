@@ -28,7 +28,7 @@ func CreateList(w io.Writer, items []models.VersionedObject) {
 	fields := FlattenStruct(items[0])
 	fieldNames := make([]string, 0, len(fields))
 	for name, v := range fields {
-		if !v.IsBunRelation && name != "Deleted" {
+		if !v.IsBunRelation {
 			fieldNames = append(fieldNames, name)
 		}
 	}

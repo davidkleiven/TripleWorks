@@ -250,7 +250,12 @@ func (e *EntityStore) Commit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	slog.InfoContext(ctx, "Successfully upgraded data", "commitId", commit.Id, "commitMessage", commit.Message, "type", pkg.StructName(model))
-	w.Write([]byte("Successfully upgraded data"))
+
+	if isDeleted(model) {
+		fmt.Fprintf(w, "Item %s was deleted", modelMetaData.Mrid)
+		return
+	}
+	fmt.Fprintf(w, "Successfully updated object %s", modelMetaData.Mrid)
 }
 
 func (e *EntityStore) CheckUnsetFields(unset []string) error {
@@ -265,10 +270,10 @@ func (e *EntityStore) CheckUnsetFields(unset []string) error {
 
 func (e *EntityStore) EntityList(w http.ResponseWriter, r *http.Request) {
 	entityType := r.URL.Query().Get("type")
-	finder, ok := pkg.Finders[entityType]
-	if !ok {
-		slog.ErrorContext(r.Context(), "Could not locate a finder", "type", entityType)
-		http.Error(w, "Could not locate a finder for the provided type", http.StatusBadRequest)
+	finder, err := pkg.GetFinder(entityType)
+	if err != nil {
+		slog.ErrorContext(r.Context(), "Could not locate a finder", "error", err, "type", entityType)
+		http.Error(w, "Could not locate a finder for the provided type "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -359,7 +364,6 @@ func NewEntityStore(db *bun.DB, timeout time.Duration) *EntityStore {
 			"CommitId":  {},
 			"id":        {},
 			"commit_id": {},
-			"deleted":   {},
 		},
 	}
 }
@@ -417,4 +421,9 @@ func choiceExists(items []models.VersionedObject, choice string) bool {
 		}
 	}
 	return false
+}
+
+func isDeleted(model any) bool {
+	asDeleteGetter, ok := model.(models.DeletedGetter)
+	return ok && asDeleteGetter.GetDeleted()
 }
