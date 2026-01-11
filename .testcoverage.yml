@@ -28,6 +28,8 @@ override:
   # (default is 80, as configured above in this example).
   - path: ^pkg/lib/foo$
     threshold: 100
+  - path: ^migrations$
+    threshold: 70
   - path: ^migrations/.*
     threshold: 70
 
