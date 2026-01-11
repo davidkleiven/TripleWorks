@@ -250,7 +250,12 @@ func (e *EntityStore) Commit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	slog.InfoContext(ctx, "Successfully upgraded data", "commitId", commit.Id, "commitMessage", commit.Message, "type", pkg.StructName(model))
-	w.Write([]byte("Successfully upgraded data"))
+
+	if isDeleted(model) {
+		fmt.Fprintf(w, "Item %s was deleted", modelMetaData.Mrid)
+		return
+	}
+	fmt.Fprintf(w, "Successfully updated object %s", modelMetaData.Mrid)
 }
 
 func (e *EntityStore) CheckUnsetFields(unset []string) error {
@@ -359,7 +364,6 @@ func NewEntityStore(db *bun.DB, timeout time.Duration) *EntityStore {
 			"CommitId":  {},
 			"id":        {},
 			"commit_id": {},
-			"deleted":   {},
 		},
 	}
 }
@@ -417,4 +421,9 @@ func choiceExists(items []models.VersionedObject, choice string) bool {
 		}
 	}
 	return false
+}
+
+func isDeleted(model any) bool {
+	asDeleteGetter, ok := model.(models.DeletedGetter)
+	return ok && asDeleteGetter.GetDeleted()
 }

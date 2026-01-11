@@ -250,8 +250,10 @@ func FormInputFields(w io.Writer, item any) {
 	// Add delete marker
 	deleteRow := `
 	<div id="deleted-field" class="field has-background-danger-light">
-		<label id="deleted-label" class="label" json-tag="delete">Mark for deletion</label>
+		<div id="deleted-label" class="checkbox mr-2" json-tag="deleted">
+		<strong class="mr-2">Mark for deletion</strong>
 		<input type="checkbox" id="deleted-value">
+		</div>
 	</div>
 	`
 	fmt.Fprint(w, deleteRow)
