@@ -270,7 +270,9 @@ func (e *EntityStore) CheckUnsetFields(unset []string) error {
 
 func (e *EntityStore) EntityList(w http.ResponseWriter, r *http.Request) {
 	entityType := r.URL.Query().Get("type")
-	finder, err := pkg.GetFinder(entityType)
+	nameFilter := r.URL.Query().Get("name-filter")
+	typeFilter := r.URL.Query().Get("type-filter")
+	finder, err := pkg.GetFinder(entityType, nameFilter, typeFilter)
 	if err != nil {
 		slog.ErrorContext(r.Context(), "Could not locate a finder", "error", err, "type", entityType)
 		http.Error(w, "Could not locate a finder for the provided type "+err.Error(), http.StatusBadRequest)
@@ -325,34 +327,63 @@ func (e *EntityStore) SubstationDiagram(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (e *EntityStore) EditComponentForm(w http.ResponseWriter, r *http.Request) {
-	mrid := r.PathValue("mrid")
-
-	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+func (e *EntityStore) GetResource(ctx context.Context, mrid string) (any, error) {
+	ctx, cancel := context.WithTimeout(ctx, e.timeout)
 	defer cancel()
 
 	var entity models.Entity
 	err := e.db.NewSelect().Model(&entity).Where("mrid = ?", mrid).Limit(1).Scan(ctx)
 	if err != nil {
-		slog.ErrorContext(ctx, "Failed find entity", "error", err, "mrid", mrid)
-		http.Error(w, "Failed to find entity for passed mrid "+err.Error(), http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("Failed to find entity: %w", err)
 	}
 
 	resource, ok := pkg.FormTypes()[entity.EntityType]
 	if !ok {
-		slog.ErrorContext(ctx, "Could not find a form type", "entityType", entity.EntityType)
-		http.Error(w, fmt.Sprintf("Failed to find entity for type %s", entity.EntityType), http.StatusBadRequest)
-		return
+		return resource, fmt.Errorf("Could not find a form type for type %s", entity.EntityType)
 	}
 
 	err = e.db.NewSelect().Model(resource).Where("mrid = ?", mrid).OrderBy("commit_id", bun.OrderDesc).Limit(1).Scan(ctx)
 	if err != nil {
-		slog.ErrorContext(ctx, "Failed to collect data for editing resource", "error", err)
-		http.Error(w, "Failed to collect data for editing resource "+err.Error(), http.StatusInternalServerError)
+		return resource, fmt.Errorf("Failed to collect data for editing resource: %w", err)
+	}
+	return resource, nil
+}
+
+func (e *EntityStore) EditComponentForm(w http.ResponseWriter, r *http.Request) {
+	mrid := r.PathValue("mrid")
+	resource, err := e.GetResource(r.Context(), mrid)
+	if err != nil {
+		slog.ErrorContext(r.Context(), "Failed to fetch resource", "error", err)
+		http.Error(w, "Failed to fetch resource "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	pkg.FormInputFields(w, resource)
+}
+
+func (e *EntityStore) Resource(w http.ResponseWriter, r *http.Request) {
+	mrid := r.PathValue("mrid")
+	resource, err := e.GetResource(r.Context(), mrid)
+	if err != nil {
+		slog.ErrorContext(r.Context(), "Failed to fetch resource", "error", err)
+		http.Error(w, "Failed to fetch resource "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := ResourceItem{
+		Data: resource,
+		Type: pkg.StructName(resource),
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(data)
+	if err != nil {
+		slog.ErrorContext(r.Context(), "Failed to write json", "error", err)
+	}
+}
+
+type ResourceItem struct {
+	Data any    `json:"data"`
+	Type string `json:"type"`
 }
 
 func NewEntityStore(db *bun.DB, timeout time.Duration) *EntityStore {
