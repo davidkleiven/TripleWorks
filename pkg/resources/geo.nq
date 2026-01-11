@@ -1,0 +1,230 @@
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseUML> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseUML> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#isFixed> "iec61970cim16v28_iec61968cim12v08_iec62325cim03v01a"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseUML> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..1> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseUML> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseUML> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseUML> <http://www.w3.org/2000/01/rdf-schema#comment> "Base UML provided by CIM model manager."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseUML> <http://www.w3.org/2000/01/rdf-schema#domain> <http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseUML> <http://www.w3.org/2000/01/rdf-schema#label> "baseUML"@en .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#isFixed> "http://entsoe.eu/Secretariat/2013/Geographical/2"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..1> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseURI> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseURI> <http://www.w3.org/2000/01/rdf-schema#comment> "Profile URI used in the Model Exchange header and defined in IEC standards.  It uniquely identifies the Profile and its version. It is given for information only and to identify the closest IEC profile to which this CGMES profile is based on."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseURI> <http://www.w3.org/2000/01/rdf-schema#domain> <http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.baseURI> <http://www.w3.org/2000/01/rdf-schema#label> "baseURI"@en .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.date> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#Date> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.date> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#isFixed> "2014-08-07"^^<http://www.w3.org/2001/XMLSchema#date> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.date> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..1> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.date> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.date> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.date> <http://www.w3.org/2000/01/rdf-schema#comment> "Profile creation date\nForm is YYYY-MM-DD for example for January 5, 2009 it is 2009-01-05."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.date> <http://www.w3.org/2000/01/rdf-schema#domain> <http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.date> <http://www.w3.org/2000/01/rdf-schema#label> "date"@en .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.differenceModelURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.differenceModelURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#isFixed> "http://iec.ch/TC57/61970-552/DifferenceModel/1#"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.differenceModelURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..1> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.differenceModelURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.differenceModelURI> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.differenceModelURI> <http://www.w3.org/2000/01/rdf-schema#comment> "Difference model URI defined by IEC 61970-552. "^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.differenceModelURI> <http://www.w3.org/2000/01/rdf-schema#domain> <http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.differenceModelURI> <http://www.w3.org/2000/01/rdf-schema#label> "differenceModelURI"@en .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeUML> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeUML> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#isFixed> "entsoe_v2.4.15"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeUML> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..1> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeUML> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeUML> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeUML> <http://www.w3.org/2000/01/rdf-schema#comment> "UML provided by ENTSO-E."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeUML> <http://www.w3.org/2000/01/rdf-schema#domain> <http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeUML> <http://www.w3.org/2000/01/rdf-schema#label> "entsoeUML"@en .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#isFixed> "http://entsoe.eu/CIM/GeographicalLocation/2/1"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..1> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeURI> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeURI> <http://www.w3.org/2000/01/rdf-schema#comment> "Profile URI defined by ENTSO-E and used in the Model Exchange header.  It uniquely identifies the Profile and its version. The last two elements in the URI (http://entsoe.eu/CIM/GeographicalLocation/yy/zzz) indicate major and minor versions where: \n- yy - indicates a major version;\n- zzz - indicates a minor version. "^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeURI> <http://www.w3.org/2000/01/rdf-schema#domain> <http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.entsoeURI> <http://www.w3.org/2000/01/rdf-schema#label> "entsoeURI"@en .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.modelDescriptionURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.modelDescriptionURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#isFixed> "http://iec.ch/TC57/61970-552/ModelDescription/1#"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.modelDescriptionURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..1> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.modelDescriptionURI> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.modelDescriptionURI> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.modelDescriptionURI> <http://www.w3.org/2000/01/rdf-schema#comment> "Model Description URI defined by IEC 61970-552. "^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.modelDescriptionURI> <http://www.w3.org/2000/01/rdf-schema#domain> <http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.modelDescriptionURI> <http://www.w3.org/2000/01/rdf-schema#label> "modelDescriptionURI"@en .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceRDF> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceRDF> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#isFixed> "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceRDF> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..1> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceRDF> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceRDF> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceRDF> <http://www.w3.org/2000/01/rdf-schema#comment> "RDF namespace. "^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceRDF> <http://www.w3.org/2000/01/rdf-schema#domain> <http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceRDF> <http://www.w3.org/2000/01/rdf-schema#label> "namespaceRDF"@en .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceUML> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceUML> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#isFixed> "http://iec.ch/TC57/2013/CIM-schema-cim16#"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceUML> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..1> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceUML> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceUML> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceUML> <http://www.w3.org/2000/01/rdf-schema#comment> "CIM UML namespace. "^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceUML> <http://www.w3.org/2000/01/rdf-schema#domain> <http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.namespaceUML> <http://www.w3.org/2000/01/rdf-schema#label> "namespaceUML"@en .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.shortName> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.shortName> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#isFixed> "GL"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.shortName> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..1> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.shortName> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.shortName> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.shortName> <http://www.w3.org/2000/01/rdf-schema#comment> "The short name of the profile used in profile documentation."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.shortName> <http://www.w3.org/2000/01/rdf-schema#domain> <http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion.shortName> <http://www.w3.org/2000/01/rdf-schema#label> "shortName"@en .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#belongsToCategory> <http://iec.ch/TC57/2013/CIM-schema-cim16#Package_GeographicalLocationProfile> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> "Entsoe" .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Class> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> <http://www.w3.org/2000/01/rdf-schema#comment> "Version details."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://entsoe.eu/CIM/SchemaExtension/3/1#GeographicalLocationVersion> <http://www.w3.org/2000/01/rdf-schema#label> "GeographicalLocationVersion"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.Location> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#AssociationUsed> "No" .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.Location> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#inverseRoleName> <http://iec.ch/TC57/2013/CIM-schema-cim16#Location.CoordinateSystem> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.Location> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:0..n> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.Location> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.Location> <http://www.w3.org/2000/01/rdf-schema#comment> "All locations described with position points in this coordinate system."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.Location> <http://www.w3.org/2000/01/rdf-schema#domain> <http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.Location> <http://www.w3.org/2000/01/rdf-schema#label> "Location"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.Location> <http://www.w3.org/2000/01/rdf-schema#range> <http://iec.ch/TC57/2013/CIM-schema-cim16#Location> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.crsUrn> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.crsUrn> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..1> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.crsUrn> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.crsUrn> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.crsUrn> <http://www.w3.org/2000/01/rdf-schema#comment> "A Uniform Resource Name (URN) for the coordinate reference system (crs) used to define 'Location.PositionPoints'.\nAn example would be the European Petroleum Survey Group (EPSG) code for a coordinate reference system, defined in URN under the Open Geospatial Consortium (OGC) namespace as: urn:ogc:def:uom:EPSG::XXXX, where XXXX is an EPSG code (a full list of codes can be found at the EPSG Registry web site http://www.epsg-registry.org/). To define the coordinate system as being WGS84 (latitude, longitude) using an EPSG OGC, this attribute would be urn:ogc:def:uom:EPSG::4236.\nA profile should limit this code to a set of allowed URNs agreed to by all sending and receiving parties."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.crsUrn> <http://www.w3.org/2000/01/rdf-schema#domain> <http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.crsUrn> <http://www.w3.org/2000/01/rdf-schema#label> "crsUrn"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#belongsToCategory> <http://iec.ch/TC57/2013/CIM-schema-cim16#Package_Common> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#concrete> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Class> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem> <http://www.w3.org/2000/01/rdf-schema#comment> "Coordinate reference system."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem> <http://www.w3.org/2000/01/rdf-schema#label> "CoordinateSystem"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Date> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#belongsToCategory> <http://iec.ch/TC57/2013/CIM-schema-cim16#Package_DomainProfile> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Date> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> "Primitive" .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Date> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Class> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Date> <http://www.w3.org/2000/01/rdf-schema#comment> "Date as \"yyyy-mm-dd\", which conforms with ISO 8601. UTC time zone is specified as \"yyyy-mm-ddZ\". A local timezone relative UTC is specified as \"yyyy-mm-dd(+/-)hh:mm\"."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Date> <http://www.w3.org/2000/01/rdf-schema#label> "Date"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.mRID> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.mRID> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:0..1> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.mRID> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.mRID> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.mRID> <http://www.w3.org/2000/01/rdf-schema#comment> "Master resource identifier issued by a model authority. The mRID is globally unique within an exchange context. Global uniqueness is easily achieved by using a UUID,  as specified in RFC 4122, for the mRID.  The use of UUID is strongly recommended.\nFor CIMXML data files in RDF syntax conforming to IEC 61970-552 Edition 1, the mRID is mapped to rdf:ID or rdf:about attributes that identify CIM object elements."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.mRID> <http://www.w3.org/2000/01/rdf-schema#domain> <http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.mRID> <http://www.w3.org/2000/01/rdf-schema#label> "mRID"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.name> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.name> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:0..1> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.name> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.name> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.name> <http://www.w3.org/2000/01/rdf-schema#comment> "The name is any free human readable and possibly non unique text naming the object."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.name> <http://www.w3.org/2000/01/rdf-schema#domain> <http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.name> <http://www.w3.org/2000/01/rdf-schema#label> "name"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#belongsToCategory> <http://iec.ch/TC57/2013/CIM-schema-cim16#Package_Core> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Class> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject> <http://www.w3.org/2000/01/rdf-schema#comment> "This is a root class to provide common identification for all classes needing identification and naming attributes."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject> <http://www.w3.org/2000/01/rdf-schema#label> "IdentifiedObject"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Integer> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#belongsToCategory> <http://iec.ch/TC57/2013/CIM-schema-cim16#Package_DomainProfile> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Integer> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> "Primitive" .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Integer> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Class> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Integer> <http://www.w3.org/2000/01/rdf-schema#comment> "An integer number. The range is unspecified and not limited."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Integer> <http://www.w3.org/2000/01/rdf-schema#label> "Integer"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.CoordinateSystem> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#AssociationUsed> "Yes" .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.CoordinateSystem> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#inverseRoleName> <http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem.Location> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.CoordinateSystem> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..1> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.CoordinateSystem> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.CoordinateSystem> <http://www.w3.org/2000/01/rdf-schema#comment> "Coordinate system used to describe position points of this location."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.CoordinateSystem> <http://www.w3.org/2000/01/rdf-schema#domain> <http://iec.ch/TC57/2013/CIM-schema-cim16#Location> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.CoordinateSystem> <http://www.w3.org/2000/01/rdf-schema#label> "CoordinateSystem"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.CoordinateSystem> <http://www.w3.org/2000/01/rdf-schema#range> <http://iec.ch/TC57/2013/CIM-schema-cim16#CoordinateSystem> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PositionPoints> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#AssociationUsed> "No" .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PositionPoints> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#inverseRoleName> <http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.Location> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PositionPoints> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..n> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PositionPoints> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PositionPoints> <http://www.w3.org/2000/01/rdf-schema#comment> "Sequence of position points describing this location, expressed in coordinate system 'Location.CoordinateSystem'."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PositionPoints> <http://www.w3.org/2000/01/rdf-schema#domain> <http://iec.ch/TC57/2013/CIM-schema-cim16#Location> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PositionPoints> <http://www.w3.org/2000/01/rdf-schema#label> "PositionPoints"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PositionPoints> <http://www.w3.org/2000/01/rdf-schema#range> <http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PowerSystemResources> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#AssociationUsed> "Yes" .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PowerSystemResources> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#inverseRoleName> <http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource.Location> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PowerSystemResources> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PowerSystemResources> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PowerSystemResources> <http://www.w3.org/2000/01/rdf-schema#comment> "All power system resources at this location."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PowerSystemResources> <http://www.w3.org/2000/01/rdf-schema#domain> <http://iec.ch/TC57/2013/CIM-schema-cim16#Location> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PowerSystemResources> <http://www.w3.org/2000/01/rdf-schema#label> "PowerSystemResources"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PowerSystemResources> <http://www.w3.org/2000/01/rdf-schema#range> <http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#belongsToCategory> <http://iec.ch/TC57/2013/CIM-schema-cim16#Package_Common> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#concrete> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Class> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location> <http://www.w3.org/2000/01/rdf-schema#comment> "The place, scene, or point of something where someone or something has been, is, and/or will be at a given moment in time. It can be defined with one or more postition points (coordinates) in a given coordinate system."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location> <http://www.w3.org/2000/01/rdf-schema#label> "Location"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Location> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Package_Common> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Package_Common> <http://www.w3.org/2000/01/rdf-schema#label> "Common"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Package_Core> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Package_Core> <http://www.w3.org/2000/01/rdf-schema#label> "Core"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Package_GeographicalLocationProfile> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Package_GeographicalLocationProfile> <http://www.w3.org/2000/01/rdf-schema#comment> "This geographical location profile is built on the basis of the IEC profile. There is small difference in one association which is specific for exchanges between TSOs."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#Package_GeographicalLocationProfile> <http://www.w3.org/2000/01/rdf-schema#label> "GeographicalLocationProfile"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.Location> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#AssociationUsed> "Yes" .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.Location> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#inverseRoleName> <http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PositionPoints> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.Location> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.Location> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.Location> <http://www.w3.org/2000/01/rdf-schema#comment> "Location described by this position point."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.Location> <http://www.w3.org/2000/01/rdf-schema#domain> <http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.Location> <http://www.w3.org/2000/01/rdf-schema#label> "Location"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.Location> <http://www.w3.org/2000/01/rdf-schema#range> <http://iec.ch/TC57/2013/CIM-schema-cim16#Location> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.sequenceNumber> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#Integer> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.sequenceNumber> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:0..1> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.sequenceNumber> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.sequenceNumber> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.sequenceNumber> <http://www.w3.org/2000/01/rdf-schema#comment> "Zero-relative sequence number of this point within a series of points."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.sequenceNumber> <http://www.w3.org/2000/01/rdf-schema#domain> <http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.sequenceNumber> <http://www.w3.org/2000/01/rdf-schema#label> "sequenceNumber"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.xPosition> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.xPosition> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..1> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.xPosition> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.xPosition> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.xPosition> <http://www.w3.org/2000/01/rdf-schema#comment> "X axis position."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.xPosition> <http://www.w3.org/2000/01/rdf-schema#domain> <http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.xPosition> <http://www.w3.org/2000/01/rdf-schema#label> "xPosition"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.yPosition> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.yPosition> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:1..1> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.yPosition> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.yPosition> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.yPosition> <http://www.w3.org/2000/01/rdf-schema#comment> "Y axis position."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.yPosition> <http://www.w3.org/2000/01/rdf-schema#domain> <http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.yPosition> <http://www.w3.org/2000/01/rdf-schema#label> "yPosition"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.zPosition> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#dataType> <http://iec.ch/TC57/2013/CIM-schema-cim16#String> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.zPosition> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:0..1> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.zPosition> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#attribute> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.zPosition> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.zPosition> <http://www.w3.org/2000/01/rdf-schema#comment> "(if applicable) Z axis position."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.zPosition> <http://www.w3.org/2000/01/rdf-schema#domain> <http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint.zPosition> <http://www.w3.org/2000/01/rdf-schema#label> "zPosition"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#belongsToCategory> <http://iec.ch/TC57/2013/CIM-schema-cim16#Package_Common> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> <http://iec.ch/TC57/NonStandard/UML#concrete> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Class> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint> <http://www.w3.org/2000/01/rdf-schema#comment> "Set of spatial coordinates that determine a point, defined in the coordinate system specified in 'Location.CoordinateSystem'. Use a single position point instance to desribe a point-oriented location. Use a sequence of position points to describe a line-oriented object (physical location of non-point oriented objects like cables or lines), or area of an object (like a substation or a geographical zone - in this case, have first and last position point with the same values)."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PositionPoint> <http://www.w3.org/2000/01/rdf-schema#label> "PositionPoint"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource.Location> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#AssociationUsed> "No" .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource.Location> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#inverseRoleName> <http://iec.ch/TC57/2013/CIM-schema-cim16#Location.PowerSystemResources> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource.Location> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#multiplicity> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#M:0..1> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource.Location> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource.Location> <http://www.w3.org/2000/01/rdf-schema#comment> "Location of this power system resource."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource.Location> <http://www.w3.org/2000/01/rdf-schema#domain> <http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource.Location> <http://www.w3.org/2000/01/rdf-schema#label> "Location"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource.Location> <http://www.w3.org/2000/01/rdf-schema#range> <http://iec.ch/TC57/2013/CIM-schema-cim16#Location> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#belongsToCategory> <http://iec.ch/TC57/2013/CIM-schema-cim16#Package_Core> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Class> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource> <http://www.w3.org/2000/01/rdf-schema#comment> "A power system resource can be an item of equipment such as a switch, an equipment container containing many individual items of equipment such as a substation, or an organisational entity such as sub-control area. Power system resources can have measurements associated."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource> <http://www.w3.org/2000/01/rdf-schema#label> "PowerSystemResource"@en .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#PowerSystemResource> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#String> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#belongsToCategory> <http://iec.ch/TC57/2013/CIM-schema-cim16#Package_DomainProfile> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#String> <http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#stereotype> "Primitive" .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#String> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Class> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#String> <http://www.w3.org/2000/01/rdf-schema#comment> "A string consisting of a sequence of characters. The character encoding is UTF-8. The string length is unspecified and unlimited."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .
+<http://iec.ch/TC57/2013/CIM-schema-cim16#String> <http://www.w3.org/2000/01/rdf-schema#label> "String"@en .
