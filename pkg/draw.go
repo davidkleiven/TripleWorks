@@ -138,6 +138,14 @@ func CollectSubstationData(ctx context.Context, db *bun.DB, s *models.Substation
 			return err
 		},
 	)
+
+	// Extract only latest active versions
+	result.VoltageLevels = OnlyActiveLatest(result.VoltageLevels)
+	result.ConnectivityNodes = OnlyActiveLatest(result.ConnectivityNodes)
+	result.Terminals = OnlyActiveLatest(result.Terminals)
+	result.ACLineSegments = OnlyActiveLatest(result.ACLineSegments)
+	result.SyncMachines = OnlyActiveLatest(result.SyncMachines)
+
 	slog.InfoContext(
 		ctx,
 		"Loaded data for diagram",
