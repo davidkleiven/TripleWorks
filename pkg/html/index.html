@@ -77,6 +77,18 @@
                 List
               </button>
             </div>
+            <div class="column">
+              <button
+                id="list-all-btn"
+                class="button is-info is-fullwidth"
+                hx-target="#list-content"
+                hx-swap="innerHTML"
+                hx-get="/entity-list?type=all"
+                hx-trigger="click"
+              >
+                List all
+              </button>
+            </div>
             <div
               class="column is-flex is-justify-content-center is-align-items-center"
             >
