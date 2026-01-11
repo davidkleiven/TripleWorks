@@ -98,8 +98,7 @@ func (e *EntityStore) GetEntityForKind(w http.ResponseWriter, r *http.Request) {
 
 	result, err := getFinderForAllSubtypes(kind)
 	if err != nil {
-
-		slog.ErrorContext(ctx, "Failed to locate a finder", "kind", kind)
+		slog.ErrorContext(ctx, "Failed to locate a finder", "kind", kind, "error", err)
 		http.Error(w, "Failed to locate a finder for "+kind, http.StatusBadRequest)
 		return
 	}

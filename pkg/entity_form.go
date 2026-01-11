@@ -128,6 +128,7 @@ func FormTypes() map[string]any {
 		"Reactance":                      &models.Reactance{},
 		"ReactiveCapabilityCurve":        &models.ReactiveCapabilityCurve{},
 		"ReactivePower":                  &models.ReactivePower{},
+		"Region":                         &models.SubGeographicalRegion{}, // Alias sometimes used
 		"RegularIntervalSchedule":        &models.RegularIntervalSchedule{},
 		"RegulatingCondEq":               &models.RegulatingCondEq{},
 		"RegulatingControl":              &models.RegulatingControl{},
