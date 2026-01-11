@@ -270,10 +270,10 @@ func (e *EntityStore) CheckUnsetFields(unset []string) error {
 
 func (e *EntityStore) EntityList(w http.ResponseWriter, r *http.Request) {
 	entityType := r.URL.Query().Get("type")
-	finder, ok := pkg.Finders[entityType]
-	if !ok {
-		slog.ErrorContext(r.Context(), "Could not locate a finder", "type", entityType)
-		http.Error(w, "Could not locate a finder for the provided type", http.StatusBadRequest)
+	finder, err := pkg.GetFinder(entityType)
+	if err != nil {
+		slog.ErrorContext(r.Context(), "Could not locate a finder", "error", err, "type", entityType)
+		http.Error(w, "Could not locate a finder for the provided type "+err.Error(), http.StatusBadRequest)
 		return
 	}
 

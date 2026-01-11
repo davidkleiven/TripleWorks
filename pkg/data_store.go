@@ -105,7 +105,46 @@ type MridAndName struct {
 	Name string
 }
 
+func AllFinder(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
+	limit := 100
+	result := make([]models.VersionedObject, 0, limit)
+	for name, finder := range Finders {
+		items, err := finder(ctx, db, modelId)
+		if err != nil {
+			return result, fmt.Errorf("Failed to find data for %s: %w", name, err)
+		}
+
+		for _, item := range items {
+			obj := models.IdentifiedObject{
+				Mrid: item.GetMrid(),
+				Name: item.GetName(),
+				BaseEntity: models.BaseEntity{
+					CommitId: item.GetCommitId(),
+					Deleted:  item.GetDeleted(),
+				},
+			}
+
+			result = append(result, obj)
+			if len(result) >= limit {
+				return result, nil
+			}
+		}
+	}
+	return result, nil
+}
+
 type Finder func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error)
+
+func GetFinder(name string) (Finder, error) {
+	if name == "all" {
+		return AllFinder, nil
+	}
+	finder, ok := Finders[name]
+	if !ok {
+		return nil, fmt.Errorf("Could not find a finder for %s", name)
+	}
+	return finder, nil
+}
 
 var Finders = map[string]Finder{
 	"ACDCConverter": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
