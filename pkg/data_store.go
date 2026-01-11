@@ -38,7 +38,7 @@ func FindNameAndMrid[T models.VersionedObject](db *bun.DB, ctx context.Context, 
 	for i, item := range result {
 		resultInterfaces[i] = item
 	}
-	return resultInterfaces, nil
+	return OnlyActiveLatest(resultInterfaces), nil
 }
 
 func FindEnum[T models.Enum](ctx context.Context, db *bun.DB) ([]models.Enum, error) {
