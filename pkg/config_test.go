@@ -31,3 +31,11 @@ func TestDatabaseConnectionSqlite3(t *testing.T) {
 	con := config.DatabaseConnection()
 	require.Equal(t, con.Dialect().Name(), dialect.SQLite)
 }
+
+func TestGetConfig(t *testing.T) {
+	test := GetConfig("test")
+	require.Contains(t, test.DbUrl, "memory")
+
+	defaultConfig := GetConfig("")
+	require.Equal(t, defaultConfig.DbUrl, "tripleworks.db")
+}

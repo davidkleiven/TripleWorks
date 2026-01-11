@@ -21,7 +21,8 @@ func main() {
 	logger := slog.New(logHandler)
 	slog.SetDefault(logger)
 
-	config := pkg.NewDefaultConfig()
+	configName := os.Getenv("TRIPLE_WORKS_CONFIG")
+	config := pkg.GetConfig(configName)
 
 	mux := http.NewServeMux()
 	api.Setup(mux, config)
