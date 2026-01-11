@@ -109,13 +109,38 @@
 
       <div id="one-col-content" class="is-hidden">
         <div id="search-field" class="field">
-          <p class="control">
-            <input
-              class="input is-rounded"
-              type="text"
-              placeholder="Search existing types..."
-            />
-          </p>
+          <div class="columns is-fullwidth">
+            <div class="column is-variable">
+              <p class="control">
+                <input
+                  id="name-filter-input"
+                  name="name-filter"
+                  class="input is-rounded"
+                  type="text"
+                  placeholder="Search existing names..."
+                  hx-get="/entity-list?type=all"
+                  hx-trigger="input delay:500ms"
+                  hx-include="#type-filter-input"
+                  hx-target="#list-content"
+                />
+              </p>
+            </div>
+            <div class="column is-variable">
+              <p class="control">
+                <input
+                  id="type-filter-input"
+                  name="type-filter"
+                  class="input is-rounded"
+                  type="text"
+                  placeholder="Search existing types..."
+                  hx-get="/entity-list?type=all"
+                  hx-trigger="input delay:500ms"
+                  hx-include="#name-filter-input"
+                  hx-target="#list-content"
+                />
+              </p>
+            </div>
+          </div>
         </div>
         <div id="list-content" class="table-container"></div>
       </div>
@@ -224,6 +249,7 @@
         loadStationDrawing(e);
         return;
       }
+
       performAutofill(e);
       const select = e.target;
       if (!select.matches("select[value-field]")) return;
@@ -282,7 +308,7 @@
       }
     }
 
-    function handleAfterSwapEvent(evt) {
+    async function handleAfterSwapEvent(evt) {
       if (evt.detail.elt.id === "list-btn") {
         hideField("commit-field");
         hideField("two-col-content");
@@ -291,7 +317,23 @@
         hideField("one-col-content");
         makeFieldVisible("two-col-content");
         makeFieldVisible("commit-field");
+
+        // Synchronize the select type
+        const mrid = document.getElementById("Mrid-value")?.value;
+        await synchronizeTypeField(mrid);
       }
+    }
+
+    async function synchronizeTypeField(mrid) {
+      if (mrid == null) {
+        console.log("No mrid found. Abort synchronization");
+        return;
+      }
+
+      resp = await fetch("/resource/" + mrid, { method: "GET" });
+      data = await resp.json();
+      const selector = document.getElementById("type-select");
+      selector.value = data.type;
     }
 
     document.addEventListener("change", handleChangeEvent);

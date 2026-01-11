@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"com.github/davidkleiven/tripleworks/models"
 	"github.com/google/uuid"
@@ -105,16 +106,53 @@ type MridAndName struct {
 	Name string
 }
 
-func AllFinder(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
+func CreateFilteredAllFinder(nameFilter string, typeFilter string) Finder {
+	candidates := Finders
+	if typeFilter != "" {
+		filteredCandidates := make(map[string]Finder)
+		for k, finder := range Finders {
+			if strings.Contains(strings.ToLower(k), strings.ToLower(typeFilter)) {
+				filteredCandidates[k] = finder
+			}
+		}
+		candidates = filteredCandidates
+	}
+	nameFilterFunc := NoOpNameFilter
+	if nameFilter != "" {
+		nameFilterFunc = CreateContainsNameFilter(nameFilter)
+	}
+
+	return func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
+		return AllFinder(ctx, db, modelId, candidates, nameFilterFunc)
+	}
+
+}
+
+type NameFilter func(name string) bool
+
+func NoOpNameFilter(name string) bool {
+	return true
+}
+
+func CreateContainsNameFilter(substr string) NameFilter {
+	return func(name string) bool {
+		return strings.Contains(strings.ToLower(name), strings.ToLower(substr))
+	}
+}
+
+func AllFinder(ctx context.Context, db *bun.DB, modelId int, candidates map[string]Finder, include NameFilter) ([]models.VersionedObject, error) {
 	limit := 100
 	result := make([]models.VersionedObject, 0, limit)
-	for name, finder := range Finders {
+	for name, finder := range candidates {
 		items, err := finder(ctx, db, modelId)
 		if err != nil {
 			return result, fmt.Errorf("Failed to find data for %s: %w", name, err)
 		}
 
 		for _, item := range items {
+			if !include(item.GetName()) {
+				continue
+			}
 			obj := models.IdentifiedObject{
 				Mrid: item.GetMrid(),
 				Name: item.GetName(),
@@ -135,9 +173,9 @@ func AllFinder(ctx context.Context, db *bun.DB, modelId int) ([]models.Versioned
 
 type Finder func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error)
 
-func GetFinder(name string) (Finder, error) {
+func GetFinder(name, nameFilter, typeFilter string) (Finder, error) {
 	if name == "all" {
-		return AllFinder, nil
+		return CreateFilteredAllFinder(nameFilter, typeFilter), nil
 	}
 	finder, ok := Finders[name]
 	if !ok {

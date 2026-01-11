@@ -364,6 +364,7 @@ func TestEditComponentForm(t *testing.T) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/entity-form/{mrid}", store.EditComponentForm)
+	mux.HandleFunc("/resource/{mrid}", store.Resource)
 
 	t.Run("success", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -373,12 +374,32 @@ func TestEditComponentForm(t *testing.T) {
 		require.Contains(t, rec.Body.String(), "hx-get")
 	})
 
+	t.Run("success corresonding resource", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", fmt.Sprintf("/resource/%s", entity.Mrid), nil)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+
+		var content ResourceItem
+		err := json.NewDecoder(rec.Body).Decode(&content)
+		require.NoError(t, err)
+		require.Equal(t, "Substation", content.Type)
+	})
+
 	t.Run("non existing mrid", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/entity-form/0000-0000", nil)
 		mux.ServeHTTP(rec, req)
 		require.Equal(t, http.StatusBadRequest, rec.Code)
 		require.Contains(t, rec.Body.String(), "Failed to find entity")
+	})
+
+	t.Run("non existing mrid get resource", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/resource/0000-0000", nil)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
+		require.Contains(t, rec.Body.String(), "Failed to fetch resource")
 	})
 
 	t.Run("non existing type", func(t *testing.T) {

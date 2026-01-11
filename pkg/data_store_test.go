@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"com.github/davidkleiven/tripleworks/models"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 )
 
 func TestOnlyLatest(t *testing.T) {
@@ -87,4 +89,93 @@ func TestAllEnumFinders(t *testing.T) {
 		require.NoError(t, err, errorMsg)
 		require.Greater(t, len(items), 0, errorMsg)
 	}
+}
+
+func TestFilteredFinder(t *testing.T) {
+	ctx := context.Background()
+	db := NewTestConfig(WithDbName(t.Name())).DatabaseConnection()
+	_, err := migrations.RunUp(ctx, db)
+	require.NoError(t, err)
+
+	obj := models.IdentifiedObject{
+		Mrid: uuid.New(),
+		Name: "My object",
+	}
+
+	_, err = db.NewInsert().Model(&obj).Exec(ctx)
+	require.NoError(t, err)
+
+	// Add more than 100 objects to test that max 100 is returned
+	vls := make([]models.VoltageLevel, 120)
+	for i := range len(vls) {
+		vls[i].Mrid = uuid.New()
+	}
+
+	_, err = db.NewInsert().Model(&vls).Exec(ctx)
+	require.NoError(t, err)
+
+	t.Run("error on unkown key", func(t *testing.T) {
+		_, err := GetFinder("my random object", "", "")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "find a finder")
+	})
+
+	t.Run("IdentifiedObject", func(t *testing.T) {
+		finder, err := GetFinder("IdentifiedObject", "", "")
+		require.NoError(t, err)
+		result, err := finder(ctx, db, 0)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(result))
+	})
+
+	t.Run("all unfiltered", func(t *testing.T) {
+		finder, err := GetFinder("all", "", "")
+		require.NoError(t, err)
+		result, err := finder(ctx, db, 0)
+		require.NoError(t, err)
+		require.Equal(t, 100, len(result))
+	})
+
+	t.Run("all name filtered", func(t *testing.T) {
+		finder, err := GetFinder("all", "my", "")
+		require.NoError(t, err)
+		result, err := finder(ctx, db, 0)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(result))
+	})
+
+	t.Run("all name filtered no result", func(t *testing.T) {
+		finder, err := GetFinder("all", "base voltage", "")
+		require.NoError(t, err)
+		result, err := finder(ctx, db, 0)
+		require.NoError(t, err)
+		require.Equal(t, 0, len(result))
+	})
+
+	t.Run("all type filtered", func(t *testing.T) {
+		finder, err := GetFinder("all", "", "ident")
+		require.NoError(t, err)
+		result, err := finder(ctx, db, 0)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(result))
+	})
+
+	t.Run("all type filtered no result", func(t *testing.T) {
+		finder, err := GetFinder("all", "", "BaseVoltage")
+		require.NoError(t, err)
+		result, err := finder(ctx, db, 0)
+		require.NoError(t, err)
+		require.Equal(t, 0, len(result))
+	})
+
+	t.Run("return immediatly on failing finder", func(t *testing.T) {
+		finder := func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
+			return nil, errors.New("something went wrong")
+		}
+
+		candidates := map[string]Finder{"failing": finder}
+		_, err := AllFinder(ctx, db, 0, candidates, NoOpNameFilter)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "went wrong")
+	})
 }
