@@ -49,44 +49,48 @@
             ></select>
           </div>
         </div>
-        <div class="column is-one-quarter">
-          <button
-            id="new-btn"
-            class="button is-success is-fullwidth"
-            hx-target="#entity-form"
-            hx-swap="innerHTML"
-            hx-get="/entity-form"
-            hx-include="#type-select"
-            hx-trigger="click"
-          >
-            New
-          </button>
-        </div>
-        <div class="column is-one-quarter">
-          <button
-            id="list-btn"
-            class="button is-info is-fullwidth"
-            hx-target="#list-content"
-            hx-swap="innerHTML"
-            hx-get="/entity-list"
-            hx-include="#type-select"
-            hx-trigger="click"
-          >
-            List
-          </button>
-        </div>
-        <div
-          class="column is-one-quarter is-flex is-justify-content-center is-align-items-center"
-        >
-          <span class="has-text-weight-bold mr-2">Diagram:</span>
-          <div class="select">
-            <select
-              id="substation-select"
-              hx-get="/entities?kind=Substation"
-              hx-target="this"
-              hx-swap="innerHTML"
-              hx-trigger="load"
-            ></select>
+        <div class="column is-three-quarter">
+          <div class="columns is-variable" id="buttons">
+            <div class="column">
+              <button
+                id="new-btn"
+                class="button is-success is-fullwidth"
+                hx-target="#entity-form"
+                hx-swap="innerHTML"
+                hx-get="/entity-form"
+                hx-include="#type-select"
+                hx-trigger="click"
+              >
+                New
+              </button>
+            </div>
+            <div class="column">
+              <button
+                id="list-btn"
+                class="button is-info is-fullwidth"
+                hx-target="#list-content"
+                hx-swap="innerHTML"
+                hx-get="/entity-list"
+                hx-include="#type-select"
+                hx-trigger="click"
+              >
+                List
+              </button>
+            </div>
+            <div
+              class="column is-flex is-justify-content-center is-align-items-center"
+            >
+              <span class="has-text-weight-bold mr-2">Diagram:</span>
+              <div class="select">
+                <select
+                  id="substation-select"
+                  hx-get="/entities?kind=Substation"
+                  hx-target="this"
+                  hx-swap="innerHTML"
+                  hx-trigger="load"
+                ></select>
+              </div>
+            </div>
           </div>
         </div>
       </div>
