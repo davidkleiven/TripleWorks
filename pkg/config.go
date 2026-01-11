@@ -53,3 +53,12 @@ func WithDbName(name string) func(c *Config) {
 		c.DbUrl = strings.ReplaceAll(c.DbUrl, "memdb", name)
 	}
 }
+
+func GetConfig(name string) *Config {
+	switch name {
+	case "test":
+		return NewTestConfig()
+	default:
+		return NewDefaultConfig()
+	}
+}
