@@ -42,10 +42,11 @@
             <select
               id="type-select"
               name="type"
-              hx-trigger="load"
+              hx-trigger="load, editComponentFormChanged from:body"
               hx-get="/cim-types"
               hx-target="this"
               hx-swap="innerHTML"
+              hx-vals="js:{ resourceType: event.detail?.resourceType }"
             ></select>
           </div>
         </div>
@@ -308,8 +309,11 @@
       }
     }
 
-    async function handleAfterSwapEvent(evt) {
-      if (evt.detail.elt.id === "list-btn") {
+    function handleAfterSwapEvent(evt) {
+      if (
+        evt.detail.elt.id === "list-btn" ||
+        evt.detail.elt.id === "list-all-btn"
+      ) {
         hideField("commit-field");
         hideField("two-col-content");
         makeFieldVisible("one-col-content");
@@ -317,23 +321,7 @@
         hideField("one-col-content");
         makeFieldVisible("two-col-content");
         makeFieldVisible("commit-field");
-
-        // Synchronize the select type
-        const mrid = document.getElementById("Mrid-value")?.value;
-        await synchronizeTypeField(mrid);
       }
-    }
-
-    async function synchronizeTypeField(mrid) {
-      if (mrid == null) {
-        console.log("No mrid found. Abort synchronization");
-        return;
-      }
-
-      resp = await fetch("/resource/" + mrid, { method: "GET" });
-      data = await resp.json();
-      const selector = document.getElementById("type-select");
-      selector.value = data.type;
     }
 
     document.addEventListener("change", handleChangeEvent);

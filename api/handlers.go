@@ -16,7 +16,8 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func CimTypes(w http.ResponseWriter, r *http.Request) {
-	pkg.EntityOptions(w)
+	target := r.URL.Query().Get("resourceType")
+	pkg.EntityOptions(w, target)
 }
 
 func EntityForm(w http.ResponseWriter, r *http.Request) {
