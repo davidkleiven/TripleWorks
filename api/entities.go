@@ -356,6 +356,13 @@ func (e *EntityStore) EditComponentForm(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Failed to fetch resource "+err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	hxTriggerPayload := map[string]TriggerEditComponentForm{
+		"editComponentFormChanged": {ResourceType: pkg.StructName(resource)},
+	}
+	hxTriggerPayloadBytes := pkg.Must(json.Marshal(hxTriggerPayload))
+	w.Header().Set("HX-Trigger", string(hxTriggerPayloadBytes))
+
 	pkg.FormInputFields(w, resource)
 }
 
@@ -383,6 +390,10 @@ func (e *EntityStore) Resource(w http.ResponseWriter, r *http.Request) {
 type ResourceItem struct {
 	Data any    `json:"data"`
 	Type string `json:"type"`
+}
+
+type TriggerEditComponentForm struct {
+	ResourceType string `json:"resourceType"`
 }
 
 func NewEntityStore(db *bun.DB, timeout time.Duration) *EntityStore {

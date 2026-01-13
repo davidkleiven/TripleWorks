@@ -167,17 +167,29 @@ func FormTypes() map[string]any {
 	}
 }
 
-func EntityOptions(w io.Writer) {
+func EntityOptions(w io.Writer, target string) {
 	formTypes := FormTypes()
 	items := make([]string, len(formTypes))
 	num := 0
+	targetIsKnown := false
 	for k := range formTypes {
 		items[num] = k
 		num++
+
+		if k == target {
+			targetIsKnown = true
+		}
 	}
 	slices.Sort(items)
 
+	if targetIsKnown {
+		fmt.Fprintf(w, "<option>%s</option>", target)
+	}
+
 	for _, k := range items {
+		if k == target && targetIsKnown {
+			continue
+		}
 		fmt.Fprintf(w, "<option>%s</option>\n", k)
 	}
 }

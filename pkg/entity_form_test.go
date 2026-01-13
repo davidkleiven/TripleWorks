@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"com.github/davidkleiven/tripleworks/models"
@@ -11,8 +12,14 @@ import (
 
 func TestEntityOptions(t *testing.T) {
 	var buf bytes.Buffer
-	EntityOptions(&buf)
+	EntityOptions(&buf, "")
 	require.Contains(t, buf.String(), "<option")
+}
+
+func TestEntityOptionsTargetFirst(t *testing.T) {
+	var buf bytes.Buffer
+	EntityOptions(&buf, "Substation")
+	require.True(t, strings.HasPrefix(buf.String(), "<option>Substation"))
 }
 
 func TestFormInputFieldsForType(t *testing.T) {
