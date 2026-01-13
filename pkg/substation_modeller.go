@@ -182,15 +182,15 @@ func CreateFullyConnectedSubstation(data SubstationData) *SubstationModel {
 
 					// Terminal 1 connects to new node, which also winding terminal is connected to
 					switchBnm1 := CreateBusNameMarker(name, repGroup.Mrid)
-					switchT1 := CreateTerminal(cnSwitch, breaker.Mrid, switchBnm1, 1)
+					switchT1 := CreateTerminal(cnSwitch.Mrid, breaker.Mrid, switchBnm1, 1)
 
 					// Switch two connects to connectivity node at v1
 					switchBnm2 := CreateBusNameMarker(name, repGroup.Mrid)
-					switchT2 := CreateTerminal(cn1, breaker.Mrid, switchBnm2, 2)
+					switchT2 := CreateTerminal(cn1.Mrid, breaker.Mrid, switchBnm2, 2)
 
 					// Transformer terminals
 					bnmT1 := CreateBusNameMarker(name, repGroup.Mrid)
-					terminal1 := CreateTerminal(cnSwitch, transformer.Mrid, bnmT1, 1)
+					terminal1 := CreateTerminal(cnSwitch.Mrid, transformer.Mrid, bnmT1, 1)
 
 					windingParams1 := WindingParams{
 						Name:                 name,
@@ -204,7 +204,7 @@ func CreateFullyConnectedSubstation(data SubstationData) *SubstationModel {
 					winding1 := CreateWinding(windingParams1)
 
 					bnmT2 := CreateBusNameMarker(name, repGroup.Mrid)
-					terminal2 := CreateTerminal(cn2, transformer.Mrid, bnmT2, 2)
+					terminal2 := CreateTerminal(cn2.Mrid, transformer.Mrid, bnmT2, 2)
 
 					windingParams2 := WindingParams{
 						Name:                 name,

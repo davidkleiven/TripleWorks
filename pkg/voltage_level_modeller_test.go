@@ -13,11 +13,10 @@ import (
 func TestSingleLineModel(t *testing.T) {
 	data := NewVoltageLevelEquipment(WithLines([]models.ACLineSegment{{}}))
 	data.LineTerminalNumbers[uuid.UUID{}] = 2
-	result := CreateFullyConnectedVoltageLevel(data)
-	require.Equal(t, 1, len(result.Switches), "Switches")
-	require.Equal(t, 3, len(result.Terminals), "Terminals")
-	require.Equal(t, 2, len(result.ConnectivityNodes), "ConnectivityNodes")
-	require.Equal(t, result.Terminals[0].SequenceNumber, 2)
+	result := CreateFullyConnectedVoltageLevel(data, NewEmptyConnector())
+	require.Equal(t, 0, len(result.Switches), "Switches")
+	require.Equal(t, 0, len(result.Terminals), "Terminals")
+	require.Equal(t, 0, len(result.ConnectivityNodes), "ConnectivityNodes")
 }
 
 func TestGeneratorAndLine(t *testing.T) {
@@ -25,10 +24,10 @@ func TestGeneratorAndLine(t *testing.T) {
 		WithLines([]models.ACLineSegment{{}}),
 		WithGenerators([]models.SynchronousMachine{{}}),
 	)
-	result := CreateFullyConnectedVoltageLevel(data)
-	require.Equal(t, 2, len(result.Switches), "Switches")
-	require.Equal(t, 6, len(result.Terminals), "Terminals")
-	require.Equal(t, 3, len(result.ConnectivityNodes), "ConnectivityNodes")
+	result := CreateFullyConnectedVoltageLevel(data, NewEmptyConnector())
+	require.Equal(t, 1, len(result.Switches), "Switches")
+	require.Equal(t, 4, len(result.Terminals), "Terminals")
+	require.Equal(t, 2, len(result.ConnectivityNodes), "ConnectivityNodes")
 }
 
 func TestLoadAndLine(t *testing.T) {
@@ -36,10 +35,10 @@ func TestLoadAndLine(t *testing.T) {
 		WithLines([]models.ACLineSegment{{}}),
 		WithConformLoads([]models.ConformLoad{{}}),
 	)
-	result := CreateFullyConnectedVoltageLevel(data)
-	require.Equal(t, 2, len(result.Switches), "Switches")
-	require.Equal(t, 6, len(result.Terminals), "Terminals")
-	require.Equal(t, 3, len(result.ConnectivityNodes), "ConnectivityNodes")
+	result := CreateFullyConnectedVoltageLevel(data, NewEmptyConnector())
+	require.Equal(t, 1, len(result.Switches), "Switches")
+	require.Equal(t, 4, len(result.Terminals), "Terminals")
+	require.Equal(t, 2, len(result.ConnectivityNodes), "ConnectivityNodes")
 }
 
 func TestGenAndLoadNotConnectedBySwitch(t *testing.T) {
@@ -47,18 +46,18 @@ func TestGenAndLoadNotConnectedBySwitch(t *testing.T) {
 		WithConformLoads([]models.ConformLoad{{}}),
 		WithGenerators([]models.SynchronousMachine{{}}),
 	)
-	result := CreateFullyConnectedVoltageLevel(data)
+	result := CreateFullyConnectedVoltageLevel(data, NewEmptyConnector())
 	require.Equal(t, 0, len(result.Switches), "Switches")
-	require.Equal(t, 2, len(result.Terminals), "Terminals")
-	require.Equal(t, 2, len(result.ConnectivityNodes), "ConnectivityNodes")
+	require.Equal(t, 0, len(result.Terminals), "Terminals")
+	require.Equal(t, 0, len(result.ConnectivityNodes), "ConnectivityNodes")
 }
 
 func TestLineIsConnectedToLine(t *testing.T) {
 	data := NewVoltageLevelEquipment(WithLines([]models.ACLineSegment{{}, {}}))
-	result := CreateFullyConnectedVoltageLevel(data)
-	require.Equal(t, 3, len(result.Switches), "Switches")
-	require.Equal(t, 8, len(result.Terminals), "Terminals")
-	require.Equal(t, 4, len(result.ConnectivityNodes), "ConnectivityNodes")
+	result := CreateFullyConnectedVoltageLevel(data, NewEmptyConnector())
+	require.Equal(t, 1, len(result.Switches), "Switches")
+	require.Equal(t, 4, len(result.Terminals), "Terminals")
+	require.Equal(t, 2, len(result.ConnectivityNodes), "ConnectivityNodes")
 }
 
 func TestInsertVoltageModelToDb(t *testing.T) {
@@ -90,7 +89,7 @@ func TestInsertVoltageModelToDb(t *testing.T) {
 		WithGenerators([]models.SynchronousMachine{{}, {}, {}}),
 		WithLines([]models.ACLineSegment{{}, {}, {}}),
 	)
-	result := CreateFullyConnectedVoltageLevel(data)
+	result := CreateFullyConnectedVoltageLevel(data, NewEmptyConnector())
 	err = result.Write(ctx, db, model.Id, "Add voltage level")
 	require.NoError(t, err)
 }
@@ -152,4 +151,25 @@ func TestGetTargetTerminalSequenceNumber(t *testing.T) {
 		require.ErrorContains(t, err, "fetch existing")
 	})
 
+}
+
+func TestRepeatedConnectionIsSafe(t *testing.T) {
+	data := NewVoltageLevelEquipment(
+		WithConformLoads([]models.ConformLoad{{}, {}, {}}),
+		WithGenerators([]models.SynchronousMachine{{}, {}, {}}),
+		WithLines([]models.ACLineSegment{{}, {}, {}}),
+	)
+
+	connector := NewEmptyConnector()
+	result := CreateFullyConnectedVoltageLevel(data, connector)
+	require.Greater(t, len(result.Terminals), 0)
+	require.Greater(t, len(result.ConnectivityNodes), 0)
+	require.Greater(t, len(result.Switches), 0)
+	require.Greater(t, len(result.BusNameMarkers), 0)
+
+	result = CreateFullyConnectedVoltageLevel(data, connector)
+	require.Equal(t, 0, len(result.Terminals))
+	require.Equal(t, 0, len(result.ConnectivityNodes))
+	require.Equal(t, 0, len(result.Switches))
+	require.Equal(t, 0, len(result.BusNameMarkers))
 }

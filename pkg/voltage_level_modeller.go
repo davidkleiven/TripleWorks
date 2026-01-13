@@ -3,6 +3,7 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"com.github/davidkleiven/tripleworks/models"
@@ -11,9 +12,9 @@ import (
 )
 
 type VoltageLevelModel struct {
-	ReportingGroup    models.ReportingGroup
 	BusNameMarkers    []models.BusNameMarker
 	ConnectivityNodes []models.ConnectivityNode
+	ReportingGroup    models.ReportingGroup
 	Switches          []models.Switch
 	Terminals         []models.Terminal
 }
@@ -150,96 +151,133 @@ func WithConformLoads(loads []models.ConformLoad) func(v *VoltageLevelEquipment)
 	}
 }
 
-func CreateFullyConnectedVoltageLevel(equipment *VoltageLevelEquipment) *VoltageLevelModel {
-	numLines := len(equipment.Lines)
-	numGens := len(equipment.Generators)
-	numLoads := len(equipment.ConformLoads)
+// CreateFullyConnectedVoltageLevel connects all equipment to each other via a switch. If a connection
+// already exists, a new one is not created.
+// The state of connector is modified during the run to take into account emerging connections
+func CreateFullyConnectedVoltageLevel(equipment *VoltageLevelEquipment, connector *EquipmentConnector) *VoltageLevelModel {
 	name := equipment.VoltageLevel.Name
-
-	var reportingGroup models.ReportingGroup
+	var (
+		reportingGroup           models.ReportingGroup
+		numLinesAlreadyConnected int
+		numGenAlreadyConnected   int
+		numLoadAlreadyConnected  int
+	)
 	reportingGroup.Mrid = uuid.New()
 	reportingGroup.Name = fmt.Sprintf("Reporting group %s", name)
 	reportingGroup.ShortName = fmt.Sprintf("RG %s", name)
 	reportingGroup.Description = fmt.Sprintf("Reporting group for voltage level %s", name)
 
-	numConnectivityNodes := numLines + numGens + numLoads
+	connections := []ConnectionResult{}
 
-	// ConnectivityNodes of lines goes first. Very important
-	conNodes := make([]models.ConnectivityNode, 0, numConnectivityNodes)
-	for i := range numConnectivityNodes {
-		conNodes = append(conNodes, CreateConnectivityNode(fmt.Sprintf("%d %s", i, name)))
-	}
+	// Connect line to line
+	for i, line1 := range equipment.Lines {
+		for _, line2 := range equipment.Lines[i+1:] {
 
-	equipmentBusNameMarkers := make([]models.BusNameMarker, 0, numConnectivityNodes)
-	equipmentTerminals := make([]models.Terminal, 0, numConnectivityNodes)
-	for i := range numConnectivityNodes {
-		var conductingEquipmentMrid uuid.UUID
-		sequenceNumber := 1
-		if i < numLines {
-			conductingEquipmentMrid = equipment.Lines[i].Mrid
-			num, ok := equipment.LineTerminalNumbers[conductingEquipmentMrid]
-			if ok {
-				sequenceNumber = num
+			// Equipment within a voltage level is connected if there exists a path of equipment (E)
+			// and connectivity nodes (CN) such that
+			//
+			// E1 ---- CN ---- Switch ---- CN ---- E2
+			//
+			// Which results in four edges (e.g. strictly smaller than 5)
+			if connector.IsConnected(line1.Mrid, line2.Mrid, 5) {
+				numLinesAlreadyConnected++
+				continue
 			}
-		} else if i < numLines+numGens {
-			conductingEquipmentMrid = equipment.Generators[i-numLines].Mrid
-		} else {
-			conductingEquipmentMrid = equipment.ConformLoads[i-numLines-numGens].Mrid
-		}
-		equipmentBusNameMarkers = append(equipmentBusNameMarkers, CreateBusNameMarker(fmt.Sprintf("%d %s", i, name), reportingGroup.Mrid))
-		equipmentTerminals = append(equipmentTerminals, CreateTerminal(conNodes[i], conductingEquipmentMrid, equipmentBusNameMarkers[i], sequenceNumber))
-	}
 
-	numSwitches := numLines*(numLines+1)/2 + numLines*(numGens+numLoads)
-	switches := make([]models.Switch, 0, numSwitches)
-	for i := range numSwitches {
-		breaker := CreateSwitch(fmt.Sprintf("%s %d", name, i), &equipment.VoltageLevel)
-		switches = append(switches, breaker)
-	}
-
-	switchTerminals := make([]models.Terminal, 0, 2*len(switches))
-	switchTerminalBnms := make([]models.BusNameMarker, 0, len(switchTerminals))
-
-	// Add a switch between any equipment and all lines (also line to line)
-	switchNo := 0
-	for lineNo := range numLines {
-		for srcEquipment := lineNo; srcEquipment < numConnectivityNodes; srcEquipment++ {
-			linkName := fmt.Sprintf("%d-%d", srcEquipment, lineNo)
-			cn1 := conNodes[srcEquipment]
-			if srcEquipment == lineNo {
-				// Create a connectivity node disconnecting the line
-				//          /
-				// -------*      ----- substation
-				//
-				// * Is the new connectivity node
-				cn1 = CreateConnectivityNode(linkName)
-				conNodes = append(conNodes, cn1)
+			seq1, ok1 := equipment.LineTerminalNumbers[line1.Mrid]
+			seq2, ok2 := equipment.LineTerminalNumbers[line2.Mrid]
+			if ok1 {
+				seq2 = seq1%2 + 1
+			} else if ok2 {
+				seq1 = seq2%2 + 1
+			} else {
+				seq1, seq2 = 1, 2
 			}
-			cn2 := conNodes[lineNo]
-			AssertDifferent(cn1, cn2)
 
-			switchMrid := switches[switchNo].Mrid
-			switchNo++
+			params := ConnectParams{
+				Mrid1:              line1.Mrid,
+				Mrid2:              line2.Mrid,
+				CreateSeqNo1:       seq1,
+				CreateSeqNo2:       seq2,
+				ReportingGroupMrid: reportingGroup.Mrid,
+				VoltageLevel:       equipment.VoltageLevel,
+			}
 
-			bnm1 := CreateBusNameMarker(linkName, reportingGroup.Mrid)
-			terminal1 := CreateTerminal(cn1, switchMrid, bnm1, 1)
-			bnm2 := CreateBusNameMarker(linkName, reportingGroup.Mrid)
-			terminal2 := CreateTerminal(cn2, switchMrid, bnm2, 2)
+			result := connector.Connect(&params)
+			connections = append(connections, *result)
 
-			switchTerminalBnms = append(switchTerminalBnms, bnm1)
-			switchTerminalBnms = append(switchTerminalBnms, bnm2)
-			switchTerminals = append(switchTerminals, terminal1)
-			switchTerminals = append(switchTerminals, terminal2)
+			// Update connector with new terminals
+			connector.AddTerminals(result.Terminals...)
 		}
 	}
-	return &VoltageLevelModel{
-		ConnectivityNodes: conNodes,
+
+	// Connect generator to lines
+	for _, gen := range equipment.Generators {
+		for _, line := range equipment.Lines {
+			if connector.IsConnected(gen.Mrid, line.Mrid, 5) {
+				numGenAlreadyConnected++
+				continue
+			}
+			params := ConnectParams{
+				Mrid1:              gen.Mrid,
+				Mrid2:              line.Mrid,
+				CreateSeqNo1:       1,
+				ReportingGroupMrid: reportingGroup.Mrid,
+				VoltageLevel:       equipment.VoltageLevel,
+			}
+
+			result := connector.Connect(&params)
+			connections = append(connections, *result)
+
+			// Update connector with new terminals
+			connector.AddTerminals(result.Terminals...)
+		}
+	}
+
+	// Connect loads to lines
+	for _, load := range equipment.ConformLoads {
+		for _, line := range equipment.Lines {
+			if connector.IsConnected(load.Mrid, line.Mrid, 5) {
+				numLoadAlreadyConnected++
+				continue
+			}
+			params := ConnectParams{
+				Mrid1:              load.Mrid,
+				Mrid2:              line.Mrid,
+				CreateSeqNo1:       1,
+				ReportingGroupMrid: reportingGroup.Mrid,
+				VoltageLevel:       equipment.VoltageLevel,
+			}
+
+			result := connector.Connect(&params)
+			connections = append(connections, *result)
+
+			// Update connector with new terminals
+			connector.AddTerminals(result.Terminals...)
+		}
+	}
+
+	slog.Info("Fraction already connected",
+		"lines", fmt.Sprintf("%d/%d", numLinesAlreadyConnected, len(equipment.Lines)),
+		"generators", fmt.Sprintf("%d/%d", numGenAlreadyConnected, len(equipment.Generators)),
+		"load", fmt.Sprintf("%d/%d", numLoadAlreadyConnected, len(equipment.ConformLoads)),
+	)
+
+	voltageLevelModel := VoltageLevelModel{
+		BusNameMarkers:    []models.BusNameMarker{},
+		ConnectivityNodes: []models.ConnectivityNode{},
 		ReportingGroup:    reportingGroup,
-		BusNameMarkers:    append(equipmentBusNameMarkers, switchTerminalBnms...),
-		Switches:          switches,
-		Terminals:         append(equipmentTerminals, switchTerminals...),
+		Switches:          []models.Switch{},
+		Terminals:         []models.Terminal{},
 	}
 
+	for _, con := range connections {
+		voltageLevelModel.BusNameMarkers = append(voltageLevelModel.BusNameMarkers, con.BusNameMarkers...)
+		voltageLevelModel.ConnectivityNodes = append(voltageLevelModel.ConnectivityNodes, con.ConnectivityNodes...)
+		voltageLevelModel.Switches = append(voltageLevelModel.Switches, con.Switch)
+		voltageLevelModel.Terminals = append(voltageLevelModel.Terminals, con.Terminals...)
+	}
+	return &voltageLevelModel
 }
 
 func CreateConnectivityNode(associatedResourceName string) models.ConnectivityNode {
@@ -261,16 +299,16 @@ func CreateBusNameMarker(name string, repGroupMrid uuid.UUID) models.BusNameMark
 	return bn
 }
 
-func CreateTerminal(cn models.ConnectivityNode, conductingEquipmentMrid uuid.UUID, bnm models.BusNameMarker, seqNo int) models.Terminal {
+func CreateTerminal(cnMrid uuid.UUID, conductingEquipmentMrid uuid.UUID, bnm models.BusNameMarker, seqNo int) models.Terminal {
 	var terminal models.Terminal
 
 	terminal.Mrid = uuid.New()
-	terminal.Name = fmt.Sprintf("Terminal %s", cn.Name)
-	terminal.ShortName = fmt.Sprintf("T %s", cn.Name)
-	terminal.Description = fmt.Sprintf("Terminal for %s", cn.Name)
+	terminal.Name = fmt.Sprintf("Terminal %s", bnm.Name)
+	terminal.ShortName = fmt.Sprintf("T %s", bnm.Name)
+	terminal.Description = fmt.Sprintf("Terminal for %s", bnm.Name)
 	terminal.SequenceNumber = seqNo
 	terminal.BusNameMarkerMrid = bnm.Mrid
-	terminal.ConnectivityNodeMrid = cn.Mrid
+	terminal.ConnectivityNodeMrid = cnMrid
 	terminal.ConductingEquipmentMrid = conductingEquipmentMrid
 	terminal.PhasesId = 1
 	return terminal
