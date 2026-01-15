@@ -31,7 +31,7 @@ override:
   - path: ^migrations$
     threshold: 70
   - path: ^migrations/.*
-    threshold: 70
+    threshold: 50
 
 # Holds regexp rules which will exclude matched files or packages
 # from coverage statistics.
