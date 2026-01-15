@@ -104,6 +104,7 @@ type BaseVoltage struct {
 }
 type Substation struct {
 	EquipmentContainer
+	LocatedPowerSystemResource
 	SubGeographicalRegionMrid uuid.UUID `bun:"region_mrid,type:uuid" json:"region_mrid"`
 	SubGeographicalRegion     *Entity   `bun:"rel:belongs-to,join:region_mrid=mrid" json:"region,omitempty"`
 }
