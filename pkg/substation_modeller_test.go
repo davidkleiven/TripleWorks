@@ -12,7 +12,7 @@ import (
 
 func TestNoVoltageLevels(t *testing.T) {
 	data := SubstationData{VoltageLevels: []ConnectableVoltageLevel{}}
-	result := CreateFullyConnectedSubstation(data)
+	result := CreateFullyConnectedSubstation(data, NewEmptyConnector())
 	require.Equal(t, 0, len(result.Transformers))
 	require.Equal(t, 0, len(result.TransformerEnds))
 	require.Equal(t, 0, len(result.Terminals))
@@ -28,13 +28,25 @@ func TestSingleVoltageLevels(t *testing.T) {
 				ConnectivityNodes: []models.ConnectivityNode{{}, {}, {}, {}},
 			}},
 	}
-	result := CreateFullyConnectedSubstation(data)
+	result := CreateFullyConnectedSubstation(data, NewEmptyConnector())
 	require.Equal(t, 0, len(result.Transformers))
 	require.Equal(t, 0, len(result.TransformerEnds))
 	require.Equal(t, 0, len(result.Terminals))
 	require.Equal(t, 0, len(result.ConnectivityNodes))
 	require.Equal(t, 0, len(result.Switches))
 	require.Equal(t, 0, len(result.BusNameMarkers))
+}
+
+func requireNoReconnection(t *testing.T, data SubstationData, connector *EquipmentConnector) {
+	origNumTerminals := len(connector.terminals)
+	result := CreateFullyConnectedSubstation(data, connector)
+	require.Equal(t, 0, len(result.Transformers))
+	require.Equal(t, 0, len(result.TransformerEnds))
+	require.Equal(t, 0, len(result.Terminals))
+	require.Equal(t, 0, len(result.ConnectivityNodes))
+	require.Equal(t, 0, len(result.Switches))
+	require.Equal(t, 0, len(result.BusNameMarkers))
+	require.Equal(t, origNumTerminals, len(connector.terminals))
 }
 
 func TestOneCnInEachLevel(t *testing.T) {
@@ -72,7 +84,8 @@ func TestOneCnInEachLevel(t *testing.T) {
 		},
 	}
 
-	result := CreateFullyConnectedSubstation(data)
+	connector := NewEmptyConnector()
+	result := CreateFullyConnectedSubstation(data, connector)
 	require.Equal(t, 1, len(result.Switches))
 	require.Equal(t, 1, len(result.ConnectivityNodes))
 
@@ -87,6 +100,7 @@ func TestOneCnInEachLevel(t *testing.T) {
 
 	require.Equal(t, result.TransformerEnds[0].BaseVoltageMrid, vl1.BaseVoltageMrid)
 	require.Equal(t, result.TransformerEnds[1].BaseVoltageMrid, vl2.BaseVoltageMrid)
+	requireNoReconnection(t, data, connector)
 }
 
 func TestSubstationDataWrite(t *testing.T) {
@@ -135,9 +149,11 @@ func TestSubstationDataWrite(t *testing.T) {
 		VoltageLevels: vls,
 	}
 
-	result := CreateFullyConnectedSubstation(data)
+	connector := NewEmptyConnector()
+	result := CreateFullyConnectedSubstation(data, connector)
 	err = result.Write(ctx, db, model.Id, "Add substation")
 	require.NoError(t, err)
+	requireNoReconnection(t, data, connector)
 }
 
 func TestPanicOnInconsistentMrids(t *testing.T) {
