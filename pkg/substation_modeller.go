@@ -151,12 +151,15 @@ type SubstationData struct {
 	VoltageLevels []ConnectableVoltageLevel
 }
 
-func CreateFullyConnectedSubstation(data SubstationData) *SubstationModel {
+func CreateFullyConnectedSubstation(data SubstationData, connector *EquipmentConnector) *SubstationModel {
 	for _, vl := range data.VoltageLevels {
 		vl.RequireConsistentVoltageMrid()
 	}
 
-	var repGroup models.ReportingGroup
+	var (
+		repGroup            models.ReportingGroup
+		numAlreadyConnected int
+	)
 	repGroup.Mrid = uuid.New()
 	repGroup.Name = fmt.Sprintf("%s voltage level connections", data.Substation.Name)
 	repGroup.ShortName = fmt.Sprintf("%s vlc", data.Substation.Name)
@@ -174,6 +177,17 @@ func CreateFullyConnectedSubstation(data SubstationData) *SubstationModel {
 		for _, vl2 := range vls[i+1:] {
 			for ii, cn1 := range vl1.ConnectivityNodes {
 				for jj, cn2 := range vl2.ConnectivityNodes {
+					// Connectivity nodes on different voltage levels has a direct connection
+					// if they are related by
+					//
+					// CN1 --- Switch --- cn --- Transformer --- CN2
+					//
+					// which results in four edges
+					if connector.IsConnected(cn1.Mrid, cn2.Mrid, 5) {
+						numAlreadyConnected++
+						continue
+					}
+
 					name := fmt.Sprintf("%.0f kV to %.0f kV (CN %d-%d)", vl1.BaseVoltage.NominalVoltage, vl2.BaseVoltage.NominalVoltage, ii, jj)
 					transformer := CreateTransformer(name, data.Substation.Mrid, vl1.VoltageLevel.BaseVoltageMrid)
 
@@ -223,6 +237,9 @@ func CreateFullyConnectedSubstation(data SubstationData) *SubstationModel {
 					windings = append(windings, winding1, winding2)
 					bnms = append(bnms, switchBnm1, switchBnm2, bnmT1, bnmT2)
 					transformers = append(transformers, transformer)
+
+					// Update connectors terminals
+					connector.AddTerminals(switchT1, switchT2, terminal1, terminal2)
 				}
 			}
 		}
