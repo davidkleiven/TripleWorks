@@ -378,6 +378,7 @@ type formField struct {
 	Value         any
 	JsonTag       string
 	IsBunRelation bool
+	Iri           string
 }
 
 func flatten(val reflect.Value, result map[string]formField) {
@@ -395,6 +396,7 @@ func flatten(val reflect.Value, result map[string]formField) {
 
 		tag := field.Tag.Get("bun")
 		jsonTag := field.Tag.Get("json")
+		iri := field.Tag.Get("iri")
 
 		if field.Anonymous && value.Kind() == reflect.Struct {
 			flatten(value, result)
@@ -403,6 +405,7 @@ func flatten(val reflect.Value, result map[string]formField) {
 				Value:         value.Interface(),
 				JsonTag:       jsonTag,
 				IsBunRelation: strings.Contains(tag, "belongs-to"),
+				Iri:           iri,
 			}
 		}
 	}
