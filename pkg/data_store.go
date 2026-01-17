@@ -3,8 +3,11 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"iter"
+	"log/slog"
 	"slices"
 	"strings"
+	"time"
 
 	"com.github/davidkleiven/tripleworks/models"
 	"github.com/google/uuid"
@@ -182,6 +185,47 @@ func GetFinder(name, nameFilter, typeFilter string) (Finder, error) {
 		return nil, fmt.Errorf("Could not find a finder for %s", name)
 	}
 	return finder, nil
+}
+
+func NoOpOnInsert(v any) error {
+	return nil
+}
+
+func InsertAll(ctx context.Context, db *bun.DB, msg string, items iter.Seq[any], onInsert func(v any) error) error {
+	commit := models.Commit{
+		Author:    "TripleWorks",
+		Message:   msg,
+		CreatedAt: time.Now(),
+	}
+	return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewInsert().Model(&commit).Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed to insert commit: %w", err)
+		}
+
+		num := 0
+		for item := range items {
+			setCommitIfPossible(item, int(commit.Id))
+			_, err := tx.NewInsert().Model(item).On("CONFLICT DO NOTHING").Exec(ctx)
+			if err != nil {
+				return fmt.Errorf("Failed after %d: %w", num, err)
+			}
+
+			if err := onInsert(item); err != nil {
+				return fmt.Errorf("On insert failed after %d: %w", num, err)
+			}
+			num++
+		}
+		slog.InfoContext(ctx, "Inserted records into the database", "num", num)
+		return nil
+	})
+}
+
+func setCommitIfPossible(v any, commitId int) {
+	commitSetter, ok := v.(models.CommitIdSetter)
+	if ok {
+		commitSetter.SetCommitId(commitId)
+	}
 }
 
 var Finders = map[string]Finder{

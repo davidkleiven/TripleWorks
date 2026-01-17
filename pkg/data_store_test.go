@@ -179,3 +179,11 @@ func TestFilteredFinder(t *testing.T) {
 		require.ErrorContains(t, err, "went wrong")
 	})
 }
+
+func TestCommitInsertFailsOnNoTables(t *testing.T) {
+	db := NewTestConfig(WithDbName(t.Name())).DatabaseConnection()
+	items := func(yield func(v any) bool) {}
+	err := InsertAll(context.Background(), db, "insert commit", items, NoOpOnInsert)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "Failed to insert commit")
+}
