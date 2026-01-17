@@ -47,6 +47,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.HandleFunc("POST /commit", entityHandler.Commit)
 	mux.HandleFunc("POST /autofill", AutofillHandler)
 	mux.HandleFunc("GET /substations/{mrid}/diagram", entityHandler.SubstationDiagram)
+	mux.HandleFunc("/export", entityHandler.Export)
 
 	mux.Handle("/js/", pkg.JsServer())
 }

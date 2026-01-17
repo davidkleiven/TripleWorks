@@ -410,3 +410,31 @@ func TestEditComponentForm(t *testing.T) {
 		require.Contains(t, rec.Body.String(), "for type")
 	})
 }
+
+func TestExport(t *testing.T) {
+
+	store := setupStore(t)
+
+	var bv models.BaseVoltage
+	_, err := store.db.NewInsert().Model(&bv).Exec(context.Background())
+	require.NoError(t, err)
+
+	t.Run("success", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/export", nil)
+		store.Export(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, "application/n-triples", rec.Header().Get("Content-Type"))
+	})
+
+	t.Run("cancelled context", func(t *testing.T) {
+		cancelledCtx, cancel := context.WithCancel(context.Background())
+		cancel()
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/export", nil)
+		store.Export(rec, req.WithContext(cancelledCtx))
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
+		require.Contains(t, rec.Body.String(), "fetch all items")
+	})
+
+}

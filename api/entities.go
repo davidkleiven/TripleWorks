@@ -387,6 +387,29 @@ func (e *EntityStore) Resource(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (e *EntityStore) Export(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+	defer cancel()
+
+	items, err := pkg.LatestOfAllItems(ctx, e.db, 0)
+	if err != nil {
+		slog.ErrorContext(ctx, "Could not fetch all items", "error", err)
+		http.Error(w, "Could not fetch items: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	itemIterator := func(yield func(v models.MridGetter) bool) {
+		for _, item := range items {
+			if !yield(item) {
+				break
+			}
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/n-triples")
+	pkg.Export(w, itemIterator)
+}
+
 type ResourceItem struct {
 	Data any    `json:"data"`
 	Type string `json:"type"`
