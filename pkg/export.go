@@ -14,11 +14,11 @@ import (
 
 func Export(w io.Writer, items iter.Seq[models.MridGetter]) {
 	for item := range items {
-		exportItem(w, item)
+		ExportItem(w, item)
 	}
 }
 
-func exportItem(w io.Writer, item models.MridGetter) {
+func ExportItem(w io.Writer, item models.MridGetter) {
 	itemType := reflect.TypeOf(item)
 	itemValue := reflect.ValueOf(item)
 	if itemType.Kind() == reflect.Ptr {

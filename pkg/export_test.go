@@ -95,7 +95,7 @@ func TestTypeSpecifier(t *testing.T) {
 func TestExportItemPointer(t *testing.T) {
 	var bv models.BaseVoltage
 	var buf bytes.Buffer
-	exportItem(&buf, &bv)
+	ExportItem(&buf, &bv)
 	content := buf.String()
 	require.Contains(t, content, "BaseVoltage")
 }
