@@ -1,12 +1,14 @@
 package api
 
 import (
+	"bufio"
 	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"log/slog"
 	"net/http"
 	"slices"
@@ -410,6 +412,95 @@ func (e *EntityStore) Export(w http.ResponseWriter, r *http.Request) {
 	pkg.Export(w, itemIterator)
 }
 
+func (e *EntityStore) SimpleUpload(w http.ResponseWriter, r *http.Request) {
+	hundredMb := int64(100 << 20)
+	kind := r.PathValue("kind")
+	doCommit := r.URL.Query().Get("commit")
+
+	r.Body = http.MaxBytesReader(w, r.Body, hundredMb)
+	defer r.Body.Close()
+
+	var (
+		substations = "substations"
+		generators  = "generators"
+		loads       = "loads"
+		lines       = "lines"
+	)
+
+	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+	defer cancel()
+
+	modelId := 0
+	existing, err := pkg.ExistingMrids(ctx, e.db, modelId)
+	if err != nil {
+		slog.ErrorContext(ctx, "Could not get existing mrids", "error", err)
+		http.Error(w, "Could not get existing mrids: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	existingSet := make(map[uuid.UUID]struct{})
+	for _, mrid := range existing {
+		existingSet[mrid] = struct{}{}
+	}
+
+	scanner := bufio.NewScanner(r.Body)
+	num := 0
+	itemIterators := []iter.Seq[any]{}
+	for scanner.Scan() {
+		num++
+		line := scanner.Bytes()
+
+		var (
+			err          error
+			itemIterator iter.Seq[any]
+		)
+		switch kind {
+		case substations:
+			var substation pkg.SubstationLight
+			err = json.Unmarshal(line, &substation)
+			itemIterator = pkg.OnlyNewItems(existingSet, substation.CimItems(modelId))
+		case generators:
+			var generator pkg.GeneratorLight
+			err = json.Unmarshal(line, &generator)
+			itemIterator = pkg.OnlyNewItems(existingSet, generator.CimItems(modelId))
+		case loads:
+			var load pkg.LoadLight
+			err = json.Unmarshal(line, &load)
+			itemIterator = pkg.OnlyNewItems(existingSet, load.CimItems(modelId))
+		case lines:
+			var acline pkg.LineLight
+			err = json.Unmarshal(line, &acline)
+			itemIterator = pkg.OnlyNewItems(existingSet, acline.CimItems(modelId))
+		default:
+			err = fmt.Errorf("Unknown type %s", kind)
+		}
+
+		if err != nil {
+			slog.ErrorContext(ctx, "Could not unmarshal line", "kind", kind, "lineNo", num, "error", err)
+			http.Error(w, "Could not unmarshal line: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		itemIterators = append(itemIterators, itemIterator)
+	}
+
+	w.Header().Set("Content-Type", "application/n-triples")
+	itemIterator := pkg.Chain(itemIterators...)
+	if doCommit == "true" {
+		msg := fmt.Sprintf("Add %d %s", num, kind)
+		err := pkg.InsertAll(ctx, e.db, msg, itemIterator, writeNTriplesCallback(w))
+		if err != nil {
+			slog.ErrorContext(ctx, "Could not insert new items", "error", err)
+			http.Error(w, "Could not insert new items: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+	} else {
+		writer := writeNTriplesCallback(w)
+		for item := range itemIterator {
+			writer(item)
+		}
+	}
+}
+
 type ResourceItem struct {
 	Data any    `json:"data"`
 	Type string `json:"type"`
@@ -490,4 +581,15 @@ func choiceExists(items []models.VersionedObject, choice string) bool {
 func isDeleted(model any) bool {
 	asDeleteGetter, ok := model.(models.DeletedGetter)
 	return ok && asDeleteGetter.GetDeleted()
+}
+
+func writeNTriplesCallback(w io.Writer) func(item any) error {
+	return func(item any) error {
+		mridGetter, ok := item.(models.MridGetter)
+		if !ok {
+			return nil
+		}
+		pkg.ExportItem(w, mridGetter)
+		return nil
+	}
 }

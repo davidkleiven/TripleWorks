@@ -187,3 +187,70 @@ func TestCommitInsertFailsOnNoTables(t *testing.T) {
 	require.Error(t, err)
 	require.ErrorContains(t, err, "Failed to insert commit")
 }
+
+func TestCommitInsertAllStopWhenCallbackFails(t *testing.T) {
+	db := NewTestConfig(WithDbName(t.Name())).DatabaseConnection()
+	_, err := migrations.RunUp(context.Background(), db)
+	require.NoError(t, err)
+
+	items := func(yield func(v any) bool) { yield(&models.Substation{}) }
+
+	cb := func(v any) error {
+		return errors.New("something went wrong")
+	}
+	err = InsertAll(context.Background(), db, "insert commit", items, cb)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "went wrong")
+}
+
+func TestMridIfPossible(t *testing.T) {
+	var substation models.Substation
+	substation.Mrid = uuid.New()
+
+	require.Equal(t, mridIfPossible(1), uuid.UUID{})
+	require.Equal(t, mridIfPossible(&substation), substation.Mrid)
+}
+
+func TestExistingMrids(t *testing.T) {
+	db := NewTestConfig(WithDbName(t.Name())).DatabaseConnection()
+	_, err := migrations.RunUp(context.Background(), db)
+	require.NoError(t, err)
+
+	entities := []models.Entity{
+		{ModelEntity: models.ModelEntity{ModelId: 1}, Mrid: uuid.New()},
+		{ModelEntity: models.ModelEntity{ModelId: 1}, Mrid: uuid.New()},
+	}
+	_, err = db.NewInsert().Model(&entities).Exec(context.Background())
+	require.NoError(t, err)
+
+	existing, err := ExistingMrids(context.Background(), db, 1)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(existing))
+}
+
+func TestOnlyNewItems(t *testing.T) {
+	existing := uuid.New()
+	iterator := func(yield func(v any) bool) {
+		var subst models.Substation
+		subst.Mrid = existing
+
+		var substNew models.Substation
+		substNew.Mrid = uuid.New()
+
+		if !yield(&subst) {
+			return
+		}
+
+		if !yield(&substNew) {
+			return
+		}
+	}
+
+	existingMrids := map[uuid.UUID]struct{}{existing: {}}
+	filteredIterator := OnlyNewItems(existingMrids, iterator)
+	num := 0
+	for range filteredIterator {
+		num++
+	}
+	require.Equal(t, 1, num)
+}

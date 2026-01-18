@@ -145,3 +145,15 @@ func AssertDifferent[K comparable](v1, v2 K) {
 		panic(fmt.Sprintf("%v is not different from %v", v1, v2))
 	}
 }
+
+func Chain[T any](seqs ...iter.Seq[T]) iter.Seq[T] {
+	return func(yield func(v T) bool) {
+		for _, seq := range seqs {
+			for v := range seq {
+				if !yield(v) {
+					return
+				}
+			}
+		}
+	}
+}

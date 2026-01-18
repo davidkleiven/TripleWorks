@@ -221,11 +221,41 @@ func InsertAll(ctx context.Context, db *bun.DB, msg string, items iter.Seq[any],
 	})
 }
 
+func ExistingMrids(ctx context.Context, db *bun.DB, modelId int) ([]uuid.UUID, error) {
+	var mrids []uuid.UUID
+	err := db.NewSelect().TableExpr("entities").Column("mrid").Where("model_id = ?", modelId).Scan(ctx, &mrids)
+	return mrids, err
+}
+
+func OnlyNewItems(existing map[uuid.UUID]struct{}, items iter.Seq[any]) iter.Seq[any] {
+	return func(yield func(v any) bool) {
+		for item := range items {
+			mrid := mridIfPossible(item)
+			_, exists := existing[mrid]
+			if exists {
+				continue
+			}
+
+			if !yield(item) {
+				return
+			}
+		}
+	}
+}
+
 func setCommitIfPossible(v any, commitId int) {
 	commitSetter, ok := v.(models.CommitIdSetter)
 	if ok {
 		commitSetter.SetCommitId(commitId)
 	}
+}
+
+func mridIfPossible(v any) uuid.UUID {
+	mridGetter, ok := v.(models.MridGetter)
+	if ok {
+		return mridGetter.GetMrid()
+	}
+	return uuid.UUID{}
 }
 
 var Finders = map[string]Finder{
