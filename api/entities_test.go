@@ -438,3 +438,114 @@ func TestExport(t *testing.T) {
 	})
 
 }
+
+func jsonlEncode[T any](t *testing.T, records ...T) *bytes.Buffer {
+	t.Helper()
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	for _, record := range records {
+		err := enc.Encode(record)
+		require.NoError(t, err)
+	}
+	return &buf
+}
+
+func TestSimpleUpload(t *testing.T) {
+	store := setupStore(t)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/upload/{kind}", store.SimpleUpload)
+
+	t.Run("substations no commit", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+
+		body := jsonlEncode(t, pkg.SubstationLight{Name: "Sub A"}, pkg.SubstationLight{Name: "Sub B"})
+		req := httptest.NewRequest("POST", "/upload/substations", body)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, "application/n-triples", rec.Header().Get("Content-Type"))
+		content := rec.Body.String()
+		require.Contains(t, content, "Substation")
+	})
+
+	t.Run("generators no commit", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+
+		body := jsonlEncode(t, pkg.GeneratorLight{Substation: "Sub A"}, pkg.GeneratorLight{Substation: "Sub B"})
+		req := httptest.NewRequest("POST", "/upload/generators", body)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, "application/n-triples", rec.Header().Get("Content-Type"))
+		content := rec.Body.String()
+		require.Contains(t, content, "SynchronousMachine")
+	})
+
+	t.Run("aclines no commit", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+
+		body := jsonlEncode(t, pkg.LineLight{FromSubstation: "Sub A"}, pkg.LineLight{FromSubstation: "Sub B"})
+		req := httptest.NewRequest("POST", "/upload/lines", body)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, "application/n-triples", rec.Header().Get("Content-Type"))
+		content := rec.Body.String()
+		require.Contains(t, content, "ACLineSegment")
+	})
+
+	t.Run("loads no commit", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+
+		body := jsonlEncode(t, pkg.LoadLight{Substation: "Sub A"}, pkg.LoadLight{Substation: "Sub B"})
+		req := httptest.NewRequest("POST", "/upload/loads", body)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, "application/n-triples", rec.Header().Get("Content-Type"))
+		content := rec.Body.String()
+		require.Contains(t, content, "ConformLoad")
+	})
+
+	t.Run("substations do commit", func(t *testing.T) {
+		origMrids, err := pkg.ExistingMrids(context.Background(), store.db, 0)
+		require.NoError(t, err)
+
+		rec := httptest.NewRecorder()
+
+		body := jsonlEncode(t, pkg.SubstationLight{Name: "Sub A"}, pkg.SubstationLight{Name: "Sub B"})
+		req := httptest.NewRequest("POST", "/upload/substations?commit=true", body)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, "application/n-triples", rec.Header().Get("Content-Type"))
+		content := rec.Body.String()
+		require.Contains(t, content, "Substation")
+
+		finalMrids, err := pkg.ExistingMrids(context.Background(), store.db, 0)
+		require.NoError(t, err)
+		require.Greater(t, len(finalMrids), len(origMrids))
+	})
+
+	t.Run("internal server error on db failure", func(t *testing.T) {
+		cancelledCtx, cancel := context.WithCancel(context.Background())
+		cancel()
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("POST", "/upload/substation", nil)
+		mux.ServeHTTP(rec, req.WithContext(cancelledCtx))
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
+		require.Contains(t, rec.Body.String(), "existing mrids")
+	})
+
+	t.Run("bad request on bad json", func(t *testing.T) {
+		buf := bytes.NewBufferString("not jsonl")
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("POST", "/upload/substations", buf)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("bad request on unknown type", func(t *testing.T) {
+		buf := bytes.NewBufferString("not jsonl")
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("POST", "/upload/transformers", buf)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+}
