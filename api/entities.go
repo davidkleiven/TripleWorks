@@ -2,6 +2,7 @@ package api
 
 import (
 	"bufio"
+	"bytes"
 	"cmp"
 	"context"
 	"encoding/json"
@@ -446,6 +447,7 @@ func (e *EntityStore) SimpleUpload(w http.ResponseWriter, r *http.Request) {
 	scanner := bufio.NewScanner(r.Body)
 	num := 0
 	itemIterators := []iter.Seq[any]{}
+	var rawBytes bytes.Buffer
 	for scanner.Scan() {
 		num++
 		line := scanner.Bytes()
@@ -454,6 +456,7 @@ func (e *EntityStore) SimpleUpload(w http.ResponseWriter, r *http.Request) {
 			err          error
 			itemIterator iter.Seq[any]
 		)
+		_, err = rawBytes.Write(line)
 		switch kind {
 		case substations:
 			var substation pkg.SubstationLight
@@ -482,6 +485,12 @@ func (e *EntityStore) SimpleUpload(w http.ResponseWriter, r *http.Request) {
 		}
 		itemIterators = append(itemIterators, itemIterator)
 	}
+
+	rawData := models.SimpleUpload{Data: rawBytes.Bytes()}
+	rawDataIter := func(yield func(v any) bool) {
+		yield(&rawData)
+	}
+	itemIterators = append(itemIterators, rawDataIter)
 
 	w.Header().Set("Content-Type", "application/n-triples")
 	itemIterator := pkg.Chain(itemIterators...)
