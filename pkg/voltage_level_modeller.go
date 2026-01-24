@@ -3,6 +3,7 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"iter"
 	"log/slog"
 	"strings"
 
@@ -134,6 +135,129 @@ func NewVoltageLevelEquipment(opts ...func(v *VoltageLevelEquipment)) *VoltageLe
 		opt(&v)
 	}
 	return &v
+}
+
+func NewVoltageLevelEquipmentFromDb(ctx context.Context, db *bun.DB, substation *models.Substation) ([]VoltageLevelEquipment, error) {
+	var (
+		vls                   []models.VoltageLevel
+		bvs                   []models.BaseVoltage
+		lines                 []models.ACLineSegment
+		gens                  map[uuid.UUID][]models.SynchronousMachine
+		loads                 map[uuid.UUID][]models.ConformLoad
+		targetSequenceNumbers = make(map[uuid.UUID]int)
+	)
+	failNo, err := ReturnOnFirstError(
+		func() error {
+			var ierr error
+			lines, ierr = LinesConnectedToSubstationByName(ctx, db, substation.Name)
+			return ierr
+		},
+		func() error {
+			lineMrids := make([]uuid.UUID, len(lines))
+			for i, line := range lines {
+				lineMrids[i] = line.Mrid
+			}
+			var terminals []models.Terminal
+			ierr := db.NewSelect().Model(&terminals).Where("conducting_equipment_mrid IN (?)", bun.In(lineMrids)).Scan(ctx)
+			terminals = OnlyActiveLatest(terminals)
+
+			// Extract terminal numbers to be created if created. Note that if the terminal already exists
+			// this number does not matter. It will not create a new terminal
+			for _, terminal := range terminals {
+				targetSequenceNumbers[terminal.ConductingEquipmentMrid] = terminal.SequenceNumber%2 + 1
+			}
+			return ierr
+		},
+		func() error {
+			return db.NewSelect().Model(&vls).Where("substation_mrid = ?", substation.Mrid).Scan(ctx)
+		},
+		func() error {
+			bvMrids := map[uuid.UUID]struct{}{}
+			for _, vl := range vls {
+				bvMrids[vl.BaseVoltageMrid] = struct{}{}
+			}
+
+			for _, acline := range lines {
+				bvMrids[acline.BaseVoltageMrid] = struct{}{}
+			}
+			bvSlice := make([]uuid.UUID, 0, len(bvMrids))
+			for mrid := range bvMrids {
+				bvSlice = append(bvSlice, mrid)
+			}
+			return db.NewSelect().Model(&bvs).Where("mrid IN (?)", bun.In(bvSlice)).Scan(ctx)
+		},
+		func() error {
+			var ierr error
+			gens, ierr = EquipmentByContainers[models.SynchronousMachine](ctx, db, voltageLevelMridIter(vls))
+			return ierr
+		},
+		func() error {
+			var ierr error
+			loads, ierr = EquipmentByContainers[models.ConformLoad](ctx, db, voltageLevelMridIter(vls))
+			return ierr
+		},
+	)
+
+	// Keep only latest
+	vls = OnlyActiveLatest(vls)
+	bvs = OnlyActiveLatest(bvs)
+	lines = OnlyActiveLatest(lines)
+	for k, g := range gens {
+		gens[k] = OnlyActiveLatest(g)
+	}
+	for k, l := range loads {
+		loads[k] = OnlyActiveLatest(l)
+	}
+
+	result := make([]VoltageLevelEquipment, len(vls))
+	if err != nil {
+		return result, fmt.Errorf("Failed to fetch data form call %d: %w", failNo, err)
+	}
+
+	linesByBaseVoltage := map[uuid.UUID][]models.ACLineSegment{}
+	for _, line := range lines {
+		current := linesByBaseVoltage[line.BaseVoltageMrid]
+		linesByBaseVoltage[line.BaseVoltageMrid] = append(current, line)
+	}
+
+	for i, vl := range vls {
+		result[i].VoltageLevel = vl
+		result[i].Generators = gens[vl.Mrid]
+		result[i].ConformLoads = loads[vl.Mrid]
+		result[i].Lines = linesByBaseVoltage[vl.BaseVoltageMrid]
+		delete(linesByBaseVoltage, vl.BaseVoltageMrid)
+		result[i].LineTerminalNumbers = targetSequenceNumbers
+	}
+
+	// For remaining lines we add extra voltage levels
+	for bvMrid, lines := range linesByBaseVoltage {
+		baseVoltage := 0
+		for _, bv := range bvs {
+			if bv.Mrid == bvMrid {
+				baseVoltage = int(bv.NominalVoltage)
+				break
+			}
+		}
+		AssertDifferent(0, baseVoltage)
+		vl := CreateVoltageLevel(substation.Name, baseVoltage)
+		equipments := VoltageLevelEquipment{
+			VoltageLevel:        vl,
+			Lines:               lines,
+			LineTerminalNumbers: targetSequenceNumbers,
+		}
+		result = append(result, equipments)
+	}
+	return result, nil
+}
+
+func voltageLevelMridIter(vls []models.VoltageLevel) func(yield func(v uuid.UUID) bool) {
+	return func(yield func(v uuid.UUID) bool) {
+		for _, vl := range vls {
+			if !yield(vl.Mrid) {
+				return
+			}
+		}
+	}
 }
 
 func WithLines(lines []models.ACLineSegment) func(v *VoltageLevelEquipment) {
@@ -359,6 +483,23 @@ func GetTargetTerminalSequenceNumber(ctx context.Context, db *bun.DB, lines []uu
 
 	if len(haveMultipleTerminals) > 0 {
 		return result, fmt.Errorf("The lines %s have already multiple terminals.", strings.Join(haveMultipleTerminals, ", "))
+	}
+	return result, nil
+}
+
+func EquipmentByContainer[T any](ctx context.Context, db *bun.DB, equipContainerMrid uuid.UUID, result *[]T) error {
+	return db.NewSelect().Model(result).Where("equipment_container_mrid = ?", equipContainerMrid).Scan(ctx)
+}
+
+func EquipmentByContainers[T any](ctx context.Context, db *bun.DB, equipContainerMrids iter.Seq[uuid.UUID]) (map[uuid.UUID][]T, error) {
+	result := make(map[uuid.UUID][]T)
+	for mrid := range equipContainerMrids {
+		var equipment []T
+		err := EquipmentByContainer(ctx, db, mrid, &equipment)
+		if err != nil {
+			return result, fmt.Errorf("Failed to get equipment by container: %w", err)
+		}
+		result[mrid] = equipment
 	}
 	return result, nil
 }
