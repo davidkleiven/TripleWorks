@@ -254,3 +254,31 @@ func TestOnlyNewItems(t *testing.T) {
 	}
 	require.Equal(t, 1, num)
 }
+
+func TestLineConnectedToSubstationByName(t *testing.T) {
+	db := NewTestConfig(WithDbName(t.Name())).DatabaseConnection()
+	_, err := migrations.RunUp(context.Background(), db)
+	require.NoError(t, err)
+	lines := make([]models.ACLineSegment, 10)
+	for i := range len(lines) {
+		lines[i].Mrid = uuid.New()
+		lines[i].Name = fmt.Sprintf("Sub%d - Sub%d", i, i+1)
+	}
+	_, err = db.NewInsert().Model(&lines).Exec(context.Background())
+	require.NoError(t, err)
+
+	t.Run("two lines connected to Sub8", func(t *testing.T) {
+		linesConnected, err := LinesConnectedToSubstationByName(context.Background(), db, "Sub8")
+		require.NoError(t, err)
+
+		require.Equal(t, 2, len(linesConnected))
+		require.Equal(t, "Sub7 - Sub8", linesConnected[0].Name)
+	})
+
+	t.Run("error on cancelled context", func(t *testing.T) {
+		cancelledCtx, cancel := context.WithCancel(context.Background())
+		cancel()
+		_, err := LinesConnectedToSubstationByName(cancelledCtx, db, "Sub8")
+		require.Error(t, err)
+	})
+}

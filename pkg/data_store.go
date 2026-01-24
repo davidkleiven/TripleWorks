@@ -258,6 +258,16 @@ func mridIfPossible(v any) uuid.UUID {
 	return uuid.UUID{}
 }
 
+func LinesConnectedToSubstationByName(ctx context.Context, db *bun.DB, name string) ([]models.ACLineSegment, error) {
+	var result []models.ACLineSegment
+	err := db.NewSelect().Model(&result).Where("? LIKE ?", bun.Ident("name"), fmt.Sprintf("%%%s%%", name)).Scan(ctx)
+	if err != nil {
+		return result, fmt.Errorf("Failed to find ac lines by name: %w", err)
+	}
+	latest := OnlyActiveLatest(result)
+	return latest, nil
+}
+
 var Finders = map[string]Finder{
 	"ACDCConverter": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ACDCConverter](db, ctx, modelId)
