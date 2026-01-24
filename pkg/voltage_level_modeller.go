@@ -149,7 +149,7 @@ func NewVoltageLevelEquipmentFromDb(ctx context.Context, db *bun.DB, substation 
 	failNo, err := ReturnOnFirstError(
 		func() error {
 			var ierr error
-			lines, ierr = LinesConnectedToSubstationByName(ctx, db, substation.Name)
+			lines, ierr = LinesConnectedToSubstationByName(ctx, db, substation)
 			return ierr
 		},
 		func() error {

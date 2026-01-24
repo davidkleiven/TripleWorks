@@ -258,6 +258,63 @@ func mridIfPossible(v any) uuid.UUID {
 	return uuid.UUID{}
 }
 
+type LonLat struct {
+	Lat float64
+	Lon float64
+}
+
+func LinesConnectedToSubstationByName(ctx context.Context, db *bun.DB, substation *models.Substation) ([]models.ACLineSegment, error) {
+	var (
+		lines       []models.ACLineSegment
+		substations []models.Substation
+	)
+
+	// Collect line and substations that matches the name of the target substation
+	failNo, err := ReturnOnFirstError(
+		func() error {
+			return db.NewSelect().Model(&lines).Where("? LIKE ?", bun.Ident("name"), fmt.Sprintf("%%%s%%", substation.Name)).Scan(ctx)
+		},
+		func() error {
+			return db.NewSelect().
+				Model(&substations).
+				Where("? LIKE ?", bun.Ident("name"), fmt.Sprintf("%%%s%%", substation.Name)).
+				Scan(ctx)
+		},
+	)
+
+	if err != nil {
+		return lines, fmt.Errorf("Failed to find ac lines by name call no %d: %w", failNo, err)
+	}
+	lines = OnlyActiveLatest(lines)
+	substations = OnlyActiveLatest(substations)
+
+	// Lines should only be included if it has the highest similarity score with the current station
+	lines = slices.DeleteFunc(lines, func(line models.ACLineSegment) bool {
+		var (
+			highestScoreMrid uuid.UUID
+			highestScore     float64 = -1.0
+		)
+		lineName := Normalizename(line.Name)
+		lineTokens := Tokenize(lineName)
+
+		for _, sub := range substations {
+			substationName := Normalizename(sub.Name)
+			substationTokens := Tokenize(substationName)
+			cosScore := CosineSimilarity(lineName, substationName)
+			exactScore := ExactTokenSimilarity(substationTokens, lineTokens)
+
+			// The score is weighted sum of exact matches and cosine similarity
+			score := 0.8*exactScore + 0.2*cosScore
+			if score > highestScore {
+				highestScore = score
+				highestScoreMrid = sub.Mrid
+			}
+		}
+		return highestScoreMrid != substation.Mrid
+	})
+	return lines, nil
+}
+
 var Finders = map[string]Finder{
 	"ACDCConverter": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.ACDCConverter](db, ctx, modelId)

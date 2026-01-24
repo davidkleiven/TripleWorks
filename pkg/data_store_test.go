@@ -254,3 +254,65 @@ func TestOnlyNewItems(t *testing.T) {
 	}
 	require.Equal(t, 1, num)
 }
+
+func TestLineConnectedToSubstationByName(t *testing.T) {
+	db := NewTestConfig(WithDbName(t.Name())).DatabaseConnection()
+	_, err := migrations.RunUp(context.Background(), db)
+	require.NoError(t, err)
+	lines := make([]models.ACLineSegment, 20)
+	substations := make([]models.Substation, 20)
+	locations := make([]models.Location, 20)
+	points := make([]models.PositionPoint, 20)
+	for i := range len(lines) {
+		lines[i].Mrid = uuid.New()
+		lines[i].Name = fmt.Sprintf("Sub%d - Sub%d", i, (i+1)%len(substations))
+
+		substations[i].Mrid = uuid.New()
+		substations[i].Name = fmt.Sprintf("Sub%d", i)
+		substations[i].LocationMrid = uuid.New()
+
+		locations[i].Mrid = substations[i].LocationMrid
+		points[i].LocationMrid = locations[i].Mrid
+		points[i].XPosition = float64(i)
+		points[i].YPosition = float64(i)
+	}
+
+	ctx := context.Background()
+	_, err = db.NewInsert().Model(&lines).Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = db.NewInsert().Model(&substations).Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.NewInsert().Model(&locations).Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.NewInsert().Model(&points).Exec(ctx)
+	require.NoError(t, err)
+
+	target := substations[8]
+
+	t.Run("two lines connected to Sub8", func(t *testing.T) {
+		linesConnected, err := LinesConnectedToSubstationByName(context.Background(), db, &target)
+		require.NoError(t, err)
+
+		require.Equal(t, 2, len(linesConnected))
+		require.Equal(t, "Sub7 - Sub8", linesConnected[0].Name)
+	})
+
+	t.Run("error on cancelled context", func(t *testing.T) {
+		cancelledCtx, cancel := context.WithCancel(context.Background())
+		cancel()
+		_, err := LinesConnectedToSubstationByName(cancelledCtx, db, &target)
+		require.Error(t, err)
+	})
+
+	target = substations[1]
+	t.Run("two lines connected to Sub1", func(t *testing.T) {
+		// Check that we don't get any match for Sub10 which also contains Sub1x
+		linesConnected, err := LinesConnectedToSubstationByName(context.Background(), db, &target)
+		require.NoError(t, err)
+
+		require.Equal(t, 2, len(linesConnected))
+		require.Equal(t, "Sub0 - Sub1", linesConnected[0].Name)
+		require.Equal(t, "Sub1 - Sub2", linesConnected[1].Name)
+	})
+}
