@@ -51,6 +51,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.HandleFunc("/export", entityHandler.Export)
 	mux.HandleFunc("/upload/{kind}", entityHandler.SimpleUpload)
 	mux.HandleFunc("GET /commits", entityHandler.Commits)
+	mux.HandleFunc("/map", entityHandler.Map)
 
 	mux.Handle("/js/", pkg.JsServer())
 }

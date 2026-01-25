@@ -12,8 +12,10 @@ import (
 	"iter"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"com.github/davidkleiven/tripleworks/models"
@@ -575,6 +577,123 @@ func (e *EntityStore) DeleteCommit(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Successfully deleted commit %d", commitId)
 }
 
+func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+	defer cancel()
+
+	modelId := 0
+	var (
+		substations []models.Substation
+		acLines     []models.ACLineSegment
+		points      []models.PositionPoint
+		bvs         []models.BaseVoltage
+	)
+
+	failNo, err := pkg.ReturnOnFirstError(
+		func() error {
+			return e.db.NewSelect().Model(&substations).Scan(ctx)
+		},
+		func() error {
+			return e.db.NewSelect().Model(&acLines).Scan(ctx)
+		},
+		func() error {
+			return e.db.NewSelect().Model(&points).Scan(ctx)
+		},
+		func() error {
+			return e.db.NewSelect().Model(&bvs).Scan(ctx)
+		},
+	)
+
+	if err != nil {
+		slog.ErrorContext(ctx, "Failed to extract substations", "error", err, "failNo", failNo)
+		http.Error(w, "Failed to extract substations: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	substations = pkg.OnlyActiveLatest(substations)
+	bvs = pkg.OnlyActiveLatest(bvs)
+	acLines = pkg.OnlyActiveLatest(acLines)
+
+	ptMap := make(map[uuid.UUID]models.PositionPoint)
+	for _, pt := range points {
+		ptMap[pt.LocationMrid] = pt
+	}
+
+	bvMap := make(map[uuid.UUID]models.BaseVoltage)
+	for _, bv := range bvs {
+		bvMap[bv.Mrid] = bv
+	}
+
+	slog.InfoContext(ctx, "Extracted substations", "num", len(substations), "modelId", modelId)
+
+	skipped := 0
+	substationMapDataIter := func(yield func(v pkg.SubstationMapData) bool) {
+		for _, sub := range substations {
+			pt, ok := ptMap[sub.LocationMrid]
+			if !ok {
+				skipped++
+				continue
+			}
+
+			data := pkg.SubstationMapData{
+				Name: sub.Name,
+				Lat:  pt.YPosition,
+				Lng:  pt.XPosition,
+			}
+
+			if !yield(data) {
+				return
+			}
+		}
+	}
+
+	// TODO: should be deduced via electrical connectivity (not names)
+	lineIter := func(yield func(v pkg.LineMapData) bool) {
+		re := regexp.MustCompile(`\([^)]*\)`)
+		for _, line := range acLines {
+			lineName := strings.TrimSpace(re.ReplaceAllString(line.Name, ""))
+			fromToCandidates := []uuid.UUID{}
+			for _, sub := range substations {
+				if strings.HasPrefix(lineName, sub.Name+"-") || strings.HasSuffix(lineName, "-"+sub.Name) {
+					fromToCandidates = append(fromToCandidates, sub.LocationMrid)
+				}
+			}
+
+			if len(fromToCandidates) < 2 {
+				continue
+			}
+
+			pts := make([]models.PositionPoint, 0, len(fromToCandidates))
+			for _, locMrid := range fromToCandidates {
+				pt, ok := ptMap[locMrid]
+				if !ok {
+					continue
+				}
+				pts = append(pts, pt)
+			}
+
+			vl, okVl := bvMap[line.BaseVoltageMrid]
+			if !okVl || len(pts) < 2 {
+				continue
+			}
+
+			pt1, pt2 := closestPair(pts)
+			data := pkg.LineMapData{
+				LatFrom: pt1.YPosition,
+				LatTo:   pt2.YPosition,
+				LngFrom: pt1.XPosition,
+				LngTo:   pt2.XPosition,
+				Name:    line.Name,
+				Voltage: int(vl.NominalVoltage),
+			}
+
+			if !yield(data) {
+				return
+			}
+		}
+	}
+	pkg.RenderMap(w, substationMapDataIter, lineIter)
+}
+
 type ResourceItem struct {
 	Data any    `json:"data"`
 	Type string `json:"type"`
@@ -667,4 +786,26 @@ func writeNTriplesCallback(w io.Writer) func(item any) error {
 		pkg.ExportItem(w, mridGetter)
 		return nil
 	}
+}
+
+func closestPair(pts []models.PositionPoint) (models.PositionPoint, models.PositionPoint) {
+	var (
+		closest = 100000.0
+		a       models.PositionPoint
+		b       models.PositionPoint
+	)
+	for i := range pts {
+		for j := i + 1; j < len(pts); j++ {
+			dx := pts[i].XPosition - pts[j].XPosition
+			dy := pts[i].YPosition - pts[j].YPosition
+			distSq := dx*dx + dy*dy
+			if distSq < closest {
+				closest = distSq
+				a = pts[i]
+				b = pts[j]
+			}
+
+		}
+	}
+	return a, b
 }
