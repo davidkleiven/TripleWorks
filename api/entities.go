@@ -575,6 +575,123 @@ func (e *EntityStore) DeleteCommit(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Successfully deleted commit %d", commitId)
 }
 
+func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+	defer cancel()
+
+	modelId := 0
+	var (
+		substations []models.Substation
+		acLines     []models.ACLineSegment
+		points      []models.PositionPoint
+		bvs         []models.BaseVoltage
+		vls         []models.VoltageLevel
+		terminals   []models.Terminal
+		cns         []models.ConnectivityNode
+	)
+
+	failNo, err := pkg.ReturnOnFirstError(
+		func() error {
+			return e.db.NewSelect().Model(&substations).Scan(ctx)
+		},
+		func() error {
+			return e.db.NewSelect().Model(&acLines).Scan(ctx)
+		},
+		func() error {
+			return e.db.NewSelect().Model(&points).Scan(ctx)
+		},
+		func() error {
+			return e.db.NewSelect().Model(&bvs).Scan(ctx)
+		},
+		func() error {
+			return e.db.NewSelect().Model(&vls).Scan(ctx)
+		},
+		func() error {
+			return e.db.NewSelect().Model(&terminals).Scan(ctx)
+		},
+		func() error {
+			return e.db.NewSelect().Model(&cns).Scan(ctx)
+		},
+	)
+
+	if err != nil {
+		slog.ErrorContext(ctx, "Failed to extract substations", "error", err, "failNo", failNo)
+		http.Error(w, "Failed to extract substations: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	substations = pkg.OnlyActiveLatest(substations)
+	bvs = pkg.OnlyActiveLatest(bvs)
+	acLines = pkg.OnlyActiveLatest(acLines)
+	vls = pkg.OnlyActiveLatest(vls)
+	terminals = pkg.OnlyActiveLatest(terminals)
+	cns = pkg.OnlyActiveLatest(cns)
+
+	ptMap := pkg.IndexBy(points, func(p models.PositionPoint) uuid.UUID { return p.LocationMrid })
+	bvMap := pkg.IndexBy(bvs, func(b models.BaseVoltage) uuid.UUID { return b.Mrid })
+	tMap := pkg.GroupBy(terminals, func(t models.Terminal) uuid.UUID { return t.ConductingEquipmentMrid })
+	cnsMap := pkg.IndexBy(cns, func(c models.ConnectivityNode) uuid.UUID { return c.Mrid })
+	vlMap := pkg.IndexBy(vls, func(v models.VoltageLevel) uuid.UUID { return v.Mrid })
+	subMap := pkg.IndexBy(substations, func(s models.Substation) uuid.UUID { return s.Mrid })
+
+	acLineFromToMap := make(map[uuid.UUID]FromToLoc)
+	ignoredLines := []string{}
+	for _, line := range acLines {
+		connectedTerminals, ok := tMap[line.Mrid]
+		if !ok || len(connectedTerminals) != 2 {
+			ignoredLines = append(ignoredLines, line.Name)
+			continue
+		}
+		cn1 := cnsMap[connectedTerminals[0].ConnectivityNodeMrid]
+		cn2 := cnsMap[connectedTerminals[1].ConnectivityNodeMrid]
+		acLineFromToMap[line.Mrid] = FromToLoc{
+			Pt1: ptMap[subMap[vlMap[cn1.ConnectivityNodeContainerMrid].SubstationMrid].LocationMrid],
+			Pt2: ptMap[subMap[vlMap[cn2.ConnectivityNodeContainerMrid].SubstationMrid].LocationMrid],
+		}
+	}
+
+	skipped := 0
+	substationMapDataIter := func(yield func(v pkg.SubstationMapData) bool) {
+		for _, sub := range substations {
+			pt, ok := ptMap[sub.LocationMrid]
+			if !ok {
+				skipped++
+				continue
+			}
+
+			data := pkg.SubstationMapData{
+				Name: sub.Name,
+				Lat:  pt.YPosition,
+				Lng:  pt.XPosition,
+			}
+
+			if !yield(data) {
+				return
+			}
+		}
+	}
+	slog.InfoContext(ctx, "Extracted substations", "num", len(substations), "modelId", modelId, "ignoredLines", ignoredLines, "numSkippedSubstations", skipped)
+
+	lineIter := func(yield func(v pkg.LineMapData) bool) {
+		for _, line := range acLines {
+			fromTo := acLineFromToMap[line.Mrid]
+			vl := bvMap[line.BaseVoltageMrid]
+			data := pkg.LineMapData{
+				LatFrom: fromTo.Pt1.YPosition,
+				LatTo:   fromTo.Pt2.YPosition,
+				LngFrom: fromTo.Pt1.XPosition,
+				LngTo:   fromTo.Pt2.XPosition,
+				Name:    line.Name,
+				Voltage: int(vl.NominalVoltage),
+			}
+
+			if !yield(data) {
+				return
+			}
+		}
+	}
+	pkg.RenderMap(w, substationMapDataIter, lineIter)
+}
+
 type ResourceItem struct {
 	Data any    `json:"data"`
 	Type string `json:"type"`
