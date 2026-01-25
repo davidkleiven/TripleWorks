@@ -350,3 +350,15 @@ func TestAddNodeErrorOnCancelledContext(t *testing.T) {
 	require.Error(t, err)
 	require.ErrorContains(t, err, "no such table")
 }
+
+func TestCanNotInsertZeroSequenceNumber(t *testing.T) {
+	db := setupPostgresTestDb(t)
+	ctx := context.Background()
+	_, err := RunUp(ctx, db)
+	require.NoError(t, err)
+	var terminal models.Terminal
+	terminal.Mrid = uuid.New()
+	_, err = db.NewInsert().Model(&terminal).Exec(ctx)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "sequence_number_positive")
+}
