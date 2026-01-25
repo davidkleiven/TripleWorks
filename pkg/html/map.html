@@ -16,59 +16,47 @@
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-             // Initialize map centered at Oslo
-             var map = L.map('map').setView([59.9139, 10.7522], 6); // world view
+      // Initialize map centered at Oslo
+      var map = L.map('map').setView([59.9139, 10.7522], 6); // world view
 
-             // Add OpenStreetMap tiles
-             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                 maxZoom: 19,
-             }).addTo(map);
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+      }).addTo(map);
 
-             // Add substations markers
-             var substations = {{ .Substations | toJSON }};
+      // Add substations markers
+      var substations = {{ .Substations | toJSON }};
 
-             substations.forEach(function(sub) {
-                 L.marker([sub.Lat, sub.Lng])
-                     .addTo(map)
-                     .bindPopup(sub.Name);
-             });
+      substations.forEach(function(sub) {
+          L.marker([sub.Lat, sub.Lng])
+              .addTo(map)
+              .bindPopup(sub.Name);
+      });
 
-             // Add lines
-             var lines = {{ .Lines | toJSON }};
-             lines.forEach(function(line) {
-       var latlngs = [
-                [line.LatFrom, line.LngFrom],
-                [line.LatTo, line.LngTo]
-                ];
+      // Add lines
+      var lines = {{ .Lines | toJSON }};
+      lines.forEach(function(line) {
+var latlngs = [
+         [line.LatFrom, line.LngFrom],
+         [line.LatTo, line.LngTo]
+         ];
 
-       L.polyline(latlngs, { color: voltageColor(line.Voltage), weight: width(line.Voltage)})
-               	.bindPopup(line.Name + " (" + line.Voltage + " kV)")
-               .addTo(map);
-             });
+L.polyline(latlngs, { color: voltageColor(line.Voltage), weight: 3})
+        	.bindPopup(line.Name + " (" + line.Voltage + " kV)")
+        .addTo(map);
+      });
 
-             function voltageColor(voltage) {
-              if (voltage < 66) {
-               return '#808080AA';
-              } else if (voltage < 132) {
-               return '#0000FFAA';
-              } else if (voltage < 220) {
-               return '#00FF00AA';
-              } else if (voltage < 320) {
-               return '#800080AA';
-              } else {
-               return '#FF0000AA';
-              }
-             }
-
-      function width(voltage) {
+      function voltageColor(voltage) {
        if (voltage < 66) {
-        return 3
+        return 'gray';
        } else if (voltage < 132) {
-        return 5
-       } else if (voltage < 320) {
-        return 7
+        return 'blue';
+       } else if (voltage < 220) {
+        return 'black';
+       } else if (voltage < 300) {
+        return 'purple';
        } else {
-        return 9
+        return 'red';
        }
       }
     </script>

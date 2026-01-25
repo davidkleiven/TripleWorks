@@ -513,70 +513,6 @@ func (e *EntityStore) SimpleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (e *EntityStore) Commits(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
-	defer cancel()
-
-	var commits []models.Commit
-	err := e.db.NewSelect().Model(&commits).Scan(ctx)
-	if err != nil {
-		slog.ErrorContext(ctx, "Could not fetch commits", "error", err)
-		http.Error(w, "Could not fetch commits: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	pkg.PanicOnErr(json.NewEncoder(w).Encode(&commits))
-	w.Header().Set("Content-Type", "application/json")
-}
-
-func (e *EntityStore) DeleteCommit(w http.ResponseWriter, r *http.Request) {
-	commitIdStr := r.PathValue("id")
-	commitId, err := strconv.Atoi(commitIdStr)
-	if err != nil {
-		slog.ErrorContext(r.Context(), "Commit id is not an integer", "commitId", commitIdStr)
-		http.Error(w, "'%s' is not an integer", http.StatusBadRequest)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
-	defer cancel()
-
-	var (
-		affectedRows  int
-		skippedTables []string
-	)
-	txErr := e.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		for _, itemPtr := range pkg.FormTypes() {
-			_, isVersionedObject := itemPtr.(models.VersionedIdentifiedObject)
-			if !isVersionedObject {
-				skippedTables = append(skippedTables, pkg.StructName(itemPtr))
-				continue
-			}
-
-			res, err := tx.NewDelete().Model(itemPtr).Where("commit_id = ?", commitId).Exec(ctx)
-			if err != nil {
-				return fmt.Errorf("Failed to delete from table %s: %w", pkg.StructName(itemPtr), err)
-			}
-			rows, _ := res.RowsAffected()
-			affectedRows += int(rows)
-		}
-		_, err := tx.NewDelete().Model((*models.Commit)(nil)).Where("id = ?", commitId).Exec(ctx)
-		if err != nil {
-			return fmt.Errorf("Failed to delete from commit table: %w", err)
-		}
-
-		_, err = tx.NewDelete().Model((*models.Entity)(nil)).Where("commit_id = ?", commitId).Exec(ctx)
-		return err
-	})
-
-	slog.InfoContext(ctx, "Skipped delete for tables", "affectedRows", affectedRows, "skipped", skippedTables)
-	if txErr != nil {
-		slog.ErrorContext(ctx, "Failed to delete commit", "error", txErr)
-		http.Error(w, "Failed to delete commit: "+txErr.Error(), http.StatusInternalServerError)
-		return
-	}
-	fmt.Fprintf(w, "Successfully deleted commit %d", commitId)
-}
-
 func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
 	defer cancel()
@@ -611,7 +547,6 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 	}
 	substations = pkg.OnlyActiveLatest(substations)
 	bvs = pkg.OnlyActiveLatest(bvs)
-	acLines = pkg.OnlyActiveLatest(acLines)
 
 	ptMap := make(map[uuid.UUID]models.PositionPoint)
 	for _, pt := range points {
@@ -649,34 +584,38 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 	// TODO: should be deduced via electrical connectivity (not names)
 	lineIter := func(yield func(v pkg.LineMapData) bool) {
 		re := regexp.MustCompile(`\([^)]*\)`)
+		fromTo := make([]uuid.UUID, 2)
+		skip := []string{"Ulven", "Jordal", "Solheim-Fyllingsdalen", "Sande"}
 		for _, line := range acLines {
+			found := 0
 			lineName := strings.TrimSpace(re.ReplaceAllString(line.Name, ""))
-			fromToCandidates := []uuid.UUID{}
+			doSkip := false
+			for _, name := range skip {
+				if strings.Contains(lineName, name) {
+					doSkip = true
+					break
+				}
+			}
+
+			if doSkip {
+				continue
+			}
+
 			for _, sub := range substations {
 				if strings.HasPrefix(lineName, sub.Name+"-") || strings.HasSuffix(lineName, "-"+sub.Name) {
-					fromToCandidates = append(fromToCandidates, sub.LocationMrid)
+					fromTo[found] = sub.LocationMrid
+					found++
+				}
+				if found == 2 {
+					break
 				}
 			}
-
-			if len(fromToCandidates) < 2 {
-				continue
-			}
-
-			pts := make([]models.PositionPoint, 0, len(fromToCandidates))
-			for _, locMrid := range fromToCandidates {
-				pt, ok := ptMap[locMrid]
-				if !ok {
-					continue
-				}
-				pts = append(pts, pt)
-			}
-
+			pt1, ok1 := ptMap[fromTo[0]]
+			pt2, ok2 := ptMap[fromTo[1]]
 			vl, okVl := bvMap[line.BaseVoltageMrid]
-			if !okVl || len(pts) < 2 {
+			if !ok1 || !ok2 || !okVl || (found != 2) {
 				continue
 			}
-
-			pt1, pt2 := closestPair(pts)
 			data := pkg.LineMapData{
 				LatFrom: pt1.YPosition,
 				LatTo:   pt2.YPosition,
