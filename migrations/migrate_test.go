@@ -362,3 +362,27 @@ func TestCanNotInsertZeroSequenceNumber(t *testing.T) {
 	require.Error(t, err)
 	require.ErrorContains(t, err, "sequence_number_positive")
 }
+
+func TestCanNotInsertZeroNominalVoltage(t *testing.T) {
+	db := setupPostgresTestDb(t)
+	ctx := context.Background()
+	_, err := RunUp(ctx, db)
+	require.NoError(t, err)
+
+	model := models.Model{Name: "test model"}
+	_, err = db.NewInsert().Model(&model).Exec(ctx)
+	require.NoError(t, err)
+
+	var commit models.Commit
+	commit.Message = "add base voltage"
+	_, err = db.NewInsert().Model(&commit).Exec(ctx)
+	require.NoError(t, err)
+
+	var bv models.BaseVoltage
+	bv.Mrid = uuid.New()
+	bv.CommitId = int(commit.Id)
+
+	_, err = db.NewInsert().Model(&bv).Exec(ctx)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "nominal_voltage_positive")
+}
