@@ -570,3 +570,58 @@ func TestGetCommits(t *testing.T) {
 	})
 
 }
+
+func TestDeleteCommits(t *testing.T) {
+	store := setupStore(t)
+	ctx := context.Background()
+	var toDelete int64
+	for i := range 2 {
+		var commit models.Commit
+		var bv models.BaseVoltage
+		bv.Mrid = uuid.New()
+		bv.Name = fmt.Sprintf("Base voltage: %d", i)
+
+		_, err := store.db.NewInsert().Model(&commit).Exec(ctx)
+		require.NoError(t, err)
+
+		bv.CommitId = int(commit.Id)
+		toDelete = commit.Id
+		_, err = store.db.NewInsert().Model(&bv).Exec(ctx)
+		require.NoError(t, err)
+	}
+
+	var bvs []models.BaseVoltage
+	err := store.db.NewSelect().Model(&bvs).Scan(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(bvs))
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("DELETE /commit/{id}", store.DeleteCommit)
+
+	t.Run("success", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("DELETE", fmt.Sprintf("/commit/%d", toDelete), nil)
+
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+
+		var bvs []models.BaseVoltage
+		err := store.db.NewSelect().Model(&bvs).Scan(ctx)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(bvs))
+
+		var commits []models.Commit
+		err = store.db.NewSelect().Model(&commits).Scan(ctx)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(commits))
+	})
+
+	t.Run("wrong commit id", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("DELETE", "/commit/non-int", nil)
+
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+}
