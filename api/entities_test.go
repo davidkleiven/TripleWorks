@@ -549,3 +549,24 @@ func TestSimpleUpload(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 }
+
+func TestGetCommits(t *testing.T) {
+	store := setupStore(t)
+	t.Run("success", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/commits", nil)
+		store.Commits(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+	})
+
+	t.Run("failure", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/commits", nil)
+
+		ctx, cancel := context.WithCancel(req.Context())
+		cancel()
+		store.Commits(rec, req.WithContext(ctx))
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+
+}

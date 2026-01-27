@@ -510,6 +510,21 @@ func (e *EntityStore) SimpleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (e *EntityStore) Commits(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+	defer cancel()
+
+	var commits []models.Commit
+	err := e.db.NewSelect().Model(&commits).Scan(ctx)
+	if err != nil {
+		slog.ErrorContext(ctx, "Could not fetch commits", "error", err)
+		http.Error(w, "Could not fetch commits: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	pkg.PanicOnErr(json.NewEncoder(w).Encode(&commits))
+	w.Header().Set("Content-Type", "application/json")
+}
+
 type ResourceItem struct {
 	Data any    `json:"data"`
 	Type string `json:"type"`
