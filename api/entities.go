@@ -525,6 +525,50 @@ func (e *EntityStore) Commits(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 }
 
+func (e *EntityStore) DeleteCommit(w http.ResponseWriter, r *http.Request) {
+	commitIdStr := r.PathValue("id")
+	commitId, err := strconv.Atoi(commitIdStr)
+	if err != nil {
+		slog.ErrorContext(r.Context(), "Commit id is not an integer", "commitId", commitIdStr)
+		http.Error(w, "'%s' is not an integer", http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+	defer cancel()
+
+	var (
+		affectedRows  int
+		skippedTables []string
+	)
+	txErr := e.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		for _, itemPtr := range pkg.FormTypes() {
+			_, isVersionedObject := itemPtr.(models.VersionedIdentifiedObject)
+			if !isVersionedObject {
+				skippedTables = append(skippedTables, pkg.StructName(itemPtr))
+				continue
+			}
+
+			res, err := tx.NewDelete().Model(itemPtr).Where("commit_id = ?", commitId).Exec(ctx)
+			if err != nil {
+				return fmt.Errorf("Failed to delete from table %s: %w", pkg.StructName(itemPtr), err)
+			}
+			rows, _ := res.RowsAffected()
+			affectedRows += int(rows)
+		}
+		_, err := tx.NewDelete().Model((*models.Commit)(nil)).Where("id = ?", commitId).Exec(ctx)
+		return err
+	})
+
+	slog.InfoContext(ctx, "Skipped delete for tables", "affectedRows", affectedRows, "skipped", skippedTables)
+	if txErr != nil {
+		slog.ErrorContext(ctx, "Failed to delete commit", "error", txErr)
+		http.Error(w, "Failed to delete commit: "+txErr.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "Successfully deleted commit %d", commitId)
+}
+
 type ResourceItem struct {
 	Data any    `json:"data"`
 	Type string `json:"type"`
@@ -534,8 +578,13 @@ type TriggerEditComponentForm struct {
 	ResourceType string `json:"resourceType"`
 }
 
+type FromToLoc struct {
+	Pt1 models.PositionPoint
+	Pt2 models.PositionPoint
+}
+
 func NewEntityStore(db *bun.DB, timeout time.Duration) *EntityStore {
-	return &EntityStore{
+	store := EntityStore{
 		db:      db,
 		timeout: timeout,
 		allowedUnset: map[string]struct{}{
@@ -545,6 +594,7 @@ func NewEntityStore(db *bun.DB, timeout time.Duration) *EntityStore {
 			"commit_id": {},
 		},
 	}
+	return &store
 }
 
 type ModelMetaData struct {
