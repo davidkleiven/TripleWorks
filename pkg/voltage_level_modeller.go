@@ -83,6 +83,9 @@ func (v *VoltageLevelModel) Write(ctx context.Context, db *bun.DB, modelId int, 
 				return nil
 			},
 			func() error {
+				for i := range entities {
+					entities[i].CommitId = int(commit.Id)
+				}
 				_, err := tx.NewInsert().Model(&entities).Exec(ctx)
 				return err
 			},

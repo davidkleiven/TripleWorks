@@ -74,7 +74,11 @@ func TestInsertVoltageModelToDb(t *testing.T) {
 	_, err = db.NewInsert().Model(&model).Exec(ctx)
 	require.NoError(t, err, "Model")
 
-	zeroMrid := models.Entity{ModelEntity: models.ModelEntity{ModelId: model.Id}}
+	var commit models.Commit
+	_, err = db.NewInsert().Model(&commit).Exec(ctx)
+	require.NoError(t, err)
+
+	zeroMrid := models.Entity{ModelEntity: models.ModelEntity{ModelId: model.Id}, CommitId: int(commit.Id)}
 	_, err = db.NewInsert().Model(&zeroMrid).Exec(ctx)
 	require.NoError(t, err)
 
