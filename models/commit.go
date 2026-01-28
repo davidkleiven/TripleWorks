@@ -28,6 +28,7 @@ type ModelEntity struct {
 }
 
 type BaseEntity struct {
+	bun.BaseModel
 	Id       int     `bun:"id,pk,autoincrement"`
 	CommitId int     `bun:"commit_id"`
 	Commit   *Commit `bun:"rel:belongs-to,join:commit_id=id"`
