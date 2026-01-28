@@ -219,6 +219,7 @@ func (e *EntityStore) Commit(w http.ResponseWriter, r *http.Request) {
 				return ierr
 			},
 			func() error {
+				entity.CommitId = int(commit.Id)
 				_, ierr := tx.NewInsert().
 					Model(&entity).
 					On("CONFLICT DO NOTHING").
@@ -557,6 +558,11 @@ func (e *EntityStore) DeleteCommit(w http.ResponseWriter, r *http.Request) {
 			affectedRows += int(rows)
 		}
 		_, err := tx.NewDelete().Model((*models.Commit)(nil)).Where("id = ?", commitId).Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed to delete from commit table: %w", err)
+		}
+
+		_, err = tx.NewDelete().Model((*models.Entity)(nil)).Where("commit_id = ?", commitId).Exec(ctx)
 		return err
 	})
 

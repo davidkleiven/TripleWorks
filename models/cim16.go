@@ -7,9 +7,16 @@ import (
 )
 
 type Entity struct {
+	CommitId int     `bun:"commit_id"`
+	Commit   *Commit `bun:"rel:belongs-to,join:commit_id=id"`
 	ModelEntity
 	Mrid       uuid.UUID `bun:"mrid,type:uuid,pk"`
 	EntityType string    `bun:"entity_type"`
+}
+
+// Implement CommitIdSetter interface
+func (e *Entity) SetCommitId(commitId int) {
+	e.CommitId = commitId
 }
 
 type DCBaseTerminal struct {

@@ -73,7 +73,12 @@ func TestGenerator(t *testing.T) {
 	substationEntity.EntityType = "Substation"
 	substationEntity.ModelId = modelId
 
-	_, err := db.NewInsert().Model(&substationEntity).Exec(context.Background())
+	var commit models.Commit
+	_, err := db.NewInsert().Model(&commit).Exec(context.Background())
+	require.NoError(t, err)
+
+	substationEntity.CommitId = int(commit.Id)
+	_, err = db.NewInsert().Model(&substationEntity).Exec(context.Background())
 	require.NoError(t, err)
 
 	err = InsertAll(context.Background(), db, "Create generator in substation A", itemIterator, NoOpOnInsert)
@@ -122,7 +127,13 @@ func TestConformLoad(t *testing.T) {
 	substationEntity.EntityType = "Substation"
 	substationEntity.ModelId = modelId
 
-	_, err := db.NewInsert().Model(&substationEntity).Exec(context.Background())
+	var commit models.Commit
+	_, err := db.NewInsert().Model(&commit).Exec(context.Background())
+	require.NoError(t, err)
+
+	substationEntity.CommitId = int(commit.Id)
+
+	_, err = db.NewInsert().Model(&substationEntity).Exec(context.Background())
 	require.NoError(t, err)
 
 	err = InsertAll(context.Background(), db, "Create load in substation A", itemIterator, NoOpOnInsert)
