@@ -110,6 +110,9 @@ func (s *SubstationModel) Write(ctx context.Context, db *bun.DB, modelId int, ms
 				return nil
 			},
 			func() error {
+				for i := range entities {
+					entities[i].CommitId = int(commit.Id)
+				}
 				_, err := tx.NewInsert().Model(&entities).Exec(ctx)
 				return err
 			},

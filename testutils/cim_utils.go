@@ -71,6 +71,7 @@ func InsertTerminalFactory(data *ValidTerminal) func(context.Context, bun.Tx) er
 		}
 
 		for i, entity := range data.Entities {
+			entity.CommitId = int(data.Commit.Id)
 			entity.ModelId = data.Model.Id
 			if _, err := tx.NewInsert().Model(&entity).Exec(ctx); err != nil {
 				return fmt.Errorf("Failed to insert entity %d: %w", i, err)

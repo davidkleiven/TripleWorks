@@ -118,14 +118,18 @@ func TestSubstationDataWrite(t *testing.T) {
 	_, err = db.NewInsert().Model(&model).Exec(ctx)
 	require.NoError(t, err, "Model")
 
-	zeroMrid := models.Entity{ModelEntity: models.ModelEntity{ModelId: model.Id}}
+	var commit models.Commit
+	_, err = db.NewInsert().Model(&commit).Exec(ctx)
+	require.NoError(t, err)
+
+	zeroMrid := models.Entity{ModelEntity: models.ModelEntity{ModelId: model.Id}, CommitId: int(commit.Id)}
 	_, err = db.NewInsert().Model(&zeroMrid).Exec(ctx)
 	require.NoError(t, err)
 
 	var sub models.Substation
 	sub.Mrid = uuid.New()
 
-	substationEntity := models.Entity{Mrid: sub.Mrid, ModelEntity: models.ModelEntity{ModelId: model.Id}}
+	substationEntity := models.Entity{Mrid: sub.Mrid, ModelEntity: models.ModelEntity{ModelId: model.Id}, CommitId: int(commit.Id)}
 	_, err = db.NewInsert().Model(&substationEntity).Exec(ctx)
 	require.NoError(t, err)
 
@@ -136,7 +140,7 @@ func TestSubstationDataWrite(t *testing.T) {
 		for j := range vls[i].ConnectivityNodes {
 			mrid := uuid.New()
 			vls[i].ConnectivityNodes[j].Mrid = mrid
-			conNodeEntity := models.Entity{Mrid: mrid, ModelEntity: models.ModelEntity{ModelId: model.Id}}
+			conNodeEntity := models.Entity{Mrid: mrid, ModelEntity: models.ModelEntity{ModelId: model.Id}, CommitId: int(commit.Id)}
 			conNodeEntities = append(conNodeEntities, conNodeEntity)
 		}
 	}
