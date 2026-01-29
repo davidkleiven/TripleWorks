@@ -3,6 +3,7 @@ package migrations
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -54,6 +55,29 @@ func skipLocallyIfNoConnection(t *testing.T) {
 	}
 }
 
+func clearPgDataBase(ctx context.Context, db *bun.DB) error {
+	rows, err := db.QueryContext(ctx, "SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
+	if err != nil {
+		return fmt.Errorf("Failed to create query: %w", err)
+	}
+	defer rows.Close()
+
+	tabNo := 0
+	for rows.Next() {
+		var table string
+		if err := rows.Scan(&table); err != nil {
+			return fmt.Errorf("Failed for table %d: %w", tabNo, err)
+		}
+		deleteQuery := fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE", table)
+		_, err = db.ExecContext(ctx, deleteQuery)
+		if err != nil {
+			return fmt.Errorf("Failed to delete table %s (%d): %w", table, tabNo, err)
+		}
+		tabNo++
+	}
+	return nil
+}
+
 func TestAllMigrations(t *testing.T) {
 	for _, test := range []struct {
 		db   *bun.DB
@@ -71,6 +95,7 @@ func TestAllMigrations(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			if test.name == "Postgres" {
 				skipLocallyIfNoConnection(t)
+				defer clearPgDataBase(context.Background(), test.db)
 			}
 			ctx := context.Background()
 			applied, err := RunUp(ctx, test.db)
@@ -210,6 +235,7 @@ func TestValidInsertOkSqlite(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			if test.name == "Postgres" {
 				skipLocallyIfNoConnection(t)
+				defer clearPgDataBase(ctx, test.db)
 			}
 			_, err := RunUp(ctx, test.db)
 
@@ -233,7 +259,7 @@ func TestInvalidInsertPostgres(t *testing.T) {
 	ctx := context.Background()
 	sqldb := setupPostgresTestDb(t)
 	_, err := RunUp(ctx, sqldb)
-	defer RunDown(ctx, sqldb)
+	defer clearPgDataBase(ctx, sqldb)
 	require.NoError(t, err)
 	terminal := invalidTerminal()
 	_, err = sqldb.NewInsert().Model(terminal).Exec(ctx)
@@ -285,7 +311,7 @@ func TestEnumsArePopulated(t *testing.T) {
 	ctx := context.Background()
 	sqldb := setupPostgresTestDb(t)
 	_, err := RunUp(ctx, sqldb)
-	defer RunDown(ctx, sqldb)
+	defer clearPgDataBase(ctx, sqldb)
 	require.NoError(t, err)
 
 	var phaseCodes []models.PhaseCode
@@ -354,6 +380,7 @@ func TestAddNodeErrorOnCancelledContext(t *testing.T) {
 func TestCanNotInsertZeroSequenceNumber(t *testing.T) {
 	db := setupPostgresTestDb(t)
 	ctx := context.Background()
+	defer clearPgDataBase(ctx, db)
 	_, err := RunUp(ctx, db)
 	require.NoError(t, err)
 	var terminal models.Terminal
@@ -366,6 +393,7 @@ func TestCanNotInsertZeroSequenceNumber(t *testing.T) {
 func TestCanNotInsertZeroNominalVoltage(t *testing.T) {
 	db := setupPostgresTestDb(t)
 	ctx := context.Background()
+	defer clearPgDataBase(ctx, db)
 	_, err := RunUp(ctx, db)
 	require.NoError(t, err)
 
