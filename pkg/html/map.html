@@ -2,62 +2,252 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Substations Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        overflow: hidden;
+      }
+
       #map {
         height: 100vh;
         width: 100%;
+      }
+
+      .control-panel {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        padding: 20px;
+        z-index: 1000;
+        min-width: 220px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+      }
+
+      .control-panel h3 {
+        margin: 0 0 15px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+      }
+
+      .voltage-group {
+        margin-bottom: 12px;
+      }
+
+      .voltage-group label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 6px;
+        transition: background-color 0.2s;
+      }
+
+      .voltage-group label:hover {
+        background-color: #f8f9fa;
+      }
+
+      .voltage-group input[type="checkbox"] {
+        margin-right: 10px;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #3498db;
+      }
+
+      .voltage-group .color-indicator {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        margin-right: 10px;
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+      }
+
+      .voltage-group .voltage-label {
+        flex: 1;
+        font-size: 14px;
+        color: #34495e;
+        font-weight: 500;
+      }
+
+      .substation-info {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #e0e0e0;
+        font-size: 12px;
+        color: #7f8c8d;
+      }
+
+      .substation-info strong {
+        color: #2c3e50;
       }
     </style>
   </head>
   <body>
     <div id="map"></div>
+    <div class="control-panel">
+      <h3>Voltage Levels</h3>
+      <div id="voltage-controls"></div>
+      <div class="substation-info">
+        <strong id="substation-count">0</strong> substations<br>
+        <strong id="line-count">0</strong> lines
+      </div>
+    </div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
       // Initialize map centered at Oslo
-      var map = L.map('map').setView([59.9139, 10.7522], 6); // world view
+      var map = L.map('map').setView([59.9139, 10.7522], 6);
 
       // Add OpenStreetMap tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(map);
 
-      // Add substations markers
+      // Voltage level configuration
+      var voltageLevels = [
+        { min: 0, max: 66, color: '#808080', label: '< 66 kV' },
+        { min: 66, max: 132, color: '#4169E1', label: '66-132 kV' },
+        { min: 132, max: 220, color: '#000000', label: '132-220 kV' },
+        { min: 220, max: 300, color: '#9370DB', label: '220-300 kV' },
+        { min: 300, max: Infinity, color: '#DC143C', label: '> 300 kV' }
+      ];
+
+      // Create voltage controls
+      var voltageControls = document.getElementById('voltage-controls');
+      var lineLayers = {};
+      var lineVisibility = {};
+
+      voltageLevels.forEach(function(level, index) {
+        var group = document.createElement('div');
+        group.className = 'voltage-group';
+        
+        var label = document.createElement('label');
+        var checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
+        checkbox.id = 'voltage-' + index;
+        checkbox.addEventListener('change', function() {
+          toggleVoltageLevel(index, this.checked);
+        });
+
+        var colorIndicator = document.createElement('div');
+        colorIndicator.className = 'color-indicator';
+        colorIndicator.style.backgroundColor = level.color;
+
+        var voltageLabel = document.createElement('span');
+        voltageLabel.className = 'voltage-label';
+        voltageLabel.textContent = level.label;
+
+        label.appendChild(checkbox);
+        label.appendChild(colorIndicator);
+        label.appendChild(voltageLabel);
+        group.appendChild(label);
+        voltageControls.appendChild(group);
+
+        lineLayers[index] = L.layerGroup().addTo(map);
+        lineVisibility[index] = true;
+      });
+
+      // Add substations markers as small circles
       var substations = {{ .Substations | toJSON }};
+      var substationMarkers = [];
 
       substations.forEach(function(sub) {
-          L.marker([sub.Lat, sub.Lng])
-              .addTo(map)
-              .bindPopup(sub.Name);
+        var circle = L.circleMarker([sub.Lat, sub.Lng], {
+          radius: 5,
+          fillColor: '#3498db',
+          color: '#2980b9',
+          weight: 2,
+          opacity: 0.8,
+          fillOpacity: 0.7
+        })
+        .addTo(map)
+        .bindPopup('<strong>' + sub.Name + '</strong>');
+        
+        substationMarkers.push(circle);
       });
 
-      // Add lines
+      // Update substation count
+      document.getElementById('substation-count').textContent = substations.length;
+
+      // Add lines grouped by voltage level
+      // First, collect all lines and sort by voltage level (lowest to highest)
       var lines = {{ .Lines | toJSON }};
-      lines.forEach(function(line) {
-var latlngs = [
-         [line.LatFrom, line.LngFrom],
-         [line.LatTo, line.LngTo]
-         ];
-
-L.polyline(latlngs, { color: voltageColor(line.Voltage), weight: 3})
-        	.bindPopup(line.Name + " (" + line.Voltage + " kV)")
-        .addTo(map);
+      var totalLines = lines.length;
+      
+      // Group lines by voltage level index
+      var linesByLevel = {};
+      voltageLevels.forEach(function(level, index) {
+        linesByLevel[index] = [];
       });
+
+      lines.forEach(function(line) {
+        var voltage = line.Voltage || 0;
+        var levelIndex = getVoltageLevelIndex(voltage);
+        linesByLevel[levelIndex].push(line);
+      });
+
+      // Add lines in order (lowest voltage first, highest voltage last) so highest appears on top
+      for (var i = 0; i < voltageLevels.length; i++) {
+        linesByLevel[i].forEach(function(line) {
+          var latlngs = [
+            [line.LatFrom, line.LngFrom],
+            [line.LatTo, line.LngTo]
+          ];
+
+          var polyline = L.polyline(latlngs, {
+            color: voltageLevels[i].color,
+            weight: 3,
+            opacity: 0.8
+          })
+          .bindPopup('<strong>' + line.Name + '</strong><br>' + line.Voltage + ' kV');
+
+          lineLayers[i].addLayer(polyline);
+        });
+      }
+
+      // Update line count
+      document.getElementById('line-count').textContent = totalLines;
+
+      function getVoltageLevelIndex(voltage) {
+        for (var i = 0; i < voltageLevels.length; i++) {
+          if (voltage >= voltageLevels[i].min && voltage < voltageLevels[i].max) {
+            return i;
+          }
+        }
+        return voltageLevels.length - 1; // Default to highest level
+      }
+
+      function toggleVoltageLevel(levelIndex, visible) {
+        lineVisibility[levelIndex] = visible;
+        if (visible) {
+          map.addLayer(lineLayers[levelIndex]);
+        } else {
+          map.removeLayer(lineLayers[levelIndex]);
+        }
+      }
 
       function voltageColor(voltage) {
-       if (voltage < 66) {
-        return 'gray';
-       } else if (voltage < 132) {
-        return 'blue';
-       } else if (voltage < 220) {
-        return 'black';
-       } else if (voltage < 300) {
-        return 'purple';
-       } else {
-        return 'red';
-       }
+        var levelIndex = getVoltageLevelIndex(voltage);
+        return voltageLevels[levelIndex].color;
       }
     </script>
   </body>
