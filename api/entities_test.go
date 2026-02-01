@@ -31,6 +31,32 @@ func setupStore(t *testing.T) *EntityStore {
 	return store
 }
 
+type FailingWriter struct {
+	rec    *httptest.ResponseRecorder
+	writes int
+	failAt int
+}
+
+func NewFailingWriter(rec *httptest.ResponseRecorder, failAt int) *FailingWriter {
+	return &FailingWriter{rec: rec, failAt: failAt}
+}
+
+func (f *FailingWriter) Write(p []byte) (n int, err error) {
+	f.writes++
+	if f.writes > f.failAt {
+		return 0, errors.New("writer failed")
+	}
+	return f.rec.Write(p)
+}
+
+func (f *FailingWriter) Header() http.Header {
+	return f.rec.Header()
+}
+
+func (f *FailingWriter) WriteHeader(statusCode int) {
+	f.rec.WriteHeader(statusCode)
+}
+
 func TestGetEntityForKind(t *testing.T) {
 	store := setupStore(t)
 
@@ -624,4 +650,197 @@ func TestDeleteCommits(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
+}
+
+func TestConnectDanglingLines(t *testing.T) {
+	store := setupStore(t)
+	var (
+		bv            models.BaseVoltage
+		line1         models.ACLineSegment
+		line2         models.ACLineSegment
+		substation    models.Substation
+		substationTrd models.Substation
+	)
+	bv.Mrid = uuid.New()
+	bv.NominalVoltage = 22.0
+
+	line1.BaseVoltageMrid = bv.Mrid
+	line1.Name = "Trondheim - Brottem"
+	line1.Mrid = uuid.New()
+
+	line2.BaseVoltageMrid = bv.Mrid
+	line2.Name = "Brottem - Selbu"
+	line2.Mrid = uuid.New()
+
+	substation.Mrid = uuid.New()
+	substation.Name = "Brottem"
+
+	substationTrd.Mrid = uuid.New()
+	substationTrd.Name = "Trondheim"
+
+	ctx := context.Background()
+	_, err := store.db.NewInsert().Model(&bv).Exec(ctx)
+	require.NoError(t, err)
+
+	substations := []models.Substation{substation, substationTrd}
+	_, err = store.db.NewInsert().Model(&substations).Exec(ctx)
+	require.NoError(t, err)
+
+	lines := []models.ACLineSegment{line1, line2}
+	_, err = store.db.NewInsert().Model(&lines).Exec(ctx)
+	require.NoError(t, err)
+
+	t.Run("success", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/connect-dangling", nil)
+		rec := httptest.NewRecorder()
+		store.ConnectDanglingLines(rec, req)
+		require.Equal(t, rec.Code, http.StatusOK)
+
+		graph, err := pkg.LoadObjects(rec.Body)
+		require.NoError(t, err)
+
+		it := graph.AllStatements()
+		numConNodes := 0
+		numVoltageLevels := 0
+		numTerminals := 0
+		substationTargets := make(map[string]struct{})
+		conNodeContainers := make(map[string]struct{})
+
+		for it.Next() {
+			stmt := it.Statement()
+
+			isRdfType := strings.HasSuffix(stmt.Predicate.Value, "#type>")
+			if isRdfType && strings.HasSuffix(stmt.Object.Value, "ConnectivityNode>") {
+				numConNodes++
+			}
+
+			if isRdfType && strings.HasSuffix(stmt.Object.Value, "VoltageLevel>") {
+				numVoltageLevels++
+			}
+
+			if isRdfType && strings.HasSuffix(stmt.Object.Value, "Terminal>") {
+				numTerminals++
+			}
+
+			if strings.HasSuffix(stmt.Predicate.Value, "VoltageLevel.Substation>") {
+				substationTargets[stmt.Object.Value] = struct{}{}
+			}
+
+			if strings.HasSuffix(stmt.Predicate.Value, "ConnectivityNode.ConnectivityNodeContainer>") {
+				conNodeContainers[stmt.Object.Value] = struct{}{}
+			}
+		}
+
+		// Two con nodes
+		require.Equal(t, 4, numConNodes, "Should create two connectivity nodes")
+		require.Equal(t, 4, numTerminals, "Should create two terminals")
+		require.Equal(t, 2, numVoltageLevels, "Should create one voltage level")
+		require.Equal(t, 2, len(substationTargets), "Should point to one substation")
+		require.Equal(t, 2, len(conNodeContainers), "Should be only one connectivity node container")
+	})
+
+	t.Run("timeout", func(t *testing.T) {
+		originalTimeout := store.timeout
+		store.timeout = time.Nanosecond
+		defer func() { store.timeout = originalTimeout }()
+
+		req := httptest.NewRequest("POST", "/connect-dangling", nil)
+		rec := httptest.NewRecorder()
+		store.ConnectDanglingLines(rec, req)
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+
+	t.Run("insert-error", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/connect-dangling?commit=true", nil)
+		rec := httptest.NewRecorder()
+		failingWriter := NewFailingWriter(rec, 3)
+
+		store.ConnectDanglingLines(failingWriter, req)
+
+		bodyStr := rec.Body.String()
+		linesWritten := strings.Count(bodyStr, "\n")
+		require.Less(t, linesWritten, 6, "Expected partial body since writing failed")
+	})
+}
+
+func TestMap(t *testing.T) {
+	var (
+		substations = make([]models.Substation, 5)
+		acLines     = make([]models.ACLineSegment, 5)
+		points      = make([]models.PositionPoint, 5)
+		locations   = make([]models.Location, 5)
+		bv          models.BaseVoltage
+		vls         = make([]models.VoltageLevel, 5)
+		terminals   = make([]models.Terminal, 10)
+		cns         = make([]models.ConnectivityNode, 10)
+	)
+
+	for i := range locations {
+		locations[i].Mrid = uuid.New()
+	}
+
+	for i := range points {
+		points[i].LocationMrid = locations[i].Mrid
+	}
+
+	for i := range substations {
+		substations[i].Mrid = uuid.New()
+		if i != 0 {
+			// Deliberatly make one substation not having a loc mrid
+			// to make sure the code handles it
+			substations[i].LocationMrid = locations[i].Mrid
+		}
+	}
+	bv.Mrid = uuid.New()
+
+	for i := range vls {
+		vls[i].Mrid = uuid.New()
+		vls[i].BaseVoltageMrid = bv.Mrid
+		vls[i].SubstationMrid = substations[i].Mrid
+	}
+
+	for i := range cns {
+		cns[i].Mrid = uuid.New()
+		cns[i].ConnectivityNodeContainerMrid = vls[i%len(vls)].Mrid
+	}
+
+	for i := range acLines {
+		acLines[i].Mrid = uuid.New()
+	}
+
+	for i := range terminals {
+		terminals[i].Mrid = uuid.New()
+		terminals[i].ConnectivityNodeMrid = cns[i%len(cns)].Mrid
+
+		// Make one ac line have only one terminal. The line should then be skipped
+		if i != 0 {
+			terminals[i].ConductingEquipmentMrid = acLines[i%len(acLines)].Mrid
+		}
+	}
+
+	store := setupStore(t)
+	ctx := context.Background()
+	_, err := store.db.NewInsert().Model(&locations).Exec(ctx)
+	require.NoError(t, err)
+	_, err = store.db.NewInsert().Model(&points).Exec(ctx)
+	require.NoError(t, err)
+	_, err = store.db.NewInsert().Model(&substations).Exec(ctx)
+	require.NoError(t, err)
+	_, err = store.db.NewInsert().Model(&bv).Exec(ctx)
+	require.NoError(t, err)
+	_, err = store.db.NewInsert().Model(&vls).Exec(ctx)
+	require.NoError(t, err)
+	_, err = store.db.NewInsert().Model(&cns).Exec(ctx)
+	require.NoError(t, err)
+	_, err = store.db.NewInsert().Model(&acLines).Exec(ctx)
+	require.NoError(t, err)
+	_, err = store.db.NewInsert().Model(&terminals).Exec(ctx)
+	require.NoError(t, err)
+
+	t.Run("success", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/map", nil)
+		store.Map(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+	})
 }

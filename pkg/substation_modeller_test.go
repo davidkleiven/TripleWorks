@@ -175,3 +175,90 @@ func TestPanicOnInconsistentMrids(t *testing.T) {
 	}
 	require.Panics(t, func() { connectableVl.RequireConsistentVoltageMrid() })
 }
+
+func TestConnectLinesToSubstation(t *testing.T) {
+	var (
+		substation models.Substation
+		line       models.ACLineSegment
+		terminal1  models.Terminal     // Connected to line
+		terminal2  models.Terminal     // No connected to line
+		vl         models.VoltageLevel // Same as line
+	)
+	substation.Mrid = uuid.New()
+	line.Mrid = uuid.New()
+	line.BaseVoltageMrid = uuid.New()
+
+	vl.Mrid = uuid.New()
+	vl.SubstationMrid = substation.Mrid
+	vl.BaseVoltageMrid = line.BaseVoltageMrid
+
+	terminal1.Mrid = uuid.New()
+	terminal1.SequenceNumber = 2
+	terminal1.ConductingEquipmentMrid = line.Mrid
+
+	terminal2.Mrid = uuid.New()
+	terminal2.SequenceNumber = 1
+	terminal2.ConductingEquipmentMrid = uuid.New()
+
+	params := LineConnectionParams{
+		Substation:    substation,
+		Line:          line,
+		Terminals:     []models.Terminal{terminal1, terminal2},
+		VoltageLevels: []models.VoltageLevel{vl},
+	}
+
+	t.Run("connect existing voltage level", func(t *testing.T) {
+		result, err := ConnectLineToSubstation(params)
+		require.NoError(t, err)
+		require.Nil(t, result.VoltageLevel) // Voltage lever already exist
+		require.Equal(t, 1, result.Terminal.SequenceNumber)
+	})
+
+	t.Run("connect vl does not exist", func(t *testing.T) {
+		origBvMrid := params.Line.BaseVoltageMrid
+		defer func() {
+			params.Line.BaseVoltageMrid = origBvMrid
+		}()
+		params.Line.BaseVoltageMrid = uuid.New()
+
+		result, err := ConnectLineToSubstation(params)
+		require.NoError(t, err)
+		require.NotNil(t, result.VoltageLevel) // Voltage does not exist
+	})
+
+	t.Run("no connection if line has two terminals", func(t *testing.T) {
+		origConductingEquipmentMrid := params.Terminals[1].ConductingEquipmentMrid
+		defer func() {
+			params.Terminals[1].ConductingEquipmentMrid = origConductingEquipmentMrid
+		}()
+
+		params.Terminals[1].ConductingEquipmentMrid = line.Mrid
+		_, err := ConnectLineToSubstation(params)
+		require.ErrorContains(t, err, "already has two terminals")
+	})
+
+	t.Run("no connection if a voltage level belongs to another substation", func(t *testing.T) {
+		defer func() {
+			params.VoltageLevels[0].SubstationMrid = params.Substation.Mrid
+		}()
+		params.VoltageLevels[0].SubstationMrid = uuid.New()
+		_, err := ConnectLineToSubstation(params)
+		require.ErrorContains(t, err, "does not belong to substation")
+	})
+}
+
+func TestAllLineConnectionResult(t *testing.T) {
+	params := LineConnectionResult{}
+	count := 0
+	for range params.All(0) {
+		count++
+	}
+	require.Equal(t, 8, count)
+
+	params.VoltageLevel = &models.VoltageLevel{}
+	count = 0
+	for range params.All(0) {
+		count++
+	}
+	require.Equal(t, 10, count)
+}
