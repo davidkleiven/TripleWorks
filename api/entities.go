@@ -12,8 +12,10 @@ import (
 	"iter"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"com.github/davidkleiven/tripleworks/models"
@@ -690,6 +692,114 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	pkg.RenderMap(w, substationMapDataIter, lineIter)
+}
+
+func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Request) {
+	doCommit := r.URL.Query().Get("commit")
+	var (
+		substations []models.Substation
+		lines       []models.ACLineSegment
+		terminals   []models.Terminal
+		vls         []models.VoltageLevel
+	)
+
+	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+	defer cancel()
+
+	failNo, err := pkg.ReturnOnFirstError(
+		func() error {
+			return e.db.NewSelect().Model(&substations).Scan(ctx)
+		},
+		func() error {
+			return e.db.NewSelect().Model(&lines).Scan(ctx)
+		},
+		func() error {
+			return e.db.NewSelect().Model(&terminals).Scan(ctx)
+		},
+		func() error {
+			return e.db.NewSelect().Model(&vls).Scan(ctx)
+		},
+	)
+
+	if err != nil {
+		slog.ErrorContext(ctx, "Failed to get data", "failNo", failNo, "error", err)
+		http.Error(w, "Failed to extract data: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	lines = pkg.OnlyActiveLatest(lines)
+	terminals = pkg.OnlyActiveLatest(terminals)
+	substations = pkg.OnlyActiveLatest(substations)
+	vls = pkg.OnlyActiveLatest(vls)
+	vlsPerSubstation := pkg.GroupBy(vls, func(vl models.VoltageLevel) uuid.UUID { return vl.SubstationMrid })
+	unconnecteLines := pkg.DanglingLines(lines, terminals)
+
+	substationaNames := make([]string, len(substations))
+	lineNames := make([]string, 0, len(lines))
+	lines = lines[:0] // Clear old
+	parenthesisExpr := regexp.MustCompile(`\([^)]+\)`)
+	voltageExpr := regexp.MustCompile(`(?i)[0-9\s]+kv`)
+	for i, sub := range substations {
+		name := parenthesisExpr.ReplaceAllString(sub.Name, "")
+		name = voltageExpr.ReplaceAllString(name, "")
+		substationaNames[i] = name
+	}
+	for line := range unconnecteLines {
+		name := parenthesisExpr.ReplaceAllLiteralString(line.Name, "")
+		name = voltageExpr.ReplaceAllString(name, "")
+		name = strings.ReplaceAll(name, "-", " ")
+		lineNames = append(lineNames, name)
+		lines = append(lines, line)
+	}
+
+	selector := pkg.TopSelector{Num: 2}
+	assignments := selector.Select(lineNames, substationaNames, pkg.NameSimilarity)
+
+	results := make([]iter.Seq[any], 0, len(lines)*2)
+	for lineIdx := range assignments {
+		line := lines[lineIdx]
+		for _, subIdx := range assignments[lineIdx] {
+			sub := substations[subIdx]
+			vls, ok := vlsPerSubstation[sub.Mrid]
+			if !ok {
+				vls = []models.VoltageLevel{}
+			}
+
+			params := pkg.LineConnectionParams{
+				Substation:    sub,
+				Line:          line,
+				VoltageLevels: vls,
+				Terminals:     terminals,
+			}
+			result := pkg.Must(pkg.ConnectLineToSubstation(params))
+
+			if result.VoltageLevel != nil {
+				vlsPerSubstation[sub.Mrid] = append(vlsPerSubstation[sub.Mrid], *result.VoltageLevel)
+			}
+			results = append(results, result.All(0))
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/n-triples")
+	allItems := pkg.Chain(results...)
+	if doCommit == "true" {
+		lineName := ""
+		for _, line := range lines {
+			lineName += line.Name + " "
+		}
+		msg := fmt.Sprintf("Connect %d lines to two substations each", len(lines))
+		err := pkg.InsertAll(ctx, e.db, msg, allItems, writeNTriplesCallback(w))
+		if err != nil {
+			slog.ErrorContext(ctx, "Could not insert items", "error", err)
+			http.Error(w, "Could not insert items", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		writer := writeNTriplesCallback(w)
+		for item := range allItems {
+			writer(item)
+		}
+	}
+
 }
 
 type ResourceItem struct {

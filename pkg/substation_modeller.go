@@ -3,6 +3,7 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"iter"
 
 	"com.github/davidkleiven/tripleworks/models"
 	"github.com/google/uuid"
@@ -299,4 +300,123 @@ func CreateWinding(params WindingParams) models.PowerTransformerEnd {
 	winding.G = 0.0
 	winding.B = 0.005 / z_pu
 	return winding
+}
+
+type LineConnectionParams struct {
+	Substation    models.Substation
+	Line          models.ACLineSegment
+	VoltageLevels []models.VoltageLevel
+	Terminals     []models.Terminal
+}
+
+type LineConnectionResult struct {
+	Terminal      models.Terminal
+	ConNode       models.ConnectivityNode
+	VoltageLevel  *models.VoltageLevel
+	RepGroup      models.ReportingGroup
+	BusNameMarker models.BusNameMarker
+}
+
+func (l *LineConnectionResult) Entities(modelId int) []models.Entity {
+	entities := []models.Entity{
+		{Mrid: l.Terminal.Mrid, EntityType: StructName(l.Terminal), ModelEntity: models.ModelEntity{ModelId: modelId}},
+		{Mrid: l.ConNode.Mrid, EntityType: StructName(l.ConNode), ModelEntity: models.ModelEntity{ModelId: modelId}},
+		{Mrid: l.RepGroup.Mrid, EntityType: StructName(l.RepGroup), ModelEntity: models.ModelEntity{ModelId: modelId}},
+		{Mrid: l.BusNameMarker.Mrid, EntityType: StructName(l.BusNameMarker), ModelEntity: models.ModelEntity{ModelId: modelId}},
+	}
+
+	if l.VoltageLevel != nil {
+		entities = append(entities,
+			models.Entity{Mrid: l.VoltageLevel.Mrid, EntityType: StructName(l.VoltageLevel), ModelEntity: models.ModelEntity{ModelId: modelId}})
+	}
+	return entities
+}
+
+func (l *LineConnectionResult) All(modelId int) iter.Seq[any] {
+	return func(yield func(v any) bool) {
+		for _, entity := range l.Entities(modelId) {
+			if !yield(&entity) {
+				return
+			}
+		}
+
+		yieldMany(yield, &l.Terminal, &l.ConNode, &l.RepGroup, &l.BusNameMarker)
+		if l.VoltageLevel != nil && !yield(l.VoltageLevel) {
+			return
+		}
+	}
+}
+
+func ConnectLineToSubstation(params LineConnectionParams) (*LineConnectionResult, error) {
+	terminalPerLine := make(map[uuid.UUID]models.Terminal)
+	var result LineConnectionResult
+	for _, terminal := range params.Terminals {
+		_, ok := terminalPerLine[terminal.ConductingEquipmentMrid]
+		if ok {
+			return &result, fmt.Errorf("Line %s already has two terminals and can not be connected further", terminal.ConductingEquipmentMrid)
+		}
+		terminalPerLine[terminal.ConductingEquipmentMrid] = terminal
+	}
+
+	for _, vl := range params.VoltageLevels {
+		if vl.SubstationMrid != params.Substation.Mrid {
+			return &result, fmt.Errorf("Voltage level %s does not belong to substation %s", vl.Mrid, params.Substation.Mrid)
+		}
+	}
+
+	var (
+		voltageLevel models.VoltageLevel
+		vlExist      bool
+	)
+	for _, vl := range params.VoltageLevels {
+		if vl.BaseVoltageMrid == params.Line.BaseVoltageMrid {
+			vlExist = true
+			voltageLevel = vl
+			break
+		}
+	}
+
+	if !vlExist {
+		voltageLevel.Mrid = uuid.New()
+		voltageLevel.Name = fmt.Sprintf("Voltage Level %s", params.Substation.Name)
+		voltageLevel.ShortName = fmt.Sprintf("VL %s", params.Substation.ShortName)
+		voltageLevel.SubstationMrid = params.Substation.Mrid
+		voltageLevel.BaseVoltageMrid = params.Line.BaseVoltageMrid
+	}
+
+	result.RepGroup.Mrid = uuid.New()
+	result.RepGroup.Name = params.Line.Name
+	result.BusNameMarker = CreateBusNameMarker(params.Line.Name, result.RepGroup.Mrid)
+
+	existingTerminal, ok := terminalPerLine[params.Line.Mrid]
+	seqNo := 1
+	if ok {
+		seqNo = existingTerminal.SequenceNumber%2 + 1
+	}
+
+	result.ConNode = CreateConnectivityNode(params.Line.Name)
+	result.ConNode.ConnectivityNodeContainerMrid = voltageLevel.Mrid
+	result.Terminal = CreateTerminal(result.ConNode.Mrid, params.Line.Mrid, result.BusNameMarker, seqNo)
+
+	if !vlExist {
+		result.VoltageLevel = &voltageLevel
+	}
+	return &result, nil
+}
+
+// DanglingLines extracts all lines that have no terminals associated with it
+func DanglingLines(acLines []models.ACLineSegment, terminals []models.Terminal) iter.Seq[models.ACLineSegment] {
+	terminalPerCond := GroupBy(terminals, func(t models.Terminal) uuid.UUID { return t.ConductingEquipmentMrid })
+	return func(yield func(line models.ACLineSegment) bool) {
+		for _, line := range acLines {
+			_, hasTerminals := terminalPerCond[line.Mrid]
+			if hasTerminals {
+				continue
+			}
+
+			if !yield(line) {
+				return
+			}
+		}
+	}
 }
