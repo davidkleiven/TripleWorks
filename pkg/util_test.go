@@ -3,6 +3,7 @@ package pkg
 import (
 	"errors"
 	"fmt"
+	"math"
 	"reflect"
 	"testing"
 
@@ -143,4 +144,21 @@ func TestRequireStruct(t *testing.T) {
 func TestAssertDifferent(t *testing.T) {
 	require.Panics(t, func() { AssertDifferent(1, 1) })
 	require.NotPanics(t, func() { AssertDifferent(2, 1) })
+}
+
+func TestCenteredCosineSimilarity(t *testing.T) {
+	t.Run("empty strings are equal", func(t *testing.T) {
+		require.Equal(t, 1.0, CosineSimilarity("", ""))
+	})
+
+	t.Run("equal strings are equal", func(t *testing.T) {
+		require.Less(t, math.Abs(1.0-CosineSimilarity("mr. jones", "mr. jones")), 1e-6)
+	})
+
+	t.Run("equal most equal word has highest score", func(t *testing.T) {
+		target := "international"
+		score1 := CosineSimilarity(target, "inter")
+		score2 := CosineSimilarity(target, "intern")
+		require.Greater(t, score2, score1)
+	})
 }

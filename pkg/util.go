@@ -3,7 +3,9 @@ package pkg
 import (
 	"fmt"
 	"iter"
+	"math"
 	"reflect"
+	"strings"
 
 	"com.github/davidkleiven/tripleworks/models"
 )
@@ -156,4 +158,114 @@ func Chain[T any](seqs ...iter.Seq[T]) iter.Seq[T] {
 			}
 		}
 	}
+}
+
+func CosineSimilarity(word1, word2 string) float64 {
+	if word1 == "" && word2 == "" {
+		return 1.0
+	}
+	set1 := make(map[string]struct{})
+	set2 := make(map[string]struct{})
+	union := make(map[string]struct{})
+	for token := range Ngrams(word1, 3) {
+		set1[token] = struct{}{}
+	}
+
+	for token := range Ngrams(word2, 3) {
+		set2[token] = struct{}{}
+	}
+
+	for k := range set1 {
+		union[k] = struct{}{}
+	}
+	for k := range set2 {
+		union[k] = struct{}{}
+	}
+
+	var (
+		dot   float64
+		norm1 float64
+		norm2 float64
+	)
+	for k := range union {
+		elem1 := 0.0
+		if _, ok := set1[k]; ok {
+			elem1 = 1.0
+		}
+		elem2 := 0.0
+		if _, ok := set2[k]; ok {
+			elem2 = 1.0
+		}
+		v1 := elem1
+		v2 := elem2
+		dot += v1 * v2
+		norm1 += v1 * v1
+		norm2 += v2 * v2
+	}
+	if norm1 == 0 && norm2 == 0 {
+		return 1.0
+	}
+
+	if norm1 == 0 || norm2 == 0 {
+		return 0.0
+	}
+	return dot / (math.Sqrt(norm1) * math.Sqrt(norm2))
+}
+
+func Ngrams(word string, n int) iter.Seq[string] {
+	return func(yield func(token string) bool) {
+		for i := range len(word) {
+			if i+n >= len(word) {
+				return
+			}
+			if !yield(word[i : i+n]) {
+				return
+			}
+		}
+	}
+}
+
+func Normalizename(word string) string {
+	return strings.ReplaceAll(strings.ToLower(word), "-", "")
+}
+
+func Tokenize(word string) []string {
+	return strings.Fields(word)
+}
+
+func ExactTokenSimilarity(sourceTokens []string, tokens []string) float64 {
+	tokenPool := make(map[string]struct{})
+	for _, token := range tokens {
+		tokenPool[token] = struct{}{}
+	}
+
+	var (
+		sourceWeight float64
+		matchWeight  float64
+	)
+	for _, token := range sourceTokens {
+		w := math.Log(1 + float64(len(token)))
+		sourceWeight += w
+		if _, ok := tokenPool[token]; ok {
+			matchWeight += w
+		}
+	}
+	return matchWeight / sourceWeight
+}
+
+func IndexBy[T any, K comparable](items []T, keyFn func(T) K) map[K]T {
+	m := make(map[K]T, len(items))
+	for _, item := range items {
+		m[keyFn(item)] = item
+	}
+	return m
+}
+
+func GroupBy[T any, K comparable](items []T, keyFn func(T) K) map[K][]T {
+	m := make(map[K][]T, len(items))
+	for _, item := range items {
+		k := keyFn(item)
+		m[k] = append(m[k], item)
+	}
+	return m
 }
