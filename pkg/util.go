@@ -142,6 +142,10 @@ func AssertNotNil(v any) {
 	if v == nil {
 		panic("Value should not be nil")
 	}
+	rv := reflect.ValueOf(v)
+	if rv.Kind() == reflect.Ptr && rv.IsNil() {
+		panic("Value should not be nil")
+	}
 }
 
 func AssertDifferent[K comparable](v1, v2 K) {

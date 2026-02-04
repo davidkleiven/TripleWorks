@@ -79,7 +79,6 @@ func TestOnlySwitchTerminalsOnExistingTerminals(t *testing.T) {
 		Mrid1: terminals[0].ConductingEquipmentMrid,
 		Mrid2: terminals[1].ConductingEquipmentMrid,
 	}
-	result := connector.Connect(&params)
+	result := connector.MustConnect(&params)
 	require.Equal(t, 2, len(result.Terminals))
-	require.Equal(t, 0, len(result.ConnectivityNodes))
 }

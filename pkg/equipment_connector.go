@@ -44,56 +44,30 @@ func (e *EquipmentConnector) GetTerminal(mrid uuid.UUID) *models.Terminal {
 }
 
 type ConnectParams struct {
-	CreateSeqNo1       int // If created, this is the produced sequence number
-	CreateSeqNo2       int // If created, use this sequence number
 	Mrid1              uuid.UUID
 	Mrid2              uuid.UUID
 	ReportingGroupMrid uuid.UUID
 	VoltageLevel       models.VoltageLevel
 }
 
-func (e *EquipmentConnector) Connect(params *ConnectParams) *ConnectionResult {
+// MustConnect connects equipment given by Mrid1 and Mrid2 together
+// If the equipment to be connected has no terminal the method panics
+func (e *EquipmentConnector) MustConnect(params *ConnectParams) *ConnectionResult {
 	result := ConnectionResult{
-		Terminals:         []models.Terminal{},
-		BusNameMarkers:    []models.BusNameMarker{},
-		ConnectivityNodes: []models.ConnectivityNode{},
+		Terminals:      []models.Terminal{},
+		BusNameMarkers: []models.BusNameMarker{},
 	}
-
-	var (
-		cn1Mrid uuid.UUID
-		cn2Mrid uuid.UUID
-	)
 
 	term1 := e.GetTerminal(params.Mrid1)
+	AssertNotNil(term1)
+
+	cn1Mrid := term1.ConnectivityNodeMrid
 	name := params.VoltageLevel.Name
-	if term1 != nil {
-		cn1Mrid = term1.ConnectivityNodeMrid
-	} else {
-		cn := CreateConnectivityNode(name)
-		cn1Mrid = cn.Mrid
-		result.ConnectivityNodes = append(result.ConnectivityNodes, cn)
-
-		bnm := CreateBusNameMarker(name, params.ReportingGroupMrid)
-		result.BusNameMarkers = append(result.BusNameMarkers, bnm)
-
-		newTerm := CreateTerminal(cn.Mrid, params.Mrid1, bnm, params.CreateSeqNo1)
-		result.Terminals = append(result.Terminals, newTerm)
-	}
 
 	term2 := e.GetTerminal(params.Mrid2)
-	if term2 != nil {
-		cn2Mrid = term2.ConnectivityNodeMrid
-	} else {
-		cn := CreateConnectivityNode(name)
-		cn2Mrid = cn.Mrid
-		result.ConnectivityNodes = append(result.ConnectivityNodes, cn)
+	AssertNotNil(term2)
 
-		bnm := CreateBusNameMarker(name, params.ReportingGroupMrid)
-		result.BusNameMarkers = append(result.BusNameMarkers, bnm)
-
-		newTerm := CreateTerminal(cn.Mrid, params.Mrid2, bnm, params.CreateSeqNo2)
-		result.Terminals = append(result.Terminals, newTerm)
-	}
+	cn2Mrid := term2.ConnectivityNodeMrid
 
 	// Create switch
 	result.Switch = CreateSwitch(name, &params.VoltageLevel)
@@ -134,10 +108,9 @@ func (e *EquipmentConnector) AddTerminals(terminals ...models.Terminal) {
 }
 
 type ConnectionResult struct {
-	Terminals         []models.Terminal
-	BusNameMarkers    []models.BusNameMarker
-	ConnectivityNodes []models.ConnectivityNode
-	Switch            models.Switch
+	Terminals      []models.Terminal
+	BusNameMarkers []models.BusNameMarker
+	Switch         models.Switch
 }
 
 func NewEmptyConnector() *EquipmentConnector {
