@@ -13,21 +13,16 @@ import (
 )
 
 type VoltageLevelModel struct {
-	BusNameMarkers    []models.BusNameMarker
-	ConnectivityNodes []models.ConnectivityNode
-	ReportingGroup    models.ReportingGroup
-	Switches          []models.Switch
-	Terminals         []models.Terminal
+	BusNameMarkers []models.BusNameMarker
+	ReportingGroup models.ReportingGroup
+	Switches       []models.Switch
+	Terminals      []models.Terminal
 }
 
 func (v *VoltageLevelModel) AssignCommitId(commitId int) {
 	v.ReportingGroup.CommitId = commitId
 	for i := range v.BusNameMarkers {
 		v.BusNameMarkers[i].CommitId = commitId
-	}
-
-	for i := range v.ConnectivityNodes {
-		v.ConnectivityNodes[i].CommitId = commitId
 	}
 
 	for i := range v.Switches {
@@ -40,17 +35,12 @@ func (v *VoltageLevelModel) AssignCommitId(commitId int) {
 }
 
 func (v *VoltageLevelModel) Entities(modelId int) []models.Entity {
-	entities := make([]models.Entity, 0, len(v.BusNameMarkers)+len(v.ConnectivityNodes)+len(v.Switches)+len(v.Terminals)+1)
+	entities := make([]models.Entity, 0, len(v.BusNameMarkers)+len(v.Switches)+len(v.Terminals)+1)
 
 	entities = append(entities, models.Entity{Mrid: v.ReportingGroup.Mrid, ModelEntity: models.ModelEntity{ModelId: modelId}})
 
 	for _, bnm := range v.BusNameMarkers {
 		entity := models.Entity{Mrid: bnm.Mrid, ModelEntity: models.ModelEntity{ModelId: modelId}}
-		entities = append(entities, entity)
-	}
-
-	for _, conNode := range v.ConnectivityNodes {
-		entity := models.Entity{Mrid: conNode.Mrid, ModelEntity: models.ModelEntity{ModelId: modelId}}
 		entities = append(entities, entity)
 	}
 
@@ -95,10 +85,6 @@ func (v *VoltageLevelModel) Write(ctx context.Context, db *bun.DB, modelId int, 
 				return err
 			},
 			func() error {
-				_, err := tx.NewInsert().Model(&v.ConnectivityNodes).Exec(ctx)
-				return err
-			},
-			func() error {
 				_, err := tx.NewInsert().Model(&v.Switches).Exec(ctx)
 				return err
 			},
@@ -116,19 +102,37 @@ func (v *VoltageLevelModel) Write(ctx context.Context, db *bun.DB, modelId int, 
 }
 
 type VoltageLevelEquipment struct {
-	VoltageLevel        models.VoltageLevel
-	Lines               []models.ACLineSegment
-	Generators          []models.SynchronousMachine
-	ConformLoads        []models.ConformLoad
-	LineTerminalNumbers map[uuid.UUID]int
+	VoltageLevel models.VoltageLevel
+	Lines        []models.ACLineSegment
+	Generators   []models.SynchronousMachine
+	ConformLoads []models.ConformLoad
+}
+
+func (v *VoltageLevelEquipment) EquipmentMrids() iter.Seq[uuid.UUID] {
+	return func(yield func(mrid uuid.UUID) bool) {
+		for _, line := range v.Lines {
+			if !yield(line.Mrid) {
+				return
+			}
+		}
+		for _, gen := range v.Generators {
+			if !yield(gen.Mrid) {
+				return
+			}
+		}
+		for _, load := range v.ConformLoads {
+			if !yield(load.Mrid) {
+				return
+			}
+		}
+	}
 }
 
 func NewVoltageLevelEquipment(opts ...func(v *VoltageLevelEquipment)) *VoltageLevelEquipment {
 	v := VoltageLevelEquipment{
-		Lines:               []models.ACLineSegment{},
-		Generators:          []models.SynchronousMachine{},
-		ConformLoads:        []models.ConformLoad{},
-		LineTerminalNumbers: make(map[uuid.UUID]int),
+		Lines:        []models.ACLineSegment{},
+		Generators:   []models.SynchronousMachine{},
+		ConformLoads: []models.ConformLoad{},
 	}
 
 	for _, opt := range opts {
@@ -226,7 +230,6 @@ func NewVoltageLevelEquipmentFromDb(ctx context.Context, db *bun.DB, substation 
 		result[i].ConformLoads = loads[vl.Mrid]
 		result[i].Lines = linesByBaseVoltage[vl.BaseVoltageMrid]
 		delete(linesByBaseVoltage, vl.BaseVoltageMrid)
-		result[i].LineTerminalNumbers = targetSequenceNumbers
 	}
 
 	// For remaining lines we add extra voltage levels
@@ -241,9 +244,8 @@ func NewVoltageLevelEquipmentFromDb(ctx context.Context, db *bun.DB, substation 
 		AssertDifferent(0, baseVoltage)
 		vl := CreateVoltageLevel(substation.Name, baseVoltage)
 		equipments := VoltageLevelEquipment{
-			VoltageLevel:        vl,
-			Lines:               lines,
-			LineTerminalNumbers: targetSequenceNumbers,
+			VoltageLevel: vl,
+			Lines:        lines,
 		}
 		result = append(result, equipments)
 	}
@@ -311,26 +313,14 @@ func CreateFullyConnectedVoltageLevel(equipment *VoltageLevelEquipment, connecto
 				continue
 			}
 
-			seq1, ok1 := equipment.LineTerminalNumbers[line1.Mrid]
-			seq2, ok2 := equipment.LineTerminalNumbers[line2.Mrid]
-			if ok1 {
-				seq2 = seq1%2 + 1
-			} else if ok2 {
-				seq1 = seq2%2 + 1
-			} else {
-				seq1, seq2 = 1, 2
-			}
-
 			params := ConnectParams{
 				Mrid1:              line1.Mrid,
 				Mrid2:              line2.Mrid,
-				CreateSeqNo1:       seq1,
-				CreateSeqNo2:       seq2,
 				ReportingGroupMrid: reportingGroup.Mrid,
 				VoltageLevel:       equipment.VoltageLevel,
 			}
 
-			result := connector.Connect(&params)
+			result := connector.MustConnect(&params)
 			connections = append(connections, *result)
 
 			// Update connector with new terminals
@@ -348,12 +338,11 @@ func CreateFullyConnectedVoltageLevel(equipment *VoltageLevelEquipment, connecto
 			params := ConnectParams{
 				Mrid1:              gen.Mrid,
 				Mrid2:              line.Mrid,
-				CreateSeqNo1:       1,
 				ReportingGroupMrid: reportingGroup.Mrid,
 				VoltageLevel:       equipment.VoltageLevel,
 			}
 
-			result := connector.Connect(&params)
+			result := connector.MustConnect(&params)
 			connections = append(connections, *result)
 
 			// Update connector with new terminals
@@ -371,12 +360,11 @@ func CreateFullyConnectedVoltageLevel(equipment *VoltageLevelEquipment, connecto
 			params := ConnectParams{
 				Mrid1:              load.Mrid,
 				Mrid2:              line.Mrid,
-				CreateSeqNo1:       1,
 				ReportingGroupMrid: reportingGroup.Mrid,
 				VoltageLevel:       equipment.VoltageLevel,
 			}
 
-			result := connector.Connect(&params)
+			result := connector.MustConnect(&params)
 			connections = append(connections, *result)
 
 			// Update connector with new terminals
@@ -391,16 +379,14 @@ func CreateFullyConnectedVoltageLevel(equipment *VoltageLevelEquipment, connecto
 	)
 
 	voltageLevelModel := VoltageLevelModel{
-		BusNameMarkers:    []models.BusNameMarker{},
-		ConnectivityNodes: []models.ConnectivityNode{},
-		ReportingGroup:    reportingGroup,
-		Switches:          []models.Switch{},
-		Terminals:         []models.Terminal{},
+		BusNameMarkers: []models.BusNameMarker{},
+		ReportingGroup: reportingGroup,
+		Switches:       []models.Switch{},
+		Terminals:      []models.Terminal{},
 	}
 
 	for _, con := range connections {
 		voltageLevelModel.BusNameMarkers = append(voltageLevelModel.BusNameMarkers, con.BusNameMarkers...)
-		voltageLevelModel.ConnectivityNodes = append(voltageLevelModel.ConnectivityNodes, con.ConnectivityNodes...)
 		voltageLevelModel.Switches = append(voltageLevelModel.Switches, con.Switch)
 		voltageLevelModel.Terminals = append(voltageLevelModel.Terminals, con.Terminals...)
 	}

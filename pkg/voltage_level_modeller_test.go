@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"com.github/davidkleiven/tripleworks/migrations"
@@ -12,33 +13,56 @@ import (
 
 func TestSingleLineModel(t *testing.T) {
 	data := NewVoltageLevelEquipment(WithLines([]models.ACLineSegment{{}}))
-	data.LineTerminalNumbers[uuid.UUID{}] = 2
 	result := CreateFullyConnectedVoltageLevel(data, NewEmptyConnector())
 	require.Equal(t, 0, len(result.Switches), "Switches")
 	require.Equal(t, 0, len(result.Terminals), "Terminals")
-	require.Equal(t, 0, len(result.ConnectivityNodes), "ConnectivityNodes")
 }
 
 func TestGeneratorAndLine(t *testing.T) {
+	var line models.ACLineSegment
+	line.Mrid = uuid.New()
+
+	var machine models.SynchronousMachine
+	machine.Mrid = uuid.New()
 	data := NewVoltageLevelEquipment(
-		WithLines([]models.ACLineSegment{{}}),
-		WithGenerators([]models.SynchronousMachine{{}}),
+		WithLines([]models.ACLineSegment{line}),
+		WithGenerators([]models.SynchronousMachine{machine}),
 	)
-	result := CreateFullyConnectedVoltageLevel(data, NewEmptyConnector())
+
+	connector := NewEmptyConnector()
+	for mrid := range data.EquipmentMrids() {
+		var terminal models.Terminal
+		terminal.Mrid = uuid.New()
+		terminal.ConductingEquipmentMrid = mrid
+		terminal.ConnectivityNodeMrid = uuid.New()
+		connector.AddTerminals(terminal)
+	}
+	result := CreateFullyConnectedVoltageLevel(data, connector)
 	require.Equal(t, 1, len(result.Switches), "Switches")
-	require.Equal(t, 4, len(result.Terminals), "Terminals")
-	require.Equal(t, 2, len(result.ConnectivityNodes), "ConnectivityNodes")
+	require.Equal(t, 2, len(result.Terminals), "Terminals")
 }
 
 func TestLoadAndLine(t *testing.T) {
+	var line models.ACLineSegment
+	line.Mrid = uuid.New()
+
+	var machine models.ConformLoad
+	machine.Mrid = uuid.New()
 	data := NewVoltageLevelEquipment(
-		WithLines([]models.ACLineSegment{{}}),
-		WithConformLoads([]models.ConformLoad{{}}),
+		WithLines([]models.ACLineSegment{line}),
+		WithConformLoads([]models.ConformLoad{machine}),
 	)
-	result := CreateFullyConnectedVoltageLevel(data, NewEmptyConnector())
+	connector := NewEmptyConnector()
+	for mrid := range data.EquipmentMrids() {
+		var terminal models.Terminal
+		terminal.Mrid = uuid.New()
+		terminal.ConductingEquipmentMrid = mrid
+		terminal.ConnectivityNodeMrid = uuid.New()
+		connector.AddTerminals(terminal)
+	}
+	result := CreateFullyConnectedVoltageLevel(data, connector)
 	require.Equal(t, 1, len(result.Switches), "Switches")
-	require.Equal(t, 4, len(result.Terminals), "Terminals")
-	require.Equal(t, 2, len(result.ConnectivityNodes), "ConnectivityNodes")
+	require.Equal(t, 2, len(result.Terminals), "Terminals")
 }
 
 func TestGenAndLoadNotConnectedBySwitch(t *testing.T) {
@@ -49,15 +73,26 @@ func TestGenAndLoadNotConnectedBySwitch(t *testing.T) {
 	result := CreateFullyConnectedVoltageLevel(data, NewEmptyConnector())
 	require.Equal(t, 0, len(result.Switches), "Switches")
 	require.Equal(t, 0, len(result.Terminals), "Terminals")
-	require.Equal(t, 0, len(result.ConnectivityNodes), "ConnectivityNodes")
 }
 
 func TestLineIsConnectedToLine(t *testing.T) {
 	data := NewVoltageLevelEquipment(WithLines([]models.ACLineSegment{{}, {}}))
-	result := CreateFullyConnectedVoltageLevel(data, NewEmptyConnector())
+	for i := range data.Lines {
+		data.Lines[i].Mrid = uuid.New()
+	}
+
+	connector := NewEmptyConnector()
+	for mrid := range data.EquipmentMrids() {
+		var terminal models.Terminal
+		terminal.Mrid = uuid.New()
+		terminal.ConductingEquipmentMrid = mrid
+		terminal.ConnectivityNodeMrid = uuid.New()
+		connector.AddTerminals(terminal)
+	}
+
+	result := CreateFullyConnectedVoltageLevel(data, connector)
 	require.Equal(t, 1, len(result.Switches), "Switches")
-	require.Equal(t, 4, len(result.Terminals), "Terminals")
-	require.Equal(t, 2, len(result.ConnectivityNodes), "ConnectivityNodes")
+	require.Equal(t, 2, len(result.Terminals), "Terminals")
 }
 
 func TestInsertVoltageModelToDb(t *testing.T) {
@@ -93,7 +128,37 @@ func TestInsertVoltageModelToDb(t *testing.T) {
 		WithGenerators([]models.SynchronousMachine{{}, {}, {}}),
 		WithLines([]models.ACLineSegment{{}, {}, {}}),
 	)
-	result := CreateFullyConnectedVoltageLevel(data, NewEmptyConnector())
+
+	for i := range data.Lines {
+		data.Lines[i].Mrid = uuid.New()
+	}
+	for i := range data.Generators {
+		data.Generators[i].Mrid = uuid.New()
+	}
+	for i := range data.ConformLoads {
+		data.ConformLoads[i].Mrid = uuid.New()
+	}
+
+	connector := NewEmptyConnector()
+	for mrid := range data.EquipmentMrids() {
+		var terminal models.Terminal
+		terminal.Mrid = uuid.New()
+		terminal.ConductingEquipmentMrid = mrid
+		terminal.ConnectivityNodeMrid = uuid.New()
+		connector.AddTerminals(terminal)
+	}
+
+	conNodeEntities := make([]models.Entity, len(connector.terminals))
+	for i, terminal := range connector.terminals {
+		conNodeEntities[i].Mrid = terminal.ConnectivityNodeMrid
+		conNodeEntities[i].EntityType = "ConnectivityNode"
+		conNodeEntities[i].ModelId = model.Id
+		conNodeEntities[i].CommitId = int(commit.Id)
+	}
+	_, err = db.NewInsert().Model(&conNodeEntities).Exec(ctx)
+	require.NoError(t, err)
+
+	result := CreateFullyConnectedVoltageLevel(data, connector)
 	err = result.Write(ctx, db, model.Id, "Add voltage level")
 	require.NoError(t, err)
 }
@@ -164,16 +229,31 @@ func TestRepeatedConnectionIsSafe(t *testing.T) {
 		WithLines([]models.ACLineSegment{{}, {}, {}}),
 	)
 
+	for i := range data.Lines {
+		data.Lines[i].Mrid = uuid.New()
+	}
+	for i := range data.Generators {
+		data.Generators[i].Mrid = uuid.New()
+	}
+	for i := range data.ConformLoads {
+		data.ConformLoads[i].Mrid = uuid.New()
+	}
+
 	connector := NewEmptyConnector()
+	for mrid := range data.EquipmentMrids() {
+		var terminal models.Terminal
+		terminal.Mrid = uuid.New()
+		terminal.ConductingEquipmentMrid = mrid
+		terminal.ConnectivityNodeMrid = uuid.New()
+		connector.AddTerminals(terminal)
+	}
 	result := CreateFullyConnectedVoltageLevel(data, connector)
 	require.Greater(t, len(result.Terminals), 0)
-	require.Greater(t, len(result.ConnectivityNodes), 0)
 	require.Greater(t, len(result.Switches), 0)
 	require.Greater(t, len(result.BusNameMarkers), 0)
 
 	result = CreateFullyConnectedVoltageLevel(data, connector)
 	require.Equal(t, 0, len(result.Terminals))
-	require.Equal(t, 0, len(result.ConnectivityNodes))
 	require.Equal(t, 0, len(result.Switches))
 	require.Equal(t, 0, len(result.BusNameMarkers))
 }
@@ -287,7 +367,6 @@ func TestVoltageLEvelFromToDb(t *testing.T) {
 
 		// One of the lines has a terminal with sequence number 2. Therefore, this line
 		// should have the new terminal equal to 1
-		require.Equal(t, results[0].LineTerminalNumbers[line200.Mrid], 1)
 		require.Equal(t, gen.Mrid, results[0].Generators[0].Mrid)
 		require.Equal(t, load.Mrid, results[0].ConformLoads[0].Mrid)
 		require.Equal(t, 0, len(results[1].Generators))
@@ -301,4 +380,30 @@ func TestVoltageLEvelFromToDb(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorContains(t, err, "Failed to fetch")
 	})
+}
+
+func TestEarlyAbortInEquipmentMrid(t *testing.T) {
+	var line models.ACLineSegment
+	line.Mrid = uuid.New()
+
+	var gen models.SynchronousMachine
+	gen.Mrid = uuid.New()
+
+	var load models.ConformLoad
+	load.Mrid = uuid.New()
+
+	data := NewVoltageLevelEquipment(WithLines([]models.ACLineSegment{line}), WithGenerators([]models.SynchronousMachine{gen}), WithConformLoads([]models.ConformLoad{load}))
+
+	for i, stopMrid := range []uuid.UUID{line.Mrid, gen.Mrid, load.Mrid} {
+		t.Run(fmt.Sprintf("Stop at %s", stopMrid), func(t *testing.T) {
+			count := 0
+			for mrid := range data.EquipmentMrids() {
+				if mrid == stopMrid {
+					break
+				}
+				count++
+			}
+			require.Equal(t, i, count)
+		})
+	}
 }
