@@ -99,3 +99,25 @@ func TestExportItemPointer(t *testing.T) {
 	content := buf.String()
 	require.Contains(t, content, "BaseVoltage")
 }
+
+func TestExportConnectivityNode(t *testing.T) {
+	var (
+		cn  models.ConnectivityNode
+		buf bytes.Buffer
+	)
+	cn.ConnectivityNodeContainerMrid = uuid.New()
+	ExportItem(&buf, &cn)
+
+	content := buf.String()
+	require.Contains(t, content, cn.ConnectivityNodeContainerMrid.String())
+
+	graph, err := LoadObjects(bytes.NewBufferString(content))
+	require.NoError(t, err)
+
+	numStatements := 0
+	iter := graph.AllStatements()
+	for iter.Next() {
+		numStatements++
+	}
+	require.Equal(t, 7, numStatements)
+}

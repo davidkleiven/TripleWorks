@@ -7,8 +7,10 @@ import (
 	"iter"
 	"log/slog"
 	"reflect"
+	"strings"
 
 	"com.github/davidkleiven/tripleworks/models"
+	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
 
@@ -32,12 +34,21 @@ func ExportItem(w io.Writer, item models.MridGetter) {
 
 	fieldWithoutIri := make(map[string]struct{})
 	fields := FlattenStruct(item)
+	uuidType := reflect.TypeOf(uuid.UUID{})
 	for name, field := range fields {
 		if field.Iri == "" {
 			fieldWithoutIri[name] = struct{}{}
 			continue
 		}
-		fmt.Fprintf(w, "%s <%s> \"%v\"%s .\n", subject, field.Iri, field.Value, typeSpecifier(field.Value))
+		iri := field.Iri
+		if strings.HasPrefix(iri, "cim:") {
+			iri = strings.ReplaceAll(field.Iri, "cim:", Cim16)
+		}
+		if reflect.TypeOf(field.Value) == uuidType && name != "Mrid" {
+			fmt.Fprintf(w, "%s <%s> <%s%s> .\n", subject, iri, "urn:uuid:", field.Value)
+		} else {
+			fmt.Fprintf(w, "%s <%s> \"%v\"%s .\n", subject, iri, field.Value, typeSpecifier(field.Value))
+		}
 	}
 	slog.Info("Fields missing iris", "fields", fieldWithoutIri)
 }
