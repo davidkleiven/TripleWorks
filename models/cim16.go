@@ -21,7 +21,7 @@ func (e *Entity) SetCommitId(commitId int) {
 
 type DCBaseTerminal struct {
 	ACDCTerminal
-	DCNodeMrid uuid.UUID `bun:"dcnode_mrid,type:uuid" json:"dcnode_mrid"`
+	DCNodeMrid uuid.UUID `bun:"dcnode_mrid,type:uuid" json:"dcnode_mrid" iri:"cim:DCBaseTerminal.DCNode"`
 	DCNode     *Entity   `bun:"rel:belongs-to,join:dcnode_mrid=mrid" json:"dcnode,omitempty"`
 }
 type PhaseTapChangerNonLinear struct {
@@ -79,7 +79,7 @@ type Frequency struct {
 type Terminal struct {
 	ACDCTerminal
 	TerminalOperations
-	ConductingEquipmentMrid uuid.UUID  `bun:"conducting_equipment_mrid,type:uuid" json:"conducting_equipment_mrid"`
+	ConductingEquipmentMrid uuid.UUID  `bun:"conducting_equipment_mrid,type:uuid" json:"conducting_equipment_mrid" iri:"cim:Terminal.ConductingEquipment"`
 	ConductingEquipment     *Entity    `bun:"rel:belongs-to,join:conducting_equipment_mrid=mrid" json:"conducting_equipment,omitempty"`
 	PhasesId                int        `bun:"phases_id" json:"phases_id"`
 	Phases                  *PhaseCode `bun:"rel:belongs-to,join:phases_id=id" json:"phases,omitempty"`
@@ -113,17 +113,17 @@ type BaseVoltage struct {
 type Substation struct {
 	EquipmentContainer
 	LocatedPowerSystemResource
-	SubGeographicalRegionMrid uuid.UUID `bun:"region_mrid,type:uuid" json:"region_mrid"`
+	SubGeographicalRegionMrid uuid.UUID `bun:"region_mrid,type:uuid" json:"region_mrid" iri:"cim:Substation.SubGeographicalRegion"`
 	SubGeographicalRegion     *Entity   `bun:"rel:belongs-to,join:region_mrid=mrid" json:"region,omitempty"`
 }
 type DCLine struct {
 	DCEquipmentContainer
-	RegionMrid uuid.UUID `bun:"region_mrid,type:uuid" json:"region_mrid"`
+	RegionMrid uuid.UUID `bun:"region_mrid,type:uuid" json:"region_mrid" iri:"cim:DCLine.Region"`
 	Region     *Entity   `bun:"rel:belongs-to,join:region_mrid=mrid" json:"region,omitempty"`
 }
 type PhaseTapChanger struct {
 	TapChanger
-	TransformerEndMrid uuid.UUID `bun:"transformer_end_mrid,type:uuid" json:"transformer_end_mrid"`
+	TransformerEndMrid uuid.UUID `bun:"transformer_end_mrid,type:uuid" json:"transformer_end_mrid" iri:"PhaseTapChanger.TransformerEnd"`
 	TransformerEnd     *Entity   `bun:"rel:belongs-to,join:transformer_end_mrid=mrid" json:"transformer_end,omitempty"`
 }
 type VoltageLimit struct {
@@ -167,16 +167,16 @@ type RatioTapChanger struct {
 	StepVoltageIncrement     float64                 `bun:"step_voltage_increment" json:"step_voltage_increment" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#RatioTapChanger.stepVoltageIncrement"`
 	TculControlModeId        int                     `bun:"tcul_control_mode_id" json:"tcul_control_mode_id"`
 	TculControlMode          *TransformerControlMode `bun:"rel:belongs-to,join:tcul_control_mode_id=id" json:"tcul_control_mode,omitempty"`
-	TransformerEndMrid       uuid.UUID               `bun:"transformer_end_mrid,type:uuid" json:"transformer_end_mrid"`
+	TransformerEndMrid       uuid.UUID               `bun:"transformer_end_mrid,type:uuid" json:"transformer_end_mrid" iri:"cim:RatioTapChanger.TransformerEnd"`
 	TransformerEnd           *Entity                 `bun:"rel:belongs-to,join:transformer_end_mrid=mrid" json:"transformer_end,omitempty"`
-	RatioTapChangerTableMrid uuid.UUID               `bun:"ratio_tap_changer_table_mrid,type:uuid" json:"ratio_tap_changer_table_mrid"`
+	RatioTapChangerTableMrid uuid.UUID               `bun:"ratio_tap_changer_table_mrid,type:uuid" json:"ratio_tap_changer_table_mrid" iri:"cim:RatioTapChanger.RatioTapChangerTable"`
 	RatioTapChangerTable     *Entity                 `bun:"rel:belongs-to,join:ratio_tap_changer_table_mrid=mrid" json:"ratio_tap_changer_table,omitempty"`
 }
 type HydroPump struct {
 	Equipment
-	HydroPowerPlantMrid uuid.UUID `bun:"hydro_power_plant_mrid,type:uuid" json:"hydro_power_plant_mrid"`
+	HydroPowerPlantMrid uuid.UUID `bun:"hydro_power_plant_mrid,type:uuid" json:"hydro_power_plant_mrid" iri:"cim:HydroPump.HydroPowerPlant"`
 	HydroPowerPlant     *Entity   `bun:"rel:belongs-to,join:hydro_power_plant_mrid=mrid" json:"hydro_power_plant,omitempty"`
-	RotatingMachineMrid uuid.UUID `bun:"rotating_machine_mrid,type:uuid" json:"rotating_machine_mrid"`
+	RotatingMachineMrid uuid.UUID `bun:"rotating_machine_mrid,type:uuid" json:"rotating_machine_mrid" iri:"cim:HydroPump.RotatingMachine"`
 	RotatingMachine     *Entity   `bun:"rel:belongs-to,join:rotating_machine_mrid=mrid" json:"rotating_machine,omitempty"`
 }
 type Capacitance struct {
@@ -193,7 +193,7 @@ type PowerTransformerEnd struct {
 	ConnectionKind       *WindingConnection `bun:"rel:belongs-to,join:connection_kind_id=id" json:"connection_kind,omitempty"`
 	G                    float64            `bun:"g" json:"g" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#PowerTransformerEnd.g"`
 	RatedS               float64            `bun:"rated_s" json:"rated_s" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#PowerTransformerEnd.ratedS"`
-	PowerTransformerMrid uuid.UUID          `bun:"power_transformer_mrid,type:uuid" json:"power_transformer_mrid"`
+	PowerTransformerMrid uuid.UUID          `bun:"power_transformer_mrid,type:uuid" json:"power_transformer_mrid" iri:"cim:PowerTransformerEnd.PowerTransformer"`
 	PowerTransformer     *Entity            `bun:"rel:belongs-to,join:power_transformer_mrid=mrid" json:"power_transformer,omitempty"`
 	R                    float64            `bun:"r" json:"r" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#PowerTransformerEnd.r"`
 	RatedU               float64            `bun:"rated_u" json:"rated_u" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#PowerTransformerEnd.ratedU"`
@@ -201,13 +201,13 @@ type PowerTransformerEnd struct {
 }
 type Line struct {
 	EquipmentContainer
-	RegionMrid uuid.UUID `bun:"region_mrid,type:uuid" json:"region_mrid"`
+	RegionMrid uuid.UUID `bun:"region_mrid,type:uuid" json:"region_mrid" iri:"cim:Line.Region"`
 	Region     *Entity   `bun:"rel:belongs-to,join:region_mrid=mrid" json:"region,omitempty"`
 }
 type EnergySource struct {
 	ConductingEquipment
 	X                        float64   `bun:"x" json:"x" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#EnergySource.x"`
-	EnergySchedulingTypeMrid uuid.UUID `bun:"energy_scheduling_type_mrid,type:uuid" json:"energy_scheduling_type_mrid"`
+	EnergySchedulingTypeMrid uuid.UUID `bun:"energy_scheduling_type_mrid,type:uuid" json:"energy_scheduling_type_mrid" iri:"cim:EnergySource.EnergySchedulingType"`
 	EnergySchedulingType     *Entity   `bun:"rel:belongs-to,join:energy_scheduling_type_mrid=mrid" json:"energy_scheduling_type,omitempty"`
 	R                        float64   `bun:"r" json:"r" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#EnergySource.r"`
 	Xn                       float64   `bun:"xn" json:"xn" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#EnergySource.xn"`
@@ -221,16 +221,16 @@ type EnergySource struct {
 type NonlinearShuntCompensatorPoint struct {
 	G                             float64   `bun:"g" json:"g" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#NonlinearShuntCompensatorPoint.g"`
 	B                             float64   `bun:"b" json:"b" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#NonlinearShuntCompensatorPoint.b"`
-	NonlinearShuntCompensatorMrid uuid.UUID `bun:"nonlinear_shunt_compensator_mrid,type:uuid" json:"nonlinear_shunt_compensator_mrid"`
+	NonlinearShuntCompensatorMrid uuid.UUID `bun:"nonlinear_shunt_compensator_mrid,type:uuid" json:"nonlinear_shunt_compensator_mrid" iri:"cim:NonlinearShuntCompensatorPoint.NonlinearShuntCompensator"`
 	NonlinearShuntCompensator     *Entity   `bun:"rel:belongs-to,join:nonlinear_shunt_compensator_mrid=mrid" json:"nonlinear_shunt_compensator,omitempty"`
 	SectionNumber                 int       `bun:"section_number" json:"section_number" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#NonlinearShuntCompensatorPoint.sectionNumber"`
 }
 type VoltageLevel struct {
 	EquipmentContainer
 	HighVoltageLimit float64   `bun:"high_voltage_limit" json:"high_voltage_limit" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#VoltageLevel.highVoltageLimit"`
-	SubstationMrid   uuid.UUID `bun:"substation_mrid,type:uuid" json:"substation_mrid"`
+	SubstationMrid   uuid.UUID `bun:"substation_mrid,type:uuid" json:"substation_mrid" iri:"cim:VoltageLevel.Substation"`
 	Substation       *Entity   `bun:"rel:belongs-to,join:substation_mrid=mrid" json:"substation,omitempty"`
-	BaseVoltageMrid  uuid.UUID `bun:"base_voltage_mrid,type:uuid" json:"base_voltage_mrid"`
+	BaseVoltageMrid  uuid.UUID `bun:"base_voltage_mrid,type:uuid" json:"base_voltage_mrid" iri:"cim:VoltageLevel.BaseVoltage"`
 	BaseVoltage      *Entity   `bun:"rel:belongs-to,join:base_voltage_mrid=mrid" json:"base_voltage,omitempty"`
 	LowVoltageLimit  float64   `bun:"low_voltage_limit" json:"low_voltage_limit" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#VoltageLevel.lowVoltageLimit"`
 }
@@ -238,7 +238,7 @@ type FossilFuel struct {
 	IdentifiedObject
 	FossilFuelTypeId          int       `bun:"fossil_fuel_type_id" json:"fossil_fuel_type_id"`
 	FossilFuelType            *FuelType `bun:"rel:belongs-to,join:fossil_fuel_type_id=id" json:"fossil_fuel_type,omitempty"`
-	ThermalGeneratingUnitMrid uuid.UUID `bun:"thermal_generating_unit_mrid,type:uuid" json:"thermal_generating_unit_mrid"`
+	ThermalGeneratingUnitMrid uuid.UUID `bun:"thermal_generating_unit_mrid,type:uuid" json:"thermal_generating_unit_mrid" iri:"cim:FossilFuel.ThermalGeneratingUnit"`
 	ThermalGeneratingUnit     *Entity   `bun:"rel:belongs-to,join:thermal_generating_unit_mrid=mrid" json:"thermal_generating_unit,omitempty"`
 }
 type DCShunt struct {
@@ -268,14 +268,14 @@ type ACDCConverter struct {
 	MaxUdc          float64   `bun:"max_udc" json:"max_udc" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#ACDCConverter.maxUdc"`
 	ResistiveLoss   float64   `bun:"resistive_loss" json:"resistive_loss" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#ACDCConverter.resistiveLoss"`
 	NumberOfValves  int       `bun:"number_of_valves" json:"number_of_valves" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#ACDCConverter.numberOfValves"`
-	PccTerminalMrid uuid.UUID `bun:"pcc_terminal_mrid,type:uuid" json:"pcc_terminal_mrid"`
+	PccTerminalMrid uuid.UUID `bun:"pcc_terminal_mrid,type:uuid" json:"pcc_terminal_mrid" iri:"cim:ACDCConverter.PccTerminal"`
 	PccTerminal     *Entity   `bun:"rel:belongs-to,join:pcc_terminal_mrid=mrid" json:"pcc_terminal,omitempty"`
 }
 type DCConverterUnit struct {
 	DCEquipmentContainer
 	OperationModeId int                           `bun:"operation_mode_id" json:"operation_mode_id"`
 	OperationMode   *DCConverterOperatingModeKind `bun:"rel:belongs-to,join:operation_mode_id=id" json:"operation_mode,omitempty"`
-	SubstationMrid  uuid.UUID                     `bun:"substation_mrid,type:uuid" json:"substation_mrid"`
+	SubstationMrid  uuid.UUID                     `bun:"substation_mrid,type:uuid" json:"substation_mrid" iri:"cim:DCConverterUnit.Substation"`
 	Substation      *Entity                       `bun:"rel:belongs-to,join:substation_mrid=mrid" json:"substation,omitempty"`
 }
 type PU struct {
@@ -325,7 +325,7 @@ type TapChanger struct {
 	NeutralU              float64   `bun:"neutral_u" json:"neutral_u" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#TapChanger.neutralU"`
 	LowStep               int       `bun:"low_step" json:"low_step" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#TapChanger.lowStep"`
 	NormalStep            int       `bun:"normal_step" json:"normal_step" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#TapChanger.normalStep"`
-	TapChangerControlMrid uuid.UUID `bun:"tap_changer_control_mrid,type:uuid" json:"tap_changer_control_mrid"`
+	TapChangerControlMrid uuid.UUID `bun:"tap_changer_control_mrid,type:uuid" json:"tap_changer_control_mrid" iri:"cim:TapChanger.TapChangerControl"`
 	TapChangerControl     *Entity   `bun:"rel:belongs-to,join:tap_changer_control_mrid=mrid" json:"tap_changer_control,omitempty"`
 }
 type CsConverter struct {
@@ -360,10 +360,10 @@ type OperationalLimitType struct {
 	Direction          *OperationalLimitDirectionKind `bun:"rel:belongs-to,join:direction_id=id" json:"direction,omitempty"`
 }
 type TieFlow struct {
-	ControlAreaMrid uuid.UUID `bun:"control_area_mrid,type:uuid" json:"control_area_mrid"`
+	ControlAreaMrid uuid.UUID `bun:"control_area_mrid,type:uuid" json:"control_area_mrid" iri:"cim:TieFlow.ControlArea"`
 	ControlArea     *Entity   `bun:"rel:belongs-to,join:control_area_mrid=mrid" json:"control_area,omitempty"`
 	PositiveFlowIn  bool      `bun:"positive_flow_in" json:"positive_flow_in" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#TieFlow.positiveFlowIn"`
-	TerminalMrid    uuid.UUID `bun:"terminal_mrid,type:uuid" json:"terminal_mrid"`
+	TerminalMrid    uuid.UUID `bun:"terminal_mrid,type:uuid" json:"terminal_mrid" iri:"cim:TieFlow.Terminal"`
 	Terminal        *Entity   `bun:"rel:belongs-to,join:terminal_mrid=mrid" json:"terminal,omitempty"`
 }
 type ShuntCompensator struct {
@@ -380,9 +380,9 @@ type ShuntCompensator struct {
 type TransformerEnd struct {
 	IdentifiedObject
 	EndNumber       int       `bun:"end_number" json:"end_number" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#TransformerEnd.endNumber"`
-	BaseVoltageMrid uuid.UUID `bun:"base_voltage_mrid,type:uuid" json:"base_voltage_mrid"`
+	BaseVoltageMrid uuid.UUID `bun:"base_voltage_mrid,type:uuid" json:"base_voltage_mrid" iri:"cim:TransformerEnd.BaseVoltage"`
 	BaseVoltage     *Entity   `bun:"rel:belongs-to,join:base_voltage_mrid=mrid" json:"base_voltage,omitempty"`
-	TerminalMrid    uuid.UUID `bun:"terminal_mrid,type:uuid" json:"terminal_mrid"`
+	TerminalMrid    uuid.UUID `bun:"terminal_mrid,type:uuid" json:"terminal_mrid" iri:"cim:TransformerEnd.Terminal"`
 	Terminal        *Entity   `bun:"rel:belongs-to,join:terminal_mrid=mrid" json:"terminal,omitempty"`
 }
 type AsynchronousMachine struct {
@@ -392,7 +392,7 @@ type AsynchronousMachine struct {
 }
 type DCTerminal struct {
 	DCBaseTerminal
-	DCConductingEquipmentMrid uuid.UUID `bun:"dcconducting_equipment_mrid,type:uuid" json:"dcconducting_equipment_mrid"`
+	DCConductingEquipmentMrid uuid.UUID `bun:"dcconducting_equipment_mrid,type:uuid" json:"dcconducting_equipment_mrid" iri:"cim:DCTerminal.DCConductingEquipment"`
 	DCConductingEquipment     *Entity   `bun:"rel:belongs-to,join:dcconducting_equipment_mrid=mrid" json:"dcconducting_equipment,omitempty"`
 }
 type Temperature struct {
@@ -411,7 +411,7 @@ type ApparentPower struct {
 }
 type SubGeographicalRegion struct {
 	IdentifiedObject
-	GeographicalRegionMrid uuid.UUID `bun:"region_mrid,type:uuid" json:"region_mrid"`
+	GeographicalRegionMrid uuid.UUID `bun:"region_mrid,type:uuid" json:"region_mrid" iri:"cim:SubGeographicalRegion.GeographicalRegion"`
 	GeographicalRegion     *Entity   `bun:"rel:belongs-to,join:region_mrid=mrid" json:"region,omitempty"`
 }
 type CurrentFlow struct {
@@ -430,24 +430,24 @@ type Inductance struct {
 }
 type CurveData struct {
 	Xvalue    float64   `bun:"xvalue" json:"xvalue" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#CurveData.xvalue"`
-	CurveMrid uuid.UUID `bun:"curve_mrid,type:uuid" json:"curve_mrid"`
+	CurveMrid uuid.UUID `bun:"curve_mrid,type:uuid" json:"curve_mrid" iri:"cim:CurveData.Curve"`
 	Curve     *Entity   `bun:"rel:belongs-to,join:curve_mrid=mrid" json:"curve,omitempty"`
 	Y2value   float64   `bun:"y2value" json:"y2value" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#CurveData.y2value"`
 	Y1value   float64   `bun:"y1value" json:"y1value" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#CurveData.y1value"`
 }
 type PhaseTapChangerTabular struct {
 	PhaseTapChanger
-	PhaseTapChangerTableMrid uuid.UUID `bun:"phase_tap_changer_table_mrid,type:uuid" json:"phase_tap_changer_table_mrid"`
+	PhaseTapChangerTableMrid uuid.UUID `bun:"phase_tap_changer_table_mrid,type:uuid" json:"phase_tap_changer_table_mrid" iri:"cim:PhaseTapChangerTabular.PhaseTapChangerTable"`
 	PhaseTapChangerTable     *Entity   `bun:"rel:belongs-to,join:phase_tap_changer_table_mrid=mrid" json:"phase_tap_changer_table,omitempty"`
 }
 type RatioTapChangerTablePoint struct {
 	TapChangerTablePoint
-	RatioTapChangerTableMrid uuid.UUID `bun:"ratio_tap_changer_table_mrid,type:uuid" json:"ratio_tap_changer_table_mrid"`
+	RatioTapChangerTableMrid uuid.UUID `bun:"ratio_tap_changer_table_mrid,type:uuid" json:"ratio_tap_changer_table_mrid" iri:"cim:RatioTapChangerTablePoint.RatioTapChangerTable"`
 	RatioTapChangerTable     *Entity   `bun:"rel:belongs-to,join:ratio_tap_changer_table_mrid=mrid" json:"ratio_tap_changer_table,omitempty"`
 }
 type BusNameMarker struct {
 	IdentifiedObject
-	ReportingGroupMrid uuid.UUID `bun:"reporting_group_mrid,type:uuid" json:"reporting_group_mrid"`
+	ReportingGroupMrid uuid.UUID `bun:"reporting_group_mrid,type:uuid" json:"reporting_group_mrid" iri:"cim:BusNameMarker.ReportingGroup"`
 	ReportingGroup     *Entity   `bun:"rel:belongs-to,join:reporting_group_mrid=mrid" json:"reporting_group,omitempty"`
 	Priority           int       `bun:"priority" json:"priority" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#BusNameMarker.priority"`
 }
@@ -460,31 +460,31 @@ type AngleRadians struct {
 }
 type OperationalLimit struct {
 	IdentifiedObject
-	OperationalLimitSetMrid  uuid.UUID `bun:"operational_limit_set_mrid,type:uuid" json:"operational_limit_set_mrid"`
+	OperationalLimitSetMrid  uuid.UUID `bun:"operational_limit_set_mrid,type:uuid" json:"operational_limit_set_mrid" iri:"cim:OperationalLimit.OperationalLimitSet"`
 	OperationalLimitSet      *Entity   `bun:"rel:belongs-to,join:operational_limit_set_mrid=mrid" json:"operational_limit_set,omitempty"`
-	OperationalLimitTypeMrid uuid.UUID `bun:"operational_limit_type_mrid,type:uuid" json:"operational_limit_type_mrid"`
+	OperationalLimitTypeMrid uuid.UUID `bun:"operational_limit_type_mrid,type:uuid" json:"operational_limit_type_mrid" iri:"cim:OperationalLimit.OperationalLimitType"`
 	OperationalLimitType     *Entity   `bun:"rel:belongs-to,join:operational_limit_type_mrid=mrid" json:"operational_limit_type,omitempty"`
 }
 type DCNode struct {
 	IdentifiedObject
-	DCEquipmentContainerMrid uuid.UUID `bun:"dcequipment_container_mrid,type:uuid" json:"dcequipment_container_mrid"`
+	DCEquipmentContainerMrid uuid.UUID `bun:"dcequipment_container_mrid,type:uuid" json:"dcequipment_container_mrid" iri:"cim:DCNode.DCEquipmentContainer"`
 	DCEquipmentContainer     *Entity   `bun:"rel:belongs-to,join:dcequipment_container_mrid=mrid" json:"dcequipment_container,omitempty"`
 }
 type HydroGeneratingUnit struct {
 	GeneratingUnit
-	HydroPowerPlantMrid          uuid.UUID                  `bun:"hydro_power_plant_mrid,type:uuid" json:"hydro_power_plant_mrid"`
+	HydroPowerPlantMrid          uuid.UUID                  `bun:"hydro_power_plant_mrid,type:uuid" json:"hydro_power_plant_mrid" iri:"cim:HydroGeneratingUnit.HydroPowerPlant"`
 	HydroPowerPlant              *Entity                    `bun:"rel:belongs-to,join:hydro_power_plant_mrid=mrid" json:"hydro_power_plant,omitempty"`
 	EnergyConversionCapabilityId int                        `bun:"energy_conversion_capability_id" json:"energy_conversion_capability_id"`
 	EnergyConversionCapability   *HydroEnergyConversionKind `bun:"rel:belongs-to,join:energy_conversion_capability_id=id" json:"energy_conversion_capability,omitempty"`
 }
 type ConformLoadSchedule struct {
 	SeasonDayTypeSchedule
-	ConformLoadGroupMrid uuid.UUID `bun:"conform_load_group_mrid,type:uuid" json:"conform_load_group_mrid"`
+	ConformLoadGroupMrid uuid.UUID `bun:"conform_load_group_mrid,type:uuid" json:"conform_load_group_mrid" iri:"cim:ConformLoadSchedule.ConformLoadGroup"`
 	ConformLoadGroup     *Entity   `bun:"rel:belongs-to,join:conform_load_group_mrid=mrid" json:"conform_load_group,omitempty"`
 }
 type DCLineSegment struct {
 	DCConductingEquipment
-	PerLengthParameterMrid uuid.UUID `bun:"per_length_parameter_mrid,type:uuid" json:"per_length_parameter_mrid"`
+	PerLengthParameterMrid uuid.UUID `bun:"per_length_parameter_mrid,type:uuid" json:"per_length_parameter_mrid" iri:"cim:DCLineSegment.PerLengthParameter"`
 	PerLengthParameter     *Entity   `bun:"rel:belongs-to,join:per_length_parameter_mrid=mrid" json:"per_length_parameter,omitempty"`
 	Capacitance            float64   `bun:"capacitance" json:"capacitance" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#DCLineSegment.capacitance"`
 	Resistance             float64   `bun:"resistance" json:"resistance" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#DCLineSegment.resistance"`
@@ -507,7 +507,7 @@ type RegulatingControl struct {
 	PowerSystemResource
 	ModeId       int                        `bun:"mode_id" json:"mode_id"`
 	Mode         *RegulatingControlModeKind `bun:"rel:belongs-to,join:mode_id=id" json:"mode,omitempty"`
-	TerminalMrid uuid.UUID                  `bun:"terminal_mrid,type:uuid" json:"terminal_mrid"`
+	TerminalMrid uuid.UUID                  `bun:"terminal_mrid,type:uuid" json:"terminal_mrid" iri:"cim:RegulatingControl.Terminal"`
 	Terminal     *Entity                    `bun:"rel:belongs-to,join:terminal_mrid=mrid" json:"terminal,omitempty"`
 }
 type ActivePowerPerCurrentFlow struct {
@@ -523,7 +523,7 @@ type ActivePowerPerCurrentFlow struct {
 }
 type EquivalentEquipment struct {
 	ConductingEquipment
-	EquivalentNetworkMrid uuid.UUID `bun:"equivalent_network_mrid,type:uuid" json:"equivalent_network_mrid"`
+	EquivalentNetworkMrid uuid.UUID `bun:"equivalent_network_mrid,type:uuid" json:"equivalent_network_mrid" iri:"cim:EquivalentEquipment.EquivalentNetwork"`
 	EquivalentNetwork     *Entity   `bun:"rel:belongs-to,join:equivalent_network_mrid=mrid" json:"equivalent_network,omitempty"`
 }
 type ActivePower struct {
@@ -548,19 +548,19 @@ type SynchronousMachine struct {
 	Type                               *SynchronousMachineKind `bun:"rel:belongs-to,join:type_id=id" json:"type,omitempty"`
 	QPercent                           float64                 `bun:"qpercent" json:"qpercent" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#SynchronousMachine.qPercent"`
 	MinQ                               float64                 `bun:"min_q" json:"min_q" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#SynchronousMachine.minQ"`
-	InitialReactiveCapabilityCurveMrid uuid.UUID               `bun:"initial_reactive_capability_curve_mrid,type:uuid" json:"initial_reactive_capability_curve_mrid"`
+	InitialReactiveCapabilityCurveMrid uuid.UUID               `bun:"initial_reactive_capability_curve_mrid,type:uuid" json:"initial_reactive_capability_curve_mrid" iri:"cim:SynchronousMachine.InitialReactiveCapabilityCurve"`
 	InitialReactiveCapabilityCurve     *Entity                 `bun:"rel:belongs-to,join:initial_reactive_capability_curve_mrid=mrid" json:"initial_reactive_capability_curve,omitempty"`
 }
 type ControlAreaGeneratingUnit struct {
 	IdentifiedObject
-	ControlAreaMrid    uuid.UUID `bun:"control_area_mrid,type:uuid" json:"control_area_mrid"`
+	ControlAreaMrid    uuid.UUID `bun:"control_area_mrid,type:uuid" json:"control_area_mrid" iri:"cim:ControlAreaGeneratingUnit.ControlArea"`
 	ControlArea        *Entity   `bun:"rel:belongs-to,join:control_area_mrid=mrid" json:"control_area,omitempty"`
-	GeneratingUnitMrid uuid.UUID `bun:"generating_unit_mrid,type:uuid" json:"generating_unit_mrid"`
+	GeneratingUnitMrid uuid.UUID `bun:"generating_unit_mrid,type:uuid" json:"generating_unit_mrid" iri:"cim:ControlAreaGeneratingUnit.GeneratingUnit"`
 	GeneratingUnit     *Entity   `bun:"rel:belongs-to,join:generating_unit_mrid=mrid" json:"generating_unit,omitempty"`
 }
 type PhaseTapChangerTablePoint struct {
 	TapChangerTablePoint
-	PhaseTapChangerTableMrid uuid.UUID `bun:"phase_tap_changer_table_mrid,type:uuid" json:"phase_tap_changer_table_mrid"`
+	PhaseTapChangerTableMrid uuid.UUID `bun:"phase_tap_changer_table_mrid,type:uuid" json:"phase_tap_changer_table_mrid" iri:"cim:PhaseTapChangerTablePoint.PhaseTapChangerTable"`
 	PhaseTapChangerTable     *Entity   `bun:"rel:belongs-to,join:phase_tap_changer_table_mrid=mrid" json:"phase_tap_changer_table,omitempty"`
 	Angle                    float64   `bun:"angle" json:"angle" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#PhaseTapChangerTablePoint.angle"`
 }
@@ -569,16 +569,16 @@ type EquivalentInjection struct {
 	MaxQ                        float64   `bun:"max_q" json:"max_q" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#EquivalentInjection.maxQ"`
 	RegulationCapability        bool      `bun:"regulation_capability" json:"regulation_capability" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#EquivalentInjection.regulationCapability"`
 	MaxP                        float64   `bun:"max_p" json:"max_p" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#EquivalentInjection.maxP"`
-	ReactiveCapabilityCurveMrid uuid.UUID `bun:"reactive_capability_curve_mrid,type:uuid" json:"reactive_capability_curve_mrid"`
+	ReactiveCapabilityCurveMrid uuid.UUID `bun:"reactive_capability_curve_mrid,type:uuid" json:"reactive_capability_curve_mrid" iri:"cim:EquivalentInjection.ReactiveCapabilityCurve"`
 	ReactiveCapabilityCurve     *Entity   `bun:"rel:belongs-to,join:reactive_capability_curve_mrid=mrid" json:"reactive_capability_curve,omitempty"`
 	MinP                        float64   `bun:"min_p" json:"min_p" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#EquivalentInjection.minP"`
 	MinQ                        float64   `bun:"min_q" json:"min_q" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#EquivalentInjection.minQ"`
 }
 type OperationalLimitSet struct {
 	IdentifiedObject
-	TerminalMrid  uuid.UUID `bun:"terminal_mrid,type:uuid" json:"terminal_mrid"`
+	TerminalMrid  uuid.UUID `bun:"terminal_mrid,type:uuid" json:"terminal_mrid" iri:"cim:OperationalLimitSet.Terminal"`
 	Terminal      *Entity   `bun:"rel:belongs-to,join:terminal_mrid=mrid" json:"terminal,omitempty"`
-	EquipmentMrid uuid.UUID `bun:"equipment_mrid,type:uuid" json:"equipment_mrid"`
+	EquipmentMrid uuid.UUID `bun:"equipment_mrid,type:uuid" json:"equipment_mrid" iri:"cim:OperationalLimitSet.Equipment"`
 	Equipment     *Entity   `bun:"rel:belongs-to,join:equipment_mrid=mrid" json:"equipment,omitempty"`
 }
 type Curve struct {
@@ -600,7 +600,7 @@ type DCSeriesDevice struct {
 }
 type NonConformLoadSchedule struct {
 	SeasonDayTypeSchedule
-	NonConformLoadGroupMrid uuid.UUID `bun:"non_conform_load_group_mrid,type:uuid" json:"non_conform_load_group_mrid"`
+	NonConformLoadGroupMrid uuid.UUID `bun:"non_conform_load_group_mrid,type:uuid" json:"non_conform_load_group_mrid" iri:"cim:NonConformLoadSchedule.NonConformLoadGroup"`
 	NonConformLoadGroup     *Entity   `bun:"rel:belongs-to,join:non_conform_load_group_mrid=mrid" json:"non_conform_load_group,omitempty"`
 }
 type ReactivePower struct {
@@ -671,7 +671,7 @@ type Simple_Float struct {
 }
 type ConformLoad struct {
 	EnergyConsumer
-	LoadGroupMrid uuid.UUID `bun:"load_group_mrid,type:uuid" json:"load_group_mrid"`
+	LoadGroupMrid uuid.UUID `bun:"load_group_mrid,type:uuid" json:"load_group_mrid" iri:"cim:ConformLoad.LoadGroup"`
 	LoadGroup     *Entity   `bun:"rel:belongs-to,join:load_group_mrid=mrid" json:"load_group,omitempty"`
 }
 type PhaseTapChangerAsymmetrical struct {
@@ -700,7 +700,7 @@ type ACDCConverterDCTerminal struct {
 	DCBaseTerminal
 	PolarityId                int             `bun:"polarity_id" json:"polarity_id"`
 	Polarity                  *DCPolarityKind `bun:"rel:belongs-to,join:polarity_id=id" json:"polarity,omitempty"`
-	DCConductingEquipmentMrid uuid.UUID       `bun:"dcconducting_equipment_mrid,type:uuid" json:"dcconducting_equipment_mrid"`
+	DCConductingEquipmentMrid uuid.UUID       `bun:"dcconducting_equipment_mrid,type:uuid" json:"dcconducting_equipment_mrid" iri:"cim:ACDCConverterDCTerminal.DCConductingEquipment"`
 	DCConductingEquipment     *Entity         `bun:"rel:belongs-to,join:dcconducting_equipment_mrid=mrid" json:"dcconducting_equipment,omitempty"`
 }
 type PerLengthDCLineParameter struct {
@@ -710,7 +710,7 @@ type PerLengthDCLineParameter struct {
 }
 type VsConverter struct {
 	ACDCConverter
-	CapabilityCurveMrid uuid.UUID `bun:"capability_curve_mrid,type:uuid" json:"capability_curve_mrid"`
+	CapabilityCurveMrid uuid.UUID `bun:"capability_curve_mrid,type:uuid" json:"capability_curve_mrid" iri:"cim:VsConverter.CapabilityCurve"`
 	CapabilityCurve     *Entity   `bun:"rel:belongs-to,join:capability_curve_mrid=mrid" json:"capability_curve,omitempty"`
 	MaxValveCurrent     float64   `bun:"max_valve_current" json:"max_valve_current" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#VsConverter.maxValveCurrent"`
 	MaxModulationIndex  float64   `bun:"max_modulation_index" json:"max_modulation_index" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#VsConverter.maxModulationIndex"`
@@ -723,12 +723,12 @@ type DCGround struct {
 type Equipment struct {
 	PowerSystemResource
 	Aggregate              bool      `bun:"aggregate" json:"aggregate" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#Equipment.aggregate"`
-	EquipmentContainerMrid uuid.UUID `bun:"equipment_container_mrid,type:uuid" json:"equipment_container_mrid"`
+	EquipmentContainerMrid uuid.UUID `bun:"equipment_container_mrid,type:uuid" json:"equipment_container_mrid" iri:"cim:Equipment.EquipmentContainer"`
 	EquipmentContainer     *Entity   `bun:"rel:belongs-to,join:equipment_container_mrid=mrid" json:"equipment_container,omitempty"`
 }
 type EnergyConsumer struct {
 	ConductingEquipment
-	LoadResponseMrid uuid.UUID `bun:"load_response_mrid,type:uuid" json:"load_response_mrid"`
+	LoadResponseMrid uuid.UUID `bun:"load_response_mrid,type:uuid" json:"load_response_mrid" iri:"cim:EnergyConsumer.LoadResponse"`
 	LoadResponse     *Entity   `bun:"rel:belongs-to,join:load_response_mrid=mrid" json:"load_response,omitempty"`
 	Qfixed           float64   `bun:"qfixed" json:"qfixed" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#EnergyConsumer.qfixed"`
 	QfixedPct        float64   `bun:"qfixed_pct" json:"qfixed_pct" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#EnergyConsumer.qfixedPct"`
@@ -765,14 +765,14 @@ type CurrentLimit struct {
 type RotatingMachine struct {
 	RegulatingCondEq
 	RatedU             float64   `bun:"rated_u" json:"rated_u" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#RotatingMachine.ratedU"`
-	GeneratingUnitMrid uuid.UUID `bun:"generating_unit_mrid,type:uuid" json:"generating_unit_mrid"`
+	GeneratingUnitMrid uuid.UUID `bun:"generating_unit_mrid,type:uuid" json:"generating_unit_mrid" iri:"cim:RotatingMachine.GeneratingUnit"`
 	GeneratingUnit     *Entity   `bun:"rel:belongs-to,join:generating_unit_mrid=mrid" json:"generating_unit,omitempty"`
 	RatedS             float64   `bun:"rated_s" json:"rated_s" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#RotatingMachine.ratedS"`
 	RatedPowerFactor   float64   `bun:"rated_power_factor" json:"rated_power_factor" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#RotatingMachine.ratedPowerFactor"`
 }
 type NonConformLoad struct {
 	EnergyConsumer
-	LoadGroupMrid uuid.UUID `bun:"load_group_mrid,type:uuid" json:"load_group_mrid"`
+	LoadGroupMrid uuid.UUID `bun:"load_group_mrid,type:uuid" json:"load_group_mrid" iri:"cim:NonConformLoad.LoadGroup"`
 	LoadGroup     *Entity   `bun:"rel:belongs-to,join:load_group_mrid=mrid" json:"load_group,omitempty"`
 }
 type ACLineSegment struct {
@@ -815,18 +815,18 @@ type ActivePowerPerFrequency struct {
 }
 type ConductingEquipment struct {
 	Equipment
-	BaseVoltageMrid uuid.UUID `bun:"base_voltage_mrid,type:uuid" json:"base_voltage_mrid"`
+	BaseVoltageMrid uuid.UUID `bun:"base_voltage_mrid,type:uuid" json:"base_voltage_mrid" iri:"cim:ConductingEquipment.BaseVoltage"`
 	BaseVoltage     *Entity   `bun:"rel:belongs-to,join:base_voltage_mrid=mrid" json:"base_voltage,omitempty"`
 }
 type ACDCTerminal struct {
 	IdentifiedObject
 	SequenceNumber    int       `bun:"sequence_number" json:"sequence_number" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#ACDCTerminal.sequenceNumber"`
-	BusNameMarkerMrid uuid.UUID `bun:"bus_name_marker_mrid,type:uuid" json:"bus_name_marker_mrid"`
+	BusNameMarkerMrid uuid.UUID `bun:"bus_name_marker_mrid,type:uuid" json:"bus_name_marker_mrid" iri:"cim:ACDCTerminal.BusNameMarker"`
 	BusNameMarker     *Entity   `bun:"rel:belongs-to,join:bus_name_marker_mrid=mrid" json:"bus_name_marker,omitempty"`
 }
 type RegulatingCondEq struct {
 	ConductingEquipment
-	RegulatingControlMrid uuid.UUID `bun:"regulating_control_mrid,type:uuid" json:"regulating_control_mrid"`
+	RegulatingControlMrid uuid.UUID `bun:"regulating_control_mrid,type:uuid" json:"regulating_control_mrid" iri:"cim:RegulatingCondEq.RegulatingControl"`
 	RegulatingControl     *Entity   `bun:"rel:belongs-to,join:regulating_control_mrid=mrid" json:"regulating_control,omitempty"`
 }
 type DCBreaker struct {
