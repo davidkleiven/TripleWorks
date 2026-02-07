@@ -289,3 +289,15 @@ func IndirectDescendingSort[T cmp.Ordered](values []T) []int {
 	})
 	return indices
 }
+
+func NameSimilarity(a, b string) float64 {
+	b = Normalizename(b)
+	bTokens := Tokenize(b)
+	a = Normalizename(a)
+	aTokens := Tokenize(a)
+	cosScore := CosineSimilarity(a, b)
+	exactScore := ExactTokenSimilarity(bTokens, aTokens)
+
+	// The score is weighted sum of exact matches and cosine similarity
+	return 0.8*exactScore + 0.2*cosScore
+}
