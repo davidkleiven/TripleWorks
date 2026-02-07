@@ -1,10 +1,12 @@
 package pkg
 
 import (
+	"cmp"
 	"fmt"
 	"iter"
 	"math"
 	"reflect"
+	"slices"
 	"strings"
 
 	"com.github/davidkleiven/tripleworks/models"
@@ -148,6 +150,12 @@ func AssertDifferent[K comparable](v1, v2 K) {
 	}
 }
 
+func AssertGreater[K cmp.Ordered](v1, v2 K) {
+	if v1 < v2 {
+		panic(fmt.Sprintf("%v is smaller than %v", v1, v2))
+	}
+}
+
 func Chain[T any](seqs ...iter.Seq[T]) iter.Seq[T] {
 	return func(yield func(v T) bool) {
 		for _, seq := range seqs {
@@ -268,4 +276,16 @@ func GroupBy[T any, K comparable](items []T, keyFn func(T) K) map[K][]T {
 		m[k] = append(m[k], item)
 	}
 	return m
+}
+
+func IndirectDescendingSort[T cmp.Ordered](values []T) []int {
+	indices := make([]int, len(values))
+	for i := range indices {
+		indices[i] = i
+	}
+
+	slices.SortFunc(indices, func(i, j int) int {
+		return -cmp.Compare(values[i], values[j])
+	})
+	return indices
 }
