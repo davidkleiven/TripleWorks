@@ -162,3 +162,15 @@ func TestCenteredCosineSimilarity(t *testing.T) {
 		require.Greater(t, score2, score1)
 	})
 }
+
+func TestIndirectDescendingSort(t *testing.T) {
+	vals := []float64{1.0, 6.0, 3.0}
+	want := []int{1, 2, 0}
+	sorted := IndirectDescendingSort(vals)
+	require.Equal(t, want, sorted)
+}
+
+func TestAssertGreater(t *testing.T) {
+	require.Panics(t, func() { AssertGreater(2, 3) })
+	require.NotPanics(t, func() { AssertGreater(3, 2) })
+}
