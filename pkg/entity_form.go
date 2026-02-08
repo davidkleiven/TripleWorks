@@ -353,18 +353,7 @@ func writeInputItem(w io.Writer, config *writeInputConfig) {
 
 	templ := template.Must(template.New("inputField").Parse(inputTemplate))
 	PanicOnErr(templ.Execute(w, data))
-
-	if isExternalId || isEnum {
-		selectHtml := `
-<div class="select">
-	<select id="{{.SelectId}}" value-field="{{.Id}}" hx-get="{{.SelectHxGet}}" hx-target="this" hx-swap="innerHTML" hx-trigger="load"></select>
-</div>
-		`
-		selectTempl := template.Must(template.New("selectField").Parse(selectHtml))
-		PanicOnErr(selectTempl.Execute(w, data))
-	} else {
-		maybeWriteAutofillCheckbox(w, config.name, config.value, data.Id)
-	}
+	maybeWriteAutofillCheckbox(w, config.name, config.value, data.Id)
 	fmt.Fprintf(w, "</div>\n")
 }
 
