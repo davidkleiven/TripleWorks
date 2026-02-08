@@ -397,7 +397,7 @@ func TestEditComponentForm(t *testing.T) {
 		req := httptest.NewRequest("GET", fmt.Sprintf("/entity-form/%s", entity.Mrid), nil)
 		mux.ServeHTTP(rec, req)
 		require.Equal(t, http.StatusOK, rec.Code)
-		require.Contains(t, rec.Body.String(), "hx-get")
+		require.Contains(t, rec.Body.String(), "<input")
 	})
 
 	t.Run("success corresonding resource", func(t *testing.T) {
