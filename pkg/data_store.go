@@ -153,7 +153,7 @@ func AllFinder(ctx context.Context, db *bun.DB, modelId int, candidates map[stri
 		}
 
 		for _, item := range items {
-			if !include(item.GetName()) {
+			if !include(item.GetName()) && !include(item.GetMrid().String()) {
 				continue
 			}
 			obj := models.IdentifiedObject{
