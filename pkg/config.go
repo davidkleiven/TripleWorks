@@ -35,7 +35,7 @@ func NewDefaultConfig() *Config {
 	return &Config{
 		Port:    36000,
 		DbUrl:   "tripleworks.db",
-		Timeout: 10 * time.Second,
+		Timeout: 10 * time.Minute,
 	}
 }
 
