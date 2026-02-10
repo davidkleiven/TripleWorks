@@ -40,3 +40,17 @@ jobs:
         | grep -v '^migrations/migration_test.go' \
         && echo "❌ Existing migration modified or deleted" && exit 1 || true
 
+  check-nil:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.24
+      - name: Nilaway
+        run: |
+          go install go.uber.org/nilaway/cmd/nilaway@latest
+          nilaway ./...
+
