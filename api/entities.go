@@ -824,6 +824,22 @@ func (e *EntityStore) ApplyJsonPatch(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Successfully updated database with patch")
 }
 
+func (e *EntityStore) Connection(w http.ResponseWriter, r *http.Request) {
+	mrid := r.PathValue("mrid")
+	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+	defer cancel()
+
+	data, err := pkg.FetchConnectionData(ctx, e.db, mrid)
+	if err != nil {
+		slog.ErrorContext(ctx, "Failed to find connection", "error", err)
+		http.Error(w, "Failed to find connection: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	con := pkg.FindConnection(&data)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(con)
+}
+
 type ResourceItem struct {
 	Data any    `json:"data"`
 	Type string `json:"type"`

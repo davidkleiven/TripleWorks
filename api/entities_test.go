@@ -907,3 +907,27 @@ func TestApplyJsonPatchEndpoint(t *testing.T) {
 		require.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
 }
+
+func TestConnection(t *testing.T) {
+	store := setupStore(t)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/connections/{mrid}", store.Connection)
+	t.Run("no data", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/connections/0000-0000", nil)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+
+		var con pkg.Connection
+		err := json.NewDecoder(rec.Body).Decode(&con)
+		require.NoError(t, err)
+	})
+
+	store.db = pkg.NewTestConfig(pkg.WithDbName(t.Name() + "empty")).DatabaseConnection()
+	t.Run("wrong tables in db", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/connections/0000-0000", nil)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+}
