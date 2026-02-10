@@ -116,6 +116,9 @@ func Subtypes(model any) []any {
 	fTypes := FormTypes()
 	for _, v := range fTypes {
 		vType := baseType(v)
+		if vType == nil {
+			continue
+		}
 		for i := range vType.NumField() {
 			f := vType.Field(i)
 			if !f.Anonymous {
@@ -153,6 +156,13 @@ func MustNotNil[T any](v *T) *T {
 		return v
 	}
 	panic("Value must not be nil")
+}
+
+func MustSlice[T any](s []T) []T {
+	if s == nil {
+		panic("Slice must not be nil")
+	}
+	return s
 }
 
 func AssertDifferent[K comparable](v1, v2 K) {
@@ -311,4 +321,12 @@ func NameSimilarity(a, b string) float64 {
 
 	// The score is weighted sum of exact matches and cosine similarity
 	return 0.8*exactScore + 0.2*cosScore
+}
+
+func RequireSameLength[S, T any](a []S, b []T) []T {
+	la, lb := len(a), len(b)
+	if la != lb {
+		panic(fmt.Sprintf("slices must have same length got %d and %d", la, lb))
+	}
+	return b
 }

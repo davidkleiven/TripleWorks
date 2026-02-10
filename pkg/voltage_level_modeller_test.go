@@ -99,6 +99,7 @@ func TestInsertVoltageModelToDb(t *testing.T) {
 	db := NewTestConfig(WithDbName(t.Name())).DatabaseConnection()
 	ctx := context.Background()
 	migrations, err := migrations.RunUp(ctx, db)
+	migrations = MustNotNil(migrations)
 	t.Logf("Running %d migrations", len(migrations.Migrations))
 	require.NoError(t, err)
 
@@ -174,6 +175,7 @@ func TestGetTargetTerminalSequenceNumber(t *testing.T) {
 	db := NewTestConfig(WithDbName(t.Name())).DatabaseConnection()
 	ctx := context.Background()
 	migrations, err := migrations.RunUp(ctx, db)
+	migrations = MustNotNil(migrations)
 	t.Logf("Running %d migrations", len(migrations.Migrations))
 	require.NoError(t, err)
 

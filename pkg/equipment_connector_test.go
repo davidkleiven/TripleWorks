@@ -62,7 +62,9 @@ func TestGetTerminal(t *testing.T) {
 	terminal.ConductingEquipmentMrid = uuid.New()
 	terminal.Mrid = uuid.New()
 	connector.AddTerminals(terminal)
-	require.Equal(t, terminal.Mrid, connector.GetTerminal(terminal.ConductingEquipmentMrid).Mrid)
+
+	receivedTerminal := MustNotNil(connector.GetTerminal(terminal.ConductingEquipmentMrid))
+	require.Equal(t, terminal.Mrid, receivedTerminal.Mrid)
 }
 
 func TestOnlySwitchTerminalsOnExistingTerminals(t *testing.T) {
