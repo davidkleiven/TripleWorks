@@ -844,3 +844,66 @@ func TestMap(t *testing.T) {
 		require.Equal(t, http.StatusOK, rec.Code)
 	})
 }
+
+func TestApplyJsonPatchEndpoint(t *testing.T) {
+	store := setupStore(t)
+	ctx := context.Background()
+
+	var bv models.BaseVoltage
+	bv.Mrid = uuid.New()
+	_, err := store.db.NewInsert().Model(&bv).Exec(ctx)
+	require.NoError(t, err)
+
+	entity := models.Entity{
+		Mrid:       bv.Mrid,
+		EntityType: pkg.StructName(bv),
+	}
+	_, err = store.db.NewInsert().Model(&entity).Exec(ctx)
+	require.NoError(t, err)
+
+	t.Run("invalid json body", func(t *testing.T) {
+		buf := bytes.NewBufferString("not json")
+		req := httptest.NewRequest("PATCH", "/resource", buf)
+		rec := httptest.NewRecorder()
+		store.ApplyJsonPatch(rec, req)
+		require.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		patch := pkg.JsonPatch{
+			Op:    "replace",
+			Path:  fmt.Sprintf("/%s/nominval_voltage", bv.Mrid),
+			Value: []byte{0x32, 0x32},
+		}
+
+		var body bytes.Buffer
+		err := json.NewEncoder(&body).Encode(patch)
+		require.NoError(t, err)
+		req := httptest.NewRequest("PATCH", "/resource", &body)
+		rec := httptest.NewRecorder()
+		store.ApplyJsonPatch(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+
+		var bvs []models.BaseVoltage
+		err = store.db.NewSelect().Model(&bvs).Scan(ctx)
+		require.NoError(t, err)
+
+		require.Equal(t, 2, len(bvs))
+	})
+
+	t.Run("unknown mrid", func(t *testing.T) {
+		patch := pkg.JsonPatch{
+			Op:    "replace",
+			Path:  "/0000-0000/nominval_voltage",
+			Value: []byte{0x32, 0x32},
+		}
+
+		var body bytes.Buffer
+		err := json.NewEncoder(&body).Encode(patch)
+		require.NoError(t, err)
+		req := httptest.NewRequest("PATCH", "/resource", &body)
+		rec := httptest.NewRecorder()
+		store.ApplyJsonPatch(rec, req)
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+}

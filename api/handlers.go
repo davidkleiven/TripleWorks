@@ -53,6 +53,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.HandleFunc("GET /commits", entityHandler.Commits)
 	mux.HandleFunc("/map", entityHandler.Map)
 	mux.HandleFunc("POST /connect-dangling", entityHandler.ConnectDanglingLines)
+	mux.HandleFunc("PATCH /resource", entityHandler.ApplyJsonPatch)
 
 	mux.Handle("/js/", pkg.JsServer())
 }
