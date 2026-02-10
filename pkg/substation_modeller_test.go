@@ -108,6 +108,7 @@ func TestSubstationDataWrite(t *testing.T) {
 
 	ctx := context.Background()
 	migrations, err := migrations.RunUp(ctx, db)
+	migrations = MustNotNil(migrations)
 	t.Logf("Running %d migrations", len(migrations.Migrations))
 	require.NoError(t, err)
 
