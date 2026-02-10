@@ -330,3 +330,11 @@ func RequireSameLength[S, T any](a []S, b []T) []T {
 	}
 	return b
 }
+
+func MakeEntity(v models.MridGetter, modelId int) models.Entity {
+	return models.Entity{
+		Mrid:        v.GetMrid(),
+		EntityType:  StructName(v),
+		ModelEntity: models.ModelEntity{ModelId: modelId},
+	}
+}
