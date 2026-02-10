@@ -148,6 +148,13 @@ func AssertNotNil(v any) {
 	}
 }
 
+func MustNotNil[T any](v *T) *T {
+	if v != nil {
+		return v
+	}
+	panic("Value must not be nil")
+}
+
 func AssertDifferent[K comparable](v1, v2 K) {
 	if v1 == v2 {
 		panic(fmt.Sprintf("%v is not different from %v", v1, v2))

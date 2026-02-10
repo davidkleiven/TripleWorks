@@ -58,14 +58,12 @@ func (e *EquipmentConnector) MustConnect(params *ConnectParams) *ConnectionResul
 		BusNameMarkers: []models.BusNameMarker{},
 	}
 
-	term1 := e.GetTerminal(params.Mrid1)
-	AssertNotNil(term1)
+	term1 := MustNotNil(e.GetTerminal(params.Mrid1))
 
 	cn1Mrid := term1.ConnectivityNodeMrid
 	name := params.VoltageLevel.Name
 
-	term2 := e.GetTerminal(params.Mrid2)
-	AssertNotNil(term2)
+	term2 := MustNotNil(e.GetTerminal(params.Mrid2))
 
 	cn2Mrid := term2.ConnectivityNodeMrid
 
