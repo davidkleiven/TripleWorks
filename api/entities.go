@@ -805,6 +805,25 @@ func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Reques
 
 }
 
+func (e *EntityStore) ApplyJsonPatch(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
+	var jsonPatch pkg.JsonPatch
+	if err := json.NewDecoder(r.Body).Decode(&jsonPatch); err != nil {
+		slog.ErrorContext(r.Context(), "Failed to interpret json patch", "error", err)
+		http.Error(w, "Failed to interpret json patch: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+	defer cancel()
+	if err := pkg.ApplyPatch(ctx, e.db, jsonPatch); err != nil {
+		slog.ErrorContext(ctx, "Failed to apply patch", "error", err)
+		http.Error(w, "Failed to apply patch: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprint(w, "Successfully updated database with patch")
+}
+
 type ResourceItem struct {
 	Data any    `json:"data"`
 	Type string `json:"type"`
