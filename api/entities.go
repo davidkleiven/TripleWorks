@@ -756,6 +756,7 @@ func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Reques
 
 	results := make([]iter.Seq[any], 0, len(lines)*2)
 	lines = pkg.MustSlice(lines)
+	substations = pkg.MustSlice(substations)
 	lines = pkg.RequireSameLength(assignments, lines)
 	for lineIdx := range assignments {
 		line := lines[lineIdx]

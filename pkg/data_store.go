@@ -92,7 +92,6 @@ func DeletedIndices[T models.DeletedGetter](items []T) []int {
 }
 
 func RemoveIndices[T any](items []T, indices []int) []T {
-	items = MustSlice(items)
 	out := items[:0]
 	idx := 0
 	for i, v := range items {
@@ -102,7 +101,7 @@ func RemoveIndices[T any](items []T, indices []int) []T {
 		}
 		out = append(out, v)
 	}
-	return MustSlice(out)
+	return out
 }
 
 type MridAndName struct {
