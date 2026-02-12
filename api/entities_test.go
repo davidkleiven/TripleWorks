@@ -931,3 +931,24 @@ func TestConnection(t *testing.T) {
 		require.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
 }
+
+func TestInVoltageLevel(t *testing.T) {
+	store := setupStore(t)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/resources/voltage-level/{mrid}", store.InVoltageLevel)
+
+	t.Run("no data", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/resources/voltage-level/0000-0000", nil)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+	})
+
+	store.db = pkg.NewTestConfig(pkg.WithDbName(t.Name() + "empty")).DatabaseConnection()
+	t.Run("wrong tables in db", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/resources/voltage-level/0000-0000", nil)
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+}
