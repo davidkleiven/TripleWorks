@@ -29,7 +29,7 @@ type ModelEntity struct {
 
 type BaseEntity struct {
 	bun.BaseModel
-	Id       int     `bun:"id,pk,autoincrement"`
+	Id       int     `bun:"id,pk,autoincrement" faker:"-"`
 	CommitId int     `bun:"commit_id"`
 	Commit   *Commit `bun:"rel:belongs-to,join:commit_id=id"`
 	Deleted  bool    `bun:"deleted" json:"deleted"`

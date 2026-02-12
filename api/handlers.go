@@ -41,6 +41,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.HandleFunc("/entity-form", EntityForm)
 	mux.HandleFunc("GET /entity-form/{mrid}", entityHandler.EditComponentForm)
 	mux.HandleFunc("GET /resource/{mrid}", entityHandler.Resource)
+	mux.HandleFunc("GET /resources/voltage-level/{mrid}", entityHandler.InVoltageLevel)
 	mux.HandleFunc("/entities", entityHandler.GetEntityForKind)
 	mux.HandleFunc("/enum", entityHandler.GetEnumOptions)
 	mux.HandleFunc("/entity-list", entityHandler.EntityList)

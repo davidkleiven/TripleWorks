@@ -287,7 +287,7 @@ type PU struct {
 }
 type IdentifiedObject struct {
 	BaseEntity
-	Mrid               uuid.UUID `bun:"mrid,type:uuid" json:"mrid" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.mRID"`
+	Mrid               uuid.UUID `bun:"mrid,type:uuid" json:"mrid" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.mRID" faker:"uuid"`
 	ShortName          string    `bun:"short_name" json:"short_name" iri:"http://entsoe.eu/CIM/SchemaExtension/3/1#IdentifiedObject.shortName"`
 	Description        string    `bun:"description" json:"description" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.description"`
 	Name               string    `bun:"name" json:"name" iri:"http://iec.ch/TC57/2013/CIM-schema-cim16#IdentifiedObject.name"`

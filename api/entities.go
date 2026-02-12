@@ -840,6 +840,26 @@ func (e *EntityStore) Connection(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(con)
 }
 
+func (e *EntityStore) InVoltageLevel(w http.ResponseWriter, r *http.Request) {
+	mrid := r.PathValue("mrid")
+	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+	defer cancel()
+
+	data, err := pkg.FetchInVoltageLevelData(ctx, e.db, mrid)
+	if err != nil {
+		slog.ErrorContext(ctx, "Failed to find resources in voltage level", "error", err)
+		http.Error(w, "Failed to find resources in voltage level: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	data.PickOnlyLatest()
+	respData := InVoltageLevelResp{
+		Mrid:      mrid,
+		Resources: data,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(&respData)
+}
+
 type ResourceItem struct {
 	Data any    `json:"data"`
 	Type string `json:"type"`
@@ -852,6 +872,11 @@ type TriggerEditComponentForm struct {
 type FromToLoc struct {
 	Pt1 models.PositionPoint
 	Pt2 models.PositionPoint
+}
+
+type InVoltageLevelResp struct {
+	Mrid      string              `json:"mrid"`
+	Resources *pkg.InVoltageLevel `json:"resources"`
 }
 
 func NewEntityStore(db *bun.DB, timeout time.Duration) *EntityStore {
