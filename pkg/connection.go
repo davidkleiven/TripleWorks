@@ -113,7 +113,7 @@ func findSubstations(ctx context.Context, db *bun.DB) Step[ConnectionCtx] {
 	return Step[ConnectionCtx]{
 		Name: "Find substations",
 		Run: func(c *ConnectionCtx) error {
-			mrids := make([]uuid.UUID, len(c.ConNodes))
+			mrids := make([]uuid.UUID, len(c.VoltageLevels))
 			for i, vl := range c.VoltageLevels {
 				mrids[i] = vl.SubstationMrid
 			}
