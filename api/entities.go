@@ -862,6 +862,30 @@ func (e *EntityStore) InVoltageLevel(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(&respData)
 }
 
+func (e *EntityStore) VoltageLevelsInSubstation(w http.ResponseWriter, r *http.Request) {
+	mrid := r.PathValue("mrid")
+	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
+	defer cancel()
+
+	var vls []models.VoltageLevel
+	err := e.db.NewSelect().Model(&vls).Where("substation_mrid = ?", mrid).Scan(ctx)
+	if err != nil {
+		slog.ErrorContext(ctx, "Failed to fetch voltage levels", "error", err)
+		http.Error(w, "Failed to fetch voltage levels: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	result := struct {
+		Mrid          string                `json:"mrid"`
+		VoltageLevels []models.VoltageLevel `json:"voltage_levels"`
+	}{
+		Mrid:          mrid,
+		VoltageLevels: vls,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
 type ResourceItem struct {
 	Data any    `json:"data"`
 	Type string `json:"type"`
