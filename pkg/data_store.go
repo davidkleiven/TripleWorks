@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"iter"
@@ -55,30 +56,33 @@ func FindEnum[T models.Enum](ctx context.Context, db *bun.DB) ([]models.Enum, er
 	return result, err
 }
 
-func OnlyLatestVersion[T models.VersionedIdentifiedObject](items []T) []T {
-	// Pick max commit per mrid
-	toKeep := make(map[uuid.UUID]int)
-	for _, item := range items {
-		mrid := item.GetMrid()
-		commitId := item.GetCommitId()
-		maxCommit, ok := toKeep[mrid]
-		if !ok || commitId > maxCommit {
-			toKeep[mrid] = commitId
+func OnlyLatestVersion[T models.VersionedIdentifiedObject](items []T) iter.Seq[T] {
+	return func(yield func(v T) bool) {
+		grouped := GroupBy(items, func(item T) uuid.UUID { return item.GetMrid() })
+		for _, group := range grouped {
+			latest := slices.MaxFunc(group, func(a, b T) int { return cmp.Compare(a.GetCommitId(), b.GetCommitId()) })
+			if !yield(latest) {
+				return
+			}
 		}
 	}
+}
 
-	return slices.DeleteFunc(items, func(item T) bool {
-		mrid := item.GetMrid()
-		commitId := item.GetCommitId()
-		maxCommitId := toKeep[mrid]
-		return commitId != maxCommitId
-	})
+func OnlyActiveLatestIter[T models.VersionedObject](items []T) iter.Seq[T] {
+	return func(yield func(v T) bool) {
+		for item := range OnlyLatestVersion(items) {
+			if item.GetDeleted() {
+				continue
+			}
+			if !yield(item) {
+				return
+			}
+		}
+	}
 }
 
 func OnlyActiveLatest[T models.VersionedObject](items []T) []T {
-	latest := OnlyLatestVersion(items)
-	toDelete := DeletedIndices(latest)
-	return RemoveIndices(latest, toDelete)
+	return slices.Collect(OnlyActiveLatestIter(items))
 }
 
 func DeletedIndices[T models.DeletedGetter](items []T) []int {

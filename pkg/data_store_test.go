@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"testing"
 
 	"com.github/davidkleiven/tripleworks/migrations"
@@ -28,7 +29,7 @@ func TestOnlyLatest(t *testing.T) {
 		},
 	}
 
-	latest := OnlyLatestVersion(baseVoltages)
+	latest := slices.Collect(OnlyLatestVersion(baseVoltages))
 	require.Equal(t, 2, len(latest))
 }
 
@@ -293,9 +294,15 @@ func TestLineConnectedToSubstationByName(t *testing.T) {
 	t.Run("two lines connected to Sub8", func(t *testing.T) {
 		linesConnected, err := LinesConnectedToSubstationByName(context.Background(), db, &target)
 		require.NoError(t, err)
+		connectedNames := make(map[string]struct{})
+		for _, line := range linesConnected {
+			connectedNames[line.Name] = struct{}{}
+		}
 
 		require.Equal(t, 2, len(linesConnected))
-		require.Equal(t, "Sub7 - Sub8", linesConnected[0].Name)
+
+		_, ok := connectedNames["Sub7 - Sub8"]
+		require.True(t, ok)
 	})
 
 	t.Run("error on cancelled context", func(t *testing.T) {
@@ -311,8 +318,12 @@ func TestLineConnectedToSubstationByName(t *testing.T) {
 		linesConnected, err := LinesConnectedToSubstationByName(context.Background(), db, &target)
 		require.NoError(t, err)
 
+		connectedNames := make(map[string]struct{})
+		for _, line := range linesConnected {
+			connectedNames[line.Name] = struct{}{}
+		}
+
 		require.Equal(t, 2, len(linesConnected))
-		require.Equal(t, "Sub0 - Sub1", linesConnected[0].Name)
-		require.Equal(t, "Sub1 - Sub2", linesConnected[1].Name)
+		require.Equal(t, Set("Sub0 - Sub1", "Sub1 - Sub2"), connectedNames)
 	})
 }
