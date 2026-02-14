@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"testing"
 
 	"com.github/davidkleiven/tripleworks/migrations"
@@ -28,7 +29,7 @@ func TestOnlyLatest(t *testing.T) {
 		},
 	}
 
-	latest := OnlyLatestVersion(baseVoltages)
+	latest := slices.Collect(OnlyLatestVersion(baseVoltages))
 	require.Equal(t, 2, len(latest))
 }
 

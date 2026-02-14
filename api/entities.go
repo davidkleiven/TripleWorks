@@ -116,7 +116,7 @@ func (e *EntityStore) GetEntityForKind(w http.ResponseWriter, r *http.Request) {
 		}
 		items = append(items, newItems...)
 	}
-	items = pkg.OnlyLatestVersion(items)
+	items = slices.Collect(pkg.OnlyLatestVersion(items))
 
 	// Sort result such that the current choice is first, and the remaining are in alphabetic order
 	slices.SortFunc(items, func(a, b models.VersionedObject) int {
