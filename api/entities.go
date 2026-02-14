@@ -661,9 +661,10 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 			}
 
 			data := pkg.SubstationMapData{
-				Name: sub.Name,
 				Lat:  pt.YPosition,
 				Lng:  pt.XPosition,
+				Mrid: sub.Mrid.String(),
+				Name: sub.Name,
 			}
 
 			if !yield(data) {
@@ -682,6 +683,7 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 				LatTo:   fromTo.Pt2.YPosition,
 				LngFrom: fromTo.Pt1.XPosition,
 				LngTo:   fromTo.Pt2.XPosition,
+				Mrid:    line.Mrid.String(),
 				Name:    line.Name,
 				Voltage: int(vl.NominalVoltage),
 			}
