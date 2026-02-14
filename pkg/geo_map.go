@@ -9,6 +9,7 @@ import (
 type SubstationMapData struct {
 	Lat  float64
 	Lng  float64
+	Mrid string
 	Name string
 }
 
@@ -17,6 +18,7 @@ type LineMapData struct {
 	LatTo   float64
 	LngFrom float64
 	LngTo   float64
+	Mrid    string
 	Name    string
 	Voltage int
 }
