@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"iter"
@@ -57,23 +58,13 @@ func FindEnum[T models.Enum](ctx context.Context, db *bun.DB) ([]models.Enum, er
 }
 
 func OnlyLatestVersion[T models.VersionedIdentifiedObject](items []T) []T {
-	// Pick max commit per mrid
-	toKeep := make(map[uuid.UUID]int)
-	for _, item := range items {
-		mrid := item.GetMrid()
-		commitId := item.GetCommitId()
-		maxCommit, ok := toKeep[mrid]
-		if !ok || commitId > maxCommit {
-			toKeep[mrid] = commitId
-		}
+	grouped := GroupBy(items, func(item T) uuid.UUID { return item.GetMrid() })
+	result := make([]T, 0, len(grouped))
+	for _, group := range grouped {
+		latest := slices.MaxFunc(group, func(a, b T) int { return cmp.Compare(a.GetCommitId(), b.GetCommitId()) })
+		result = append(result, latest)
 	}
-
-	return slices.DeleteFunc(items, func(item T) bool {
-		mrid := item.GetMrid()
-		commitId := item.GetCommitId()
-		maxCommitId := toKeep[mrid]
-		return commitId != maxCommitId
-	})
+	return result
 }
 
 func OnlyActiveLatest[T models.VersionedObject](items []T) []T {
