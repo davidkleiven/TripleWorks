@@ -338,3 +338,11 @@ func MakeEntity(v models.MridGetter, modelId int) models.Entity {
 		ModelEntity: models.ModelEntity{ModelId: modelId},
 	}
 }
+
+func Set[T comparable](items ...T) map[T]struct{} {
+	unique := make(map[T]struct{})
+	for _, item := range items {
+		unique[item] = struct{}{}
+	}
+	return unique
+}
