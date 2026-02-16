@@ -20,14 +20,16 @@ import (
 
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/pkg"
+	"com.github/davidkleiven/tripleworks/repository"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
 
 type EntityStore struct {
-	db           *bun.DB
-	timeout      time.Duration
-	allowedUnset map[string]struct{}
+	db               *bun.DB
+	voltageLevelRepo repository.VoltageLevelReadRepository
+	timeout          time.Duration
+	allowedUnset     map[string]struct{}
 }
 
 func (e *EntityStore) GetEnumOptions(w http.ResponseWriter, r *http.Request) {
@@ -867,8 +869,7 @@ func (e *EntityStore) VoltageLevelsInSubstation(w http.ResponseWriter, r *http.R
 	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
 	defer cancel()
 
-	var vls []models.VoltageLevel
-	err := e.db.NewSelect().Model(&vls).Where("substation_mrid = ?", mrid).Scan(ctx)
+	vls, err := e.voltageLevelRepo.InSubstation(ctx, mrid)
 	if err != nil {
 		slog.ErrorContext(ctx, "Failed to fetch voltage levels", "error", err)
 		http.Error(w, "Failed to fetch voltage levels: "+err.Error(), http.StatusInternalServerError)
@@ -907,8 +908,9 @@ type InVoltageLevelResp struct {
 
 func NewEntityStore(db *bun.DB, timeout time.Duration) *EntityStore {
 	store := EntityStore{
-		db:      db,
-		timeout: timeout,
+		db:               db,
+		voltageLevelRepo: repository.NewBunVoltageLevelReadRepository(db),
+		timeout:          timeout,
 		allowedUnset: map[string]struct{}{
 			"Id":        {},
 			"CommitId":  {},
