@@ -20,16 +20,14 @@ import (
 
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/pkg"
-	"com.github/davidkleiven/tripleworks/repository"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
 
 type EntityStore struct {
-	db               *bun.DB
-	voltageLevelRepo repository.VoltageLevelReadRepository
-	timeout          time.Duration
-	allowedUnset     map[string]struct{}
+	db           *bun.DB
+	timeout      time.Duration
+	allowedUnset map[string]struct{}
 }
 
 func (e *EntityStore) GetEnumOptions(w http.ResponseWriter, r *http.Request) {
@@ -844,49 +842,6 @@ func (e *EntityStore) Connection(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(con)
 }
 
-func (e *EntityStore) InVoltageLevel(w http.ResponseWriter, r *http.Request) {
-	mrid := r.PathValue("mrid")
-	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
-	defer cancel()
-
-	data, err := pkg.FetchInVoltageLevelData(ctx, e.db, mrid)
-	if err != nil {
-		slog.ErrorContext(ctx, "Failed to find resources in voltage level", "error", err)
-		http.Error(w, "Failed to find resources in voltage level: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	data.PickOnlyLatest()
-	respData := InVoltageLevelResp{
-		Mrid:      mrid,
-		Resources: data,
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(&respData)
-}
-
-func (e *EntityStore) VoltageLevelsInSubstation(w http.ResponseWriter, r *http.Request) {
-	mrid := r.PathValue("mrid")
-	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
-	defer cancel()
-
-	vls, err := e.voltageLevelRepo.InSubstation(ctx, mrid)
-	if err != nil {
-		slog.ErrorContext(ctx, "Failed to fetch voltage levels", "error", err)
-		http.Error(w, "Failed to fetch voltage levels: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	result := struct {
-		Mrid          string                `json:"mrid"`
-		VoltageLevels []models.VoltageLevel `json:"voltage_levels"`
-	}{
-		Mrid:          mrid,
-		VoltageLevels: vls,
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
-}
-
 type ResourceItem struct {
 	Data any    `json:"data"`
 	Type string `json:"type"`
@@ -901,16 +856,10 @@ type FromToLoc struct {
 	Pt2 models.PositionPoint
 }
 
-type InVoltageLevelResp struct {
-	Mrid      string              `json:"mrid"`
-	Resources *pkg.InVoltageLevel `json:"resources"`
-}
-
 func NewEntityStore(db *bun.DB, timeout time.Duration) *EntityStore {
 	store := EntityStore{
-		db:               db,
-		voltageLevelRepo: repository.NewBunVoltageLevelReadRepository(db),
-		timeout:          timeout,
+		db:      db,
+		timeout: timeout,
 		allowedUnset: map[string]struct{}{
 			"Id":        {},
 			"CommitId":  {},

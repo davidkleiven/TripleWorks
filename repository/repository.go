@@ -3,47 +3,83 @@ package repository
 import (
 	"context"
 	"fmt"
+	"iter"
+	"slices"
 
+	"com.github/davidkleiven/tripleworks/models"
 	"github.com/uptrace/bun"
 )
 
 type ReadRepository[T any] interface {
 	GetByMrid(ctx context.Context, mrid string) (T, error)
 	List(ctx context.Context) ([]T, error)
+	ListByMrids(ctx context.Context, mrids iter.Seq[string]) ([]T, error)
 }
 
-type InMemReadRepository[T any] struct {
-	items map[string]T
+type InMemReadRepository[T models.VersionedIdentifiedObject] struct {
+	Items []T
 }
 
 func (i *InMemReadRepository[T]) GetByMrid(ctx context.Context, mrid string) (T, error) {
-	result, ok := i.items[mrid]
-	if !ok {
-		return result, fmt.Errorf("No object at %s", mrid)
+	var (
+		newest T
+		found  bool
+	)
+	for _, candidate := range i.Items {
+		if candidate.GetMrid().String() == mrid && candidate.GetCommitId() >= newest.GetCommitId() {
+			found = true
+			newest = candidate
+		}
 	}
-	return result, nil
+
+	if !found {
+		return newest, fmt.Errorf("No resource with mrid %s", mrid)
+	}
+	return newest, nil
 }
 
 func (i *InMemReadRepository[T]) List(ctx context.Context) ([]T, error) {
-	data := make([]T, 0, len(i.items))
-	for _, item := range i.items {
+	data := make([]T, 0, len(i.Items))
+	for _, item := range i.Items {
 		data = append(data, item)
 	}
 	return data, nil
 }
 
+func (i *InMemReadRepository[T]) ListByMrids(ctx context.Context, mrids iter.Seq[string]) ([]T, error) {
+	mridSet := make(map[string]struct{})
+	for mrid := range mrids {
+		mridSet[mrid] = struct{}{}
+	}
+
+	var result []T
+	for _, item := range i.Items {
+		_, ok := mridSet[item.GetMrid().String()]
+		if ok {
+			result = append(result, item)
+		}
+	}
+	return result, nil
+}
+
 type BunReadRepository[T any] struct {
-	db *bun.DB
+	Db *bun.DB
 }
 
 func (brp *BunReadRepository[T]) GetByMrid(ctx context.Context, mrid string) (T, error) {
 	var result T
-	err := brp.db.NewSelect().Model(&result).Where("mrid = ?", mrid).Scan(ctx)
+	err := brp.Db.NewSelect().Model(&result).Where("mrid = ?", mrid).OrderBy("commit_id", bun.OrderDesc).Limit(1).Scan(ctx)
 	return result, err
 }
 
 func (brp *BunReadRepository[T]) List(ctx context.Context) ([]T, error) {
 	var result []T
-	err := brp.db.NewSelect().Model(&result).Scan(ctx)
+	err := brp.Db.NewSelect().Model(&result).Scan(ctx)
+	return result, err
+}
+
+func (brp *BunReadRepository[T]) ListByMrids(ctx context.Context, mrids iter.Seq[string]) ([]T, error) {
+	var result []T
+	err := brp.Db.NewSelect().Model(&result).Where("mrid IN (?)", bun.In(slices.Collect(mrids))).Scan(ctx)
 	return result, err
 }

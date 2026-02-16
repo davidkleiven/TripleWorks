@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"com.github/davidkleiven/tripleworks/migrations"
+	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/pkg"
+	"com.github/davidkleiven/tripleworks/repository"
 	"github.com/uptrace/bun"
 )
 
@@ -33,16 +35,32 @@ func EntityForm(w http.ResponseWriter, r *http.Request) {
 
 func Setup(mux *http.ServeMux, config *pkg.Config) {
 	db := config.DatabaseConnection()
-	mustPerformMigrations(db, 10*time.Minute)
+	timeout := 10 * time.Minute
+	mustPerformMigrations(db, timeout)
 
 	entityHandler := NewEntityStore(db, config.Timeout)
+	inVoltageLevel := InVoltageLevelEndpoint{voltageLevelRepo: repository.NewBunVoltageLevelReadRepository(db), timeout: timeout}
+
+	equipmentInVoltageLevel := EquipmentInVoltageLevelEndpoint{
+		VoltageLevel:    &repository.BunReadRepository[models.VoltageLevel]{Db: db},
+		ConNodes:        &repository.BunConnectivityNodeReadRepository{BunReadRepository: repository.BunReadRepository[models.ConnectivityNode]{Db: db}},
+		Terminals:       &repository.BunTerminalReadRepository{BunReadRepository: repository.BunReadRepository[models.Terminal]{Db: db}},
+		Generators:      &repository.BunReadRepository[models.SynchronousMachine]{Db: db},
+		Lines:           &repository.BunReadRepository[models.ACLineSegment]{Db: db},
+		Switches:        &repository.BunReadRepository[models.Switch]{Db: db},
+		ConformLoads:    &repository.BunReadRepository[models.ConformLoad]{Db: db},
+		NonConformLoads: &repository.BunReadRepository[models.NonConformLoad]{Db: db},
+		Transformers:    &repository.BunReadRepository[models.PowerTransformer]{Db: db},
+		timeout:         timeout,
+	}
+
 	mux.HandleFunc("/", RootHandler)
 	mux.HandleFunc("/cim-types", CimTypes)
 	mux.HandleFunc("/entity-form", EntityForm)
 	mux.HandleFunc("GET /entity-form/{mrid}", entityHandler.EditComponentForm)
 	mux.HandleFunc("GET /resource/{mrid}", entityHandler.Resource)
-	mux.HandleFunc("GET /resources/voltage-level/{mrid}", entityHandler.InVoltageLevel)
-	mux.HandleFunc("GET /substations/{mrid}/voltage-levels", entityHandler.VoltageLevelsInSubstation)
+	mux.Handle("GET /resources/voltage-level/{mrid}", &equipmentInVoltageLevel)
+	mux.HandleFunc("GET /substations/{mrid}/voltage-levels", inVoltageLevel.VoltageLevelsInSubstation)
 	mux.HandleFunc("/entities", entityHandler.GetEntityForKind)
 	mux.HandleFunc("/enum", entityHandler.GetEnumOptions)
 	mux.HandleFunc("/entity-list", entityHandler.EntityList)

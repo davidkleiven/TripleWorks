@@ -4,120 +4,79 @@ import (
 	"context"
 	"testing"
 
-	"com.github/davidkleiven/tripleworks/migrations"
 	"com.github/davidkleiven/tripleworks/models"
+	"com.github/davidkleiven/tripleworks/repository"
 	"github.com/go-faker/faker/v4"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 var targetVl = uuid.New()
 
-func populateVoltageLevels(t *testing.T) *bun.DB {
-	terminals := make([]models.Terminal, 10)
-	for i := range terminals {
-		err := faker.FakeData(&terminals[i])
-		require.NoError(t, err)
+func populateVoltageLevels() *InVoltageLevelDataSources {
+	var (
+		voltageLevel    repository.InMemVoltageLevelReadRepository
+		conNodes        repository.InMemConnectivityNodeReadRepository
+		terminals       repository.InMemTerminalReadRepository
+		generators      repository.InMemReadRepository[models.SynchronousMachine]
+		lines           repository.InMemReadRepository[models.ACLineSegment]
+		switches        repository.InMemReadRepository[models.Switch]
+		conformLoads    repository.InMemReadRepository[models.ConformLoad]
+		nonConformLoads repository.InMemReadRepository[models.NonConformLoad]
+		transformers    repository.InMemReadRepository[models.PowerTransformer]
+	)
+	terminals.Items = make([]models.Terminal, 10)
+	for i := range terminals.Items {
+		terminals.Items[i].Mrid = uuid.New()
+		terminals.Items[i].ConnectivityNodeMrid = uuid.New()
+		terminals.Items[i].ConductingEquipmentMrid = uuid.New()
 	}
 
-	conNodes := make([]models.ConnectivityNode, len(terminals))
+	voltageLevel.Items = make([]models.VoltageLevel, 2)
+	voltageLevel.Items[0].Mrid = targetVl
+	voltageLevel.Items[1].Mrid = uuid.New()
 
-	for i := range conNodes {
-		err := faker.FakeData(&conNodes[i])
-		require.NoError(t, err)
-		terminals[i].ConnectivityNodeMrid = conNodes[i].Mrid
+	vls := voltageLevel.Items
+
+	conNodes.Items = make([]models.ConnectivityNode, len(terminals.Items))
+
+	for i := range conNodes.Items {
+		conNodes.Items[i].Mrid = terminals.Items[i].ConnectivityNodeMrid
+		conNodes.Items[i].ConnectivityNodeContainerMrid = vls[i%len(vls)].Mrid
 	}
 
-	vls := make([]models.VoltageLevel, 2)
-	for i := range vls {
-		err := faker.FakeData(&vls[i])
-		require.NoError(t, err)
+	lines.Items = make([]models.ACLineSegment, 10)
+	conformLoads.Items = make([]models.ConformLoad, 10)
+	generators.Items = make([]models.SynchronousMachine, 10)
+	nonConformLoads.Items = make([]models.NonConformLoad, 10)
+	switches.Items = make([]models.Switch, 10)
+	transformers.Items = make([]models.PowerTransformer, 10)
+
+	lines.Items[0].Mrid = terminals.Items[0].ConductingEquipmentMrid
+	conformLoads.Items[0].Mrid = terminals.Items[1].ConductingEquipmentMrid
+	generators.Items[0].Mrid = terminals.Items[2].ConductingEquipmentMrid
+	nonConformLoads.Items[0].Mrid = terminals.Items[3].ConductingEquipmentMrid
+	switches.Items[0].Mrid = terminals.Items[4].ConductingEquipmentMrid
+	transformers.Items[0].Mrid = terminals.Items[5].ConductingEquipmentMrid
+
+	return &InVoltageLevelDataSources{
+		VoltageLevel:    &voltageLevel,
+		ConNodes:        &conNodes,
+		Terminals:       &terminals,
+		Generators:      &generators,
+		Lines:           &lines,
+		Switches:        &switches,
+		ConformLoads:    &conformLoads,
+		NonConformLoads: &nonConformLoads,
+		Transformers:    &transformers,
 	}
-	vls[0].Mrid = targetVl
-
-	for i := range conNodes {
-		conNodes[i].ConnectivityNodeContainerMrid = vls[i%len(vls)].Mrid
-	}
-
-	lines := make([]models.ACLineSegment, 10)
-	for i := range lines {
-		err := faker.FakeData(&lines[i])
-		require.NoError(t, err)
-	}
-
-	conformLoads := make([]models.ConformLoad, 10)
-	for i := range conformLoads {
-		err := faker.FakeData(&conformLoads[i])
-		require.NoError(t, err)
-	}
-
-	gens := make([]models.SynchronousMachine, 10)
-	for i := range gens {
-		err := faker.FakeData(&gens[i])
-		require.NoError(t, err)
-	}
-
-	nonConformLoads := make([]models.NonConformLoad, 10)
-	for i := range nonConformLoads {
-		err := faker.FakeData(&nonConformLoads[i])
-		require.NoError(t, err)
-	}
-
-	switches := make([]models.Switch, 10)
-	for i := range switches {
-		err := faker.FakeData(&switches[i])
-		require.NoError(t, err)
-	}
-
-	transformer := make([]models.PowerTransformer, 10)
-	for i := range transformer {
-		err := faker.FakeData(&transformer[i])
-		require.NoError(t, err)
-	}
-
-	terminals[0].ConductingEquipmentMrid = lines[0].Mrid
-	terminals[1].ConductingEquipmentMrid = conformLoads[0].Mrid
-	terminals[2].ConductingEquipmentMrid = gens[0].Mrid
-	terminals[3].ConductingEquipmentMrid = nonConformLoads[0].Mrid
-	terminals[4].ConductingEquipmentMrid = switches[0].Mrid
-	terminals[5].ConductingEquipmentMrid = transformer[0].Mrid
-
-	ctx := context.Background()
-	db := NewTestConfig(WithDbName(t.Name())).DatabaseConnection()
-	_, err := migrations.RunUp(ctx, db)
-	require.NoError(t, err)
-
-	// Insert in dependency order: VoltageLevels -> ConnectivityNodes -> Terminals -> equipment
-	_, err = db.NewInsert().Model(&vls).Exec(ctx)
-	require.NoError(t, err)
-
-	_, err = db.NewInsert().Model(&conNodes).Exec(ctx)
-	require.NoError(t, err)
-
-	_, err = db.NewInsert().Model(&terminals).Exec(ctx)
-	require.NoError(t, err)
-
-	_, err = db.NewInsert().Model(&lines).Exec(ctx)
-	require.NoError(t, err)
-	_, err = db.NewInsert().Model(&conformLoads).Exec(ctx)
-	require.NoError(t, err)
-	_, err = db.NewInsert().Model(&gens).Exec(ctx)
-	require.NoError(t, err)
-	_, err = db.NewInsert().Model(&nonConformLoads).Exec(ctx)
-	require.NoError(t, err)
-	_, err = db.NewInsert().Model(&switches).Exec(ctx)
-	require.NoError(t, err)
-	_, err = db.NewInsert().Model(&transformer).Exec(ctx)
-	require.NoError(t, err)
-	return db
 }
 
 func TestEquipmentInVoltageLevel(t *testing.T) {
-	db := populateVoltageLevels(t)
+	sources := populateVoltageLevels()
 
 	ctx := context.Background()
-	result, err := FetchInVoltageLevelData(ctx, db, targetVl.String())
+	result, err := FetchInVoltageLevelData(ctx, sources, targetVl.String())
 	require.NoError(t, err)
 
 	require.Equal(t, 5, len(result.Terminals))
@@ -209,14 +168,4 @@ func TestOnlyPickLatest(t *testing.T) {
 	require.Equal(t, origNumSwitches, len(data.Switches), "Switches")
 	require.Equal(t, origNumTerminals, len(data.Terminals), "Terminals")
 	require.Equal(t, origNumTransformer, len(data.Transformer), "Transformer")
-}
-
-func TestErrorOnUnknownType(t *testing.T) {
-	ctx := context.Background()
-	db := NewTestConfig(WithDbName(t.Name())).DatabaseConnection()
-	step := makeEquipmentStep(ctx, db, NamedEquipment("some random equipment"))
-
-	var data InVoltageLevel
-	err := step.Run(&data)
-	require.Error(t, err)
 }

@@ -16,10 +16,7 @@ import (
 	"com.github/davidkleiven/tripleworks/migrations"
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/pkg"
-	"com.github/davidkleiven/tripleworks/repository"
 	"com.github/davidkleiven/tripleworks/testutils"
-	"github.com/go-faker/faker/v4"
-	"github.com/go-faker/faker/v4/pkg/options"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -930,87 +927,6 @@ func TestConnection(t *testing.T) {
 	t.Run("wrong tables in db", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/connections/0000-0000", nil)
-		mux.ServeHTTP(rec, req)
-		require.Equal(t, http.StatusInternalServerError, rec.Code)
-	})
-}
-
-func TestInVoltageLevel(t *testing.T) {
-	store := setupStore(t)
-	mux := http.NewServeMux()
-	mux.HandleFunc("/resources/voltage-level/{mrid}", store.InVoltageLevel)
-
-	t.Run("no data", func(t *testing.T) {
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/resources/voltage-level/0000-0000", nil)
-		mux.ServeHTTP(rec, req)
-		require.Equal(t, http.StatusOK, rec.Code)
-	})
-
-	store.db = pkg.NewTestConfig(pkg.WithDbName(t.Name() + "empty")).DatabaseConnection()
-	t.Run("wrong tables in db", func(t *testing.T) {
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/resources/voltage-level/0000-0000", nil)
-		mux.ServeHTTP(rec, req)
-		require.Equal(t, http.StatusInternalServerError, rec.Code)
-	})
-}
-
-func TestVoltageLevelsInSubstation(t *testing.T) {
-	store := setupStore(t)
-	ctx := context.Background()
-	var (
-		substations []models.Substation
-		vls         []models.VoltageLevel
-	)
-	min1 := options.WithRandomMapAndSliceMinSize(1)
-	err := faker.FakeData(&substations, min1)
-	require.NoError(t, err)
-	require.GreaterOrEqual(t, len(substations), 1)
-
-	err = faker.FakeData(&vls, min1)
-	require.NoError(t, err)
-	require.GreaterOrEqual(t, len(vls), 1)
-	vls[0].SubstationMrid = substations[0].Mrid
-
-	_, err = store.db.NewInsert().Model(&substations).Exec(ctx)
-	require.NoError(t, err)
-	_, err = store.db.NewInsert().Model(&vls).Exec(ctx)
-	require.NoError(t, err)
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/substations/{mrid}/voltage-levels", store.VoltageLevelsInSubstation)
-
-	t.Run("existing", func(t *testing.T) {
-		req := httptest.NewRequest("GET", fmt.Sprintf("/substations/%s/voltage-levels", substations[0].Mrid), nil)
-		rec := httptest.NewRecorder()
-		mux.ServeHTTP(rec, req)
-		require.Equal(t, http.StatusOK, rec.Code)
-		var res map[string]any
-		err := json.NewDecoder(rec.Body).Decode(&res)
-		require.NoError(t, err)
-		receivedVls, ok := res["voltage_levels"]
-		require.True(t, ok)
-		asSlice, ok := receivedVls.([]any)
-		require.True(t, ok)
-		require.Equal(t, 1, len(asSlice))
-
-		mrid, ok := res["mrid"]
-		require.True(t, ok)
-		require.Equal(t, substations[0].Mrid.String(), mrid.(string))
-	})
-
-	t.Run("non existing", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/substations/0000-0000/voltage-levels", nil)
-		rec := httptest.NewRecorder()
-		mux.ServeHTTP(rec, req)
-		require.Equal(t, http.StatusOK, rec.Code)
-	})
-
-	store.voltageLevelRepo = &repository.InMemVoltageLevelReadRepository{InSubstationErr: errors.New("something went wrong")}
-	t.Run("503 on error", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/substations/0000-0000/voltage-levels", nil)
-		rec := httptest.NewRecorder()
 		mux.ServeHTTP(rec, req)
 		require.Equal(t, http.StatusInternalServerError, rec.Code)
 	})

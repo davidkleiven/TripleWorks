@@ -19,7 +19,7 @@ type InMemVoltageLevelReadRepository struct {
 
 func (imv *InMemVoltageLevelReadRepository) InSubstation(ctx context.Context, mrid string) ([]models.VoltageLevel, error) {
 	var result []models.VoltageLevel
-	for _, vl := range imv.items {
+	for _, vl := range imv.Items {
 		if vl.SubstationMrid.String() == mrid {
 			result = append(result, vl)
 		}
@@ -29,7 +29,7 @@ func (imv *InMemVoltageLevelReadRepository) InSubstation(ctx context.Context, mr
 
 func NewBunVoltageLevelReadRepository(db *bun.DB) *BunVoltageLevelRepository {
 	return &BunVoltageLevelRepository{
-		BunReadRepository: BunReadRepository[models.VoltageLevel]{db: db},
+		BunReadRepository: BunReadRepository[models.VoltageLevel]{Db: db},
 	}
 }
 
@@ -39,6 +39,6 @@ type BunVoltageLevelRepository struct {
 
 func (vlr *BunVoltageLevelRepository) InSubstation(ctx context.Context, mrid string) ([]models.VoltageLevel, error) {
 	var vls []models.VoltageLevel
-	err := vlr.db.NewSelect().Model(&vls).Where("substation_mrid = ?", mrid).Scan(ctx)
+	err := vlr.Db.NewSelect().Model(&vls).Where("substation_mrid = ?", mrid).Scan(ctx)
 	return vls, err
 }
