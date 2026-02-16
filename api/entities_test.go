@@ -16,6 +16,7 @@ import (
 	"com.github/davidkleiven/tripleworks/migrations"
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/pkg"
+	"com.github/davidkleiven/tripleworks/repository"
 	"com.github/davidkleiven/tripleworks/testutils"
 	"github.com/go-faker/faker/v4"
 	"github.com/go-faker/faker/v4/pkg/options"
@@ -1006,8 +1007,8 @@ func TestVoltageLevelsInSubstation(t *testing.T) {
 		require.Equal(t, http.StatusOK, rec.Code)
 	})
 
-	store.db = pkg.NewTestConfig(pkg.WithDbName(t.Name() + "_emtpy")).DatabaseConnection()
-	t.Run("error non existent table", func(t *testing.T) {
+	store.voltageLevelRepo = &repository.InMemVoltageLevelReadRepository{InSubstationErr: errors.New("something went wrong")}
+	t.Run("503 on error", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/substations/0000-0000/voltage-levels", nil)
 		rec := httptest.NewRecorder()
 		mux.ServeHTTP(rec, req)
