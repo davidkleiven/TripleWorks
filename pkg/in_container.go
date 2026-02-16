@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"com.github/davidkleiven/tripleworks/models"
-	"github.com/google/uuid"
-	"github.com/uptrace/bun"
+	"com.github/davidkleiven/tripleworks/repository"
+	"golang.org/x/sync/errgroup"
 )
 
 type InVoltageLevel struct {
@@ -31,82 +31,84 @@ func (invl *InVoltageLevel) PickOnlyLatest() {
 	invl.Transformer = OnlyActiveLatest(invl.Transformer)
 }
 
-func conNodesStep(ctx context.Context, db *bun.DB, vlMrid string) Step[InVoltageLevel] {
-	return Step[InVoltageLevel]{
-		Name: "Find connectivity nodes",
-		Run: func(c *InVoltageLevel) error {
-			return db.NewSelect().Model(&c.ConNodes).Where("connectivity_node_container_mrid = ?", vlMrid).Scan(ctx)
-		},
-	}
+type InVoltageLevelDataSources struct {
+	VoltageLevel    repository.ReadRepository[models.VoltageLevel]
+	ConNodes        repository.ConnectivityNodeReadRepository
+	Terminals       repository.TerminalReadRepository
+	Generators      repository.ReadRepository[models.SynchronousMachine]
+	Lines           repository.ReadRepository[models.ACLineSegment]
+	Switches        repository.ReadRepository[models.Switch]
+	ConformLoads    repository.ReadRepository[models.ConformLoad]
+	NonConformLoads repository.ReadRepository[models.NonConformLoad]
+	Transformers    repository.ReadRepository[models.PowerTransformer]
 }
 
-func terminalStep(ctx context.Context, db *bun.DB) Step[InVoltageLevel] {
-	return Step[InVoltageLevel]{
-		Name: "Find terminals",
-		Run: func(c *InVoltageLevel) error {
-			mrids := make([]uuid.UUID, len(c.ConNodes))
-			for i, cn := range c.ConNodes {
-				mrids[i] = cn.Mrid
-			}
-			return db.NewSelect().Model(&c.Terminals).Where("connectivity_node_mrid IN (?)", bun.In(mrids)).Scan(ctx)
-		},
+func FetchInVoltageLevelData(ctx context.Context, sources *InVoltageLevelDataSources, vlMrid string) (*InVoltageLevel, error) {
+	var result InVoltageLevel
+	vls, err := sources.VoltageLevel.GetByMrid(ctx, vlMrid)
+	if err != nil {
+		return &result, fmt.Errorf("Failed to fetch voltage levels: %w", err)
 	}
-}
 
-type NamedEquipment string
-
-const (
-	ConformLoadName    NamedEquipment = "ConformLoad"
-	GenName            NamedEquipment = "Gen"
-	LineName           NamedEquipment = "Line"
-	NonConformLoadName NamedEquipment = "NonConformLoad"
-	SwitchName         NamedEquipment = "Switch"
-	TransformerName    NamedEquipment = "Transformer"
-)
-
-func makeEquipmentStep(ctx context.Context, db *bun.DB, namedEquipment NamedEquipment) Step[InVoltageLevel] {
-	return Step[InVoltageLevel]{
-		Name: fmt.Sprintf("Find %s", namedEquipment),
-		Run: func(c *InVoltageLevel) error {
-			query := db.NewSelect()
-			switch namedEquipment {
-			case GenName:
-				query = query.Model(&c.Gens)
-			case LineName:
-				query = query.Model(&c.Lines)
-			case TransformerName:
-				query = query.Model(&c.Transformer)
-			case ConformLoadName:
-				query = query.Model(&c.ConformLoads)
-			case NonConformLoadName:
-				query = query.Model(&c.NonConformLoads)
-			case SwitchName:
-				query = query.Model(&c.Switches)
-			default:
-				return fmt.Errorf("Unknown equipment kind: %s", namedEquipment)
-			}
-
-			mrids := make([]uuid.UUID, len(c.Terminals))
-			for i, term := range c.Terminals {
-				mrids[i] = term.ConductingEquipmentMrid
-			}
-
-			return query.Where("mrid IN (?)", bun.In(mrids)).Scan(ctx)
-		},
+	result.ConNodes, err = sources.ConNodes.InContainer(ctx, vls.Mrid.String())
+	if err != nil {
+		return &result, fmt.Errorf("Failed to fetch connectivity nodes: %w", err)
 	}
-}
 
-func FetchInVoltageLevelData(ctx context.Context, db *bun.DB, vlMrid string) (*InVoltageLevel, error) {
-	var inVl InVoltageLevel
-	err := Pipe(&inVl,
-		conNodesStep(ctx, db, vlMrid),
-		terminalStep(ctx, db),
-		makeEquipmentStep(ctx, db, GenName),
-		makeEquipmentStep(ctx, db, LineName),
-		makeEquipmentStep(ctx, db, SwitchName),
-		makeEquipmentStep(ctx, db, ConformLoadName),
-		makeEquipmentStep(ctx, db, NonConformLoadName),
-		makeEquipmentStep(ctx, db, TransformerName),
-	)
-	return &inVl, err
+	conNodeMridIter := func(yield func(v string) bool) {
+		for _, cn := range result.ConNodes {
+			if !yield(cn.Mrid.String()) {
+				return
+			}
+		}
+	}
+
+	result.Terminals, err = sources.Terminals.WithConnectivityNode(ctx, conNodeMridIter)
+	if err != nil {
+		return &result, fmt.Errorf("Failed to fetch terminals: %w", err)
+	}
+
+	condEquipmentMrid := func(yield func(v string) bool) {
+		for _, term := range result.Terminals {
+			if !yield(term.ConductingEquipmentMrid.String()) {
+				return
+			}
+		}
+	}
+
+	group, grContext := errgroup.WithContext(ctx)
+	group.Go(
+		func() error {
+			var ierr error
+			result.Gens, ierr = sources.Generators.ListByMrids(grContext, condEquipmentMrid)
+			return ierr
+		})
+	group.Go(
+		func() error {
+			var ierr error
+			result.Lines, ierr = sources.Lines.ListByMrids(grContext, condEquipmentMrid)
+			return ierr
+		})
+	group.Go(func() error {
+		var ierr error
+		result.Switches, ierr = sources.Switches.ListByMrids(grContext, condEquipmentMrid)
+		return ierr
+	})
+	group.Go(
+		func() error {
+			var ierr error
+			result.ConformLoads, ierr = sources.ConformLoads.ListByMrids(grContext, condEquipmentMrid)
+			return ierr
+		})
+	group.Go(func() error {
+		var ierr error
+		result.NonConformLoads, ierr = sources.NonConformLoads.ListByMrids(grContext, condEquipmentMrid)
+		return ierr
+	})
+	group.Go(func() error {
+		var ierr error
+		result.Transformer, ierr = sources.Transformers.ListByMrids(grContext, condEquipmentMrid)
+		return ierr
+	})
+	return &result, group.Wait()
 }
