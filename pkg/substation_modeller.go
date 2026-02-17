@@ -340,7 +340,7 @@ func (l *LineConnectionResult) All(modelId int) iter.Seq[any] {
 			}
 		}
 
-		yieldMany(yield, &l.Terminal, &l.ConNode, &l.RepGroup, &l.BusNameMarker)
+		YieldMany(yield, &l.Terminal, &l.ConNode, &l.RepGroup, &l.BusNameMarker)
 		if l.VoltageLevel != nil && !yield(l.VoltageLevel) {
 			return
 		}

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"com.github/davidkleiven/tripleworks/models"
+	"com.github/davidkleiven/tripleworks/repository"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
@@ -219,6 +220,33 @@ func InsertAll(ctx context.Context, db *bun.DB, msg string, items iter.Seq[any],
 		slog.InfoContext(ctx, "Inserted records into the database", "num", num)
 		return nil
 	})
+}
+
+func InsertAllInserter(ctx context.Context, inserter repository.Inserter, commit models.Commit, items iter.Seq[any], onInsert func(v any) error) error {
+	insertFn := func(ctx context.Context, inserter repository.Inserter) error {
+		err := inserter.Insert(ctx, &commit)
+		if err != nil {
+			return fmt.Errorf("Failed to insert commit: %w", err)
+		}
+
+		num := 0
+		for item := range items {
+			setCommitIfPossible(item, int(commit.Id))
+			err = inserter.Insert(ctx, item)
+			if err != nil {
+				return fmt.Errorf("Failed after %d: %w", num, err)
+			}
+
+			if err := onInsert(item); err != nil {
+				return fmt.Errorf("On insert failed after %d: %w", num, err)
+			}
+			num++
+		}
+		slog.InfoContext(ctx, "Inserted records into the database", "num", num)
+		return nil
+	}
+	insertFnTx := repository.WithTx(insertFn)
+	return insertFnTx(ctx, inserter)
 }
 
 func ExistingMrids(ctx context.Context, db *bun.DB, modelId int) ([]uuid.UUID, error) {
