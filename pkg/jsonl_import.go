@@ -170,7 +170,7 @@ func (s *SubstationLight) CimItems(modelId int) iter.Seq[any] {
 				return
 			}
 		}
-		yieldMany(yield, &location, &point, &substation, &coordinateSystem, &geoRegion, &subGeoRegion)
+		YieldMany(yield, &location, &point, &substation, &coordinateSystem, &geoRegion, &subGeoRegion)
 	}
 }
 
@@ -244,7 +244,7 @@ func (l *LineLight) CimItems(modelId int) iter.Seq[any] {
 				return
 			}
 		}
-		yieldMany(yield, &lineContainer, &line, &bv, &geo, &subRegion)
+		YieldMany(yield, &lineContainer, &line, &bv, &geo, &subRegion)
 	}
 }
 
@@ -406,7 +406,7 @@ func (g *GeneratorLight) CimItems(modelId int) iter.Seq[any] {
 			}
 		}
 
-		yieldMany(yield, &repGroup, &bnm, &conNode, &terminal, &regControl, &reactCurve, &machine, &bv, &vl)
+		YieldMany(yield, &repGroup, &bnm, &conNode, &terminal, &regControl, &reactCurve, &machine, &bv, &vl)
 		if g.Kind == "hydro" && !yield(&plant) {
 			return
 		}
@@ -422,7 +422,7 @@ func (g *GeneratorLight) CimItems(modelId int) iter.Seq[any] {
 	}
 }
 
-func yieldMany(yield func(v any) bool, values ...any) {
+func YieldMany(yield func(v any) bool, values ...any) {
 	for _, v := range values {
 		if !yield(v) {
 			return
@@ -483,7 +483,7 @@ func (l *LoadLight) CimItems(modelId int) iter.Seq[any] {
 	subLoadAreaEntity := models.Entity{ModelEntity: model, Mrid: subLoadArea.Mrid, EntityType: StructName(subLoadArea)}
 
 	return func(yield func(v any) bool) {
-		yieldMany(
+		YieldMany(
 			yield, &bvEntity, &vlEntity, &loadRespEntity, &conformLoadEntity, &loadGroupEntity, &loadAreaEntity, &subLoadAreaEntity,
 			&bv, &vl, &loadResponse, &conformLoad, &loadGroup, &loadArea, &subLoadArea)
 	}

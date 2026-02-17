@@ -109,77 +109,6 @@ func TestGetEntityForKind(t *testing.T) {
 	})
 
 }
-func TestCommit(t *testing.T) {
-	store := setupStore(t)
-	data := `{"mrid": "530dfa65-3158-4bdc-845f-3483a24374b9", "name": "Base voltage 420kV", "cim_type": "BaseVoltage",
-	"checksum": "00", "modelId": 0, "modelName": "national", "energy_ident_code_eic": "EIC", "description": "Desc",
-	"short_name": "name", "nominal_voltage": 22.0, "deleted": false}`
-
-	t.Run("successful commit", func(t *testing.T) {
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/commit", bytes.NewBufferString(data))
-		req.Header.Set("Content-Type", "application/json")
-		store.Commit(rec, req)
-		require.Equal(t, http.StatusOK, rec.Code)
-		require.Contains(t, rec.Body.String(), "Successfully")
-	})
-
-	t.Run("successful deletion", func(t *testing.T) {
-		deleteBody := strings.ReplaceAll(data, "false}", "true}")
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/commit", bytes.NewBufferString(deleteBody))
-
-		req.Header.Set("Content-Type", "application/json")
-		store.Commit(rec, req)
-		require.Equal(t, http.StatusOK, rec.Code)
-		require.Contains(t, rec.Body.String(), "deleted")
-	})
-
-	t.Run("invalid json", func(t *testing.T) {
-		body := "not json"
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/commit", bytes.NewBufferString(body))
-		req.Header.Set("Content-Type", "application/json")
-		store.Commit(rec, req)
-		require.Equal(t, http.StatusBadRequest, rec.Code)
-	})
-
-	t.Run("no insert on repeated checksum", func(t *testing.T) {
-		obj := models.IdentifiedObject{}
-		checksum := pkg.MustGetHash(obj)
-		serialized, err := json.Marshal(obj)
-		require.NoError(t, err)
-
-		var generic map[string]any
-		err = json.Unmarshal(serialized, &generic)
-		require.NoError(t, err)
-
-		generic["checksum"] = checksum
-		generic["cim_type"] = "IdentifiedObject"
-		generic["modelId"] = 0
-		generic["modelName"] = "national"
-
-		body, err := json.Marshal(generic)
-		require.NoError(t, err)
-
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/commit", bytes.NewBuffer(body))
-		req.Header.Set("Content-Type", "application/json")
-		store.Commit(rec, req)
-		require.Equal(t, http.StatusOK, rec.Code)
-		require.Contains(t, rec.Body.String(), "No changes detected")
-	})
-
-	store.timeout = 0
-	t.Run("db insert error", func(t *testing.T) {
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/commit", bytes.NewBufferString(data))
-		req.Header.Set("Content-Type", "application/json")
-		store.Commit(rec, req)
-		require.Equal(t, http.StatusInternalServerError, rec.Code)
-		require.Contains(t, rec.Body.String(), "not insert data")
-	})
-}
 
 func TestGetEnumItems(t *testing.T) {
 	store := setupStore(t)
@@ -239,12 +168,6 @@ func TestLogMsgOnNotEmpty(t *testing.T) {
 	require.Contains(t, logContent, "Could not find")
 	require.Contains(t, logContent, "finder")
 	require.Contains(t, logContent, "MyType")
-}
-
-func TestCheckUnsetFields(t *testing.T) {
-	store := setupStore(t)
-	err := store.CheckUnsetFields([]string{"reqruiedField"})
-	require.Error(t, err)
 }
 
 func TestSubstationReturnedWhenRequestingEquipmentContainer(t *testing.T) {

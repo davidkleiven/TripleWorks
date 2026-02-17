@@ -54,6 +54,8 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 		timeout:         timeout,
 	}
 
+	commit := CommitEndpoint{Db: &repository.BunInserter{Db: db}, timeout: timeout}
+
 	mux.HandleFunc("/", RootHandler)
 	mux.HandleFunc("/cim-types", CimTypes)
 	mux.HandleFunc("/entity-form", EntityForm)
@@ -64,7 +66,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.HandleFunc("/entities", entityHandler.GetEntityForKind)
 	mux.HandleFunc("/enum", entityHandler.GetEnumOptions)
 	mux.HandleFunc("/entity-list", entityHandler.EntityList)
-	mux.HandleFunc("POST /commit", entityHandler.Commit)
+	mux.Handle("POST /commit", &commit)
 	mux.HandleFunc("DELETE /commit/{id}", entityHandler.DeleteCommit)
 	mux.HandleFunc("POST /autofill", AutofillHandler)
 	mux.HandleFunc("GET /substations/{mrid}/diagram", entityHandler.SubstationDiagram)

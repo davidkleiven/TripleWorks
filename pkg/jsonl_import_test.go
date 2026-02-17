@@ -97,7 +97,7 @@ func TestGenerator(t *testing.T) {
 
 func TestBreakInYieldMany(t *testing.T) {
 	iterator := func(yield func(v any) bool) {
-		yieldMany(yield, 1, 2, 3, 4)
+		YieldMany(yield, 1, 2, 3, 4)
 	}
 
 	total := 0
