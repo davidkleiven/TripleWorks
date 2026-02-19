@@ -2,26 +2,20 @@ package integrity
 
 import (
 	"cmp"
-	"context"
 	"encoding/json"
 	"slices"
 
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/pkg"
 	"github.com/google/uuid"
-	"github.com/uptrace/bun"
 )
 
 type UniqueSequenceNumberPerConductingEquipment struct {
-	terminals []models.Terminal
-}
-
-func (u *UniqueSequenceNumberPerConductingEquipment) Fetch(ctx context.Context, db *bun.DB) error {
-	return db.NewSelect().Model(&u.terminals).Scan(ctx)
+	Terminals []models.Terminal
 }
 
 func (u *UniqueSequenceNumberPerConductingEquipment) Check() QualityResult {
-	latest := pkg.OnlyActiveLatest(u.terminals)
+	latest := pkg.OnlyActiveLatest(u.Terminals)
 	grouped := pkg.GroupBy(latest, func(trm models.Terminal) uuid.UUID { return trm.ConductingEquipmentMrid })
 	for k, terminals := range grouped {
 		var (

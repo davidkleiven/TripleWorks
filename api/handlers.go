@@ -55,6 +55,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	}
 
 	commit := CommitEndpoint{Db: &repository.BunInserter{Db: db}, timeout: timeout}
+	validate := NewBunValidationEndpoint(db, timeout)
 
 	mux.HandleFunc("/", RootHandler)
 	mux.HandleFunc("/cim-types", CimTypes)
@@ -77,6 +78,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.HandleFunc("POST /connect-dangling", entityHandler.ConnectDanglingLines)
 	mux.HandleFunc("PATCH /resource", entityHandler.ApplyJsonPatch)
 	mux.HandleFunc("/connection/{mrid}", entityHandler.Connection)
+	mux.Handle("PUT /validate", validate)
 
 	mux.Handle("/js/", pkg.JsServer())
 }
