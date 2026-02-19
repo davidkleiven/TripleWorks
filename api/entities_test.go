@@ -793,11 +793,11 @@ func TestApplyJsonPatchEndpoint(t *testing.T) {
 	})
 
 	t.Run("success", func(t *testing.T) {
-		patch := pkg.JsonPatch{
+		patch := []pkg.JsonPatch{{
 			Op:    "replace",
 			Path:  fmt.Sprintf("/%s/nominval_voltage", bv.Mrid),
 			Value: []byte{0x32, 0x32},
-		}
+		}}
 
 		var body bytes.Buffer
 		err := json.NewEncoder(&body).Encode(patch)
@@ -815,11 +815,11 @@ func TestApplyJsonPatchEndpoint(t *testing.T) {
 	})
 
 	t.Run("unknown mrid", func(t *testing.T) {
-		patch := pkg.JsonPatch{
+		patch := []pkg.JsonPatch{{
 			Op:    "replace",
 			Path:  "/0000-0000/nominval_voltage",
 			Value: []byte{0x32, 0x32},
-		}
+		}}
 
 		var body bytes.Buffer
 		err := json.NewEncoder(&body).Encode(patch)

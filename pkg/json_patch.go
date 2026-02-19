@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"com.github/davidkleiven/tripleworks/models"
+	"com.github/davidkleiven/tripleworks/repository"
 	"github.com/uptrace/bun"
 )
 
@@ -98,6 +100,7 @@ func applyPatchStep(patch JsonPatch) Step[PreparePatchCtx] {
 			switch patch.Op {
 			case "replace":
 				ctx.Generic[ctx.Path.Field] = ctx.Value
+				ctx.Generic["id"] = 0
 			default:
 				return fmt.Errorf("Unsupported operation %s", patch.Op)
 			}
@@ -126,44 +129,34 @@ func updatingOriginalModelStep() Step[PreparePatchCtx] {
 	}
 }
 
-func ApplyPatch(ctx context.Context, db *bun.DB, patch JsonPatch) error {
-	var prepCtx PreparePatchCtx
-	err := Pipe(&prepCtx,
-		parsePathStep(patch),
-		typeFromEntitiesStep(ctx, db),
-		formTypeStep(),
-		extractLastEntryStep(ctx, db),
-		intepretValueStep(patch),
-		serializePatchStep(patch),
-		applyPatchStep(patch),
-		serializingGenericModelStep(),
-		updatingOriginalModelStep(),
-	)
-
-	if err != nil {
-		return fmt.Errorf("Prepare data failed: %w", err)
+func ApplyPatch(ctx context.Context, db *bun.DB, patches []JsonPatch) error {
+	var result []any
+	for i, patch := range patches {
+		var prepCtx PreparePatchCtx
+		err := Pipe(&prepCtx,
+			parsePathStep(patch),
+			typeFromEntitiesStep(ctx, db),
+			formTypeStep(),
+			extractLastEntryStep(ctx, db),
+			intepretValueStep(patch),
+			serializePatchStep(patch),
+			applyPatchStep(patch),
+			serializingGenericModelStep(),
+			updatingOriginalModelStep(),
+		)
+		if err != nil {
+			return fmt.Errorf("Failed to apply patch %d: %s: %w", i, patch, err)
+		}
+		result = append(result, prepCtx.Model)
 	}
 
 	commit := models.Commit{
-		Message: fmt.Sprintf("Applied json patch %s", string(prepCtx.SerializedPatch)),
+		Message: fmt.Sprintf("Applied json patch to %d objects", len(result)),
 		Author:  "Json patcher",
 	}
 
-	return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := ReturnOnFirstError(
-			func() error {
-				_, ierr := tx.NewInsert().Model(&commit).Exec(ctx)
-				return ierr
-			},
-			func() error {
-				setCommitIfPossible(prepCtx.Model, int(commit.Id))
-				_, ierr := tx.NewInsert().Model(prepCtx.Model).ExcludeColumn("id").Exec(ctx)
-				return ierr
-			},
-		)
-		return err
-	})
-
+	inserter := repository.BunInserter{Db: db}
+	return InsertAllInserter(ctx, &inserter, commit, slices.Values(result), NoOpOnInsert)
 }
 
 type ParsedPath struct {
