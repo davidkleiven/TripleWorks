@@ -346,3 +346,7 @@ func Set[T comparable](items ...T) map[T]struct{} {
 	}
 	return unique
 }
+
+func EmptyAnyIter() iter.Seq[any] {
+	return func(yield func(v any) bool) {}
+}
