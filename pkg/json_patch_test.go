@@ -30,11 +30,11 @@ func TestApplyPatch(t *testing.T) {
 	_, err = db.NewInsert().Model(&entity).Exec(ctx)
 	require.NoError(t, err)
 
-	patch := JsonPatch{
+	patch := []JsonPatch{{
 		Op:    "replace",
 		Path:  fmt.Sprintf("/%s/nominal_voltage", bv.Mrid),
 		Value: []byte{0x32, 0x32},
-	}
+	}}
 
 	t.Run("success", func(t *testing.T) {
 		err = ApplyPatch(ctx, db, patch)
@@ -52,29 +52,29 @@ func TestApplyPatch(t *testing.T) {
 	})
 
 	t.Run("unknown mrid", func(t *testing.T) {
-		patch := JsonPatch{
+		patch := []JsonPatch{{
 			Op:   "replace",
 			Path: "/0000-0000/nominal_voltage",
-		}
+		}}
 		err = ApplyPatch(ctx, db, patch)
 		require.ErrorContains(t, err, "in result set")
 	})
 
 	t.Run("unknown wrong path format", func(t *testing.T) {
-		patch := JsonPatch{
+		patch := []JsonPatch{{
 			Op:   "replace",
 			Path: "/0000-0000/nominal_voltage/what",
-		}
+		}}
 		err = ApplyPatch(ctx, db, patch)
 		require.ErrorContains(t, err, "Parse patch")
 	})
 
 	t.Run("Unsupported operation", func(t *testing.T) {
-		patch := JsonPatch{
+		patch := []JsonPatch{{
 			Op:    "some-random-op",
 			Path:  fmt.Sprintf("/%s/nominal_voltage", bv.Mrid),
 			Value: []byte{0x32, 0x32},
-		}
+		}}
 		err = ApplyPatch(ctx, db, patch)
 		require.ErrorContains(t, err, "Unsupported operation")
 	})
