@@ -1,8 +1,6 @@
 package integrity
 
 import (
-	"iter"
-
 	"encoding/json"
 
 	"com.github/davidkleiven/tripleworks/models"
@@ -37,8 +35,4 @@ func (u *UniqueNominalVoltageResult) Report(enc *json.Encoder) error {
 		BaseVoltages: u.BaseVoltages,
 	}
 	return enc.Encode(report)
-}
-
-func (u *UniqueNominalVoltageResult) Fix() iter.Seq[any] {
-	return pkg.EmptyAnyIter()
 }

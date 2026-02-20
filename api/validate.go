@@ -17,24 +17,30 @@ import (
 
 func NewBunValidationEndpoint(db *bun.DB, timeout time.Duration) *ValidateEndpoint {
 	return &ValidateEndpoint{
-		TerminalRepo: &repository.BunReadRepository[models.Terminal]{Db: db},
-		Timeout:      timeout,
+		TerminalRepo:    &repository.BunReadRepository[models.Terminal]{Db: db},
+		BaseVoltageRepo: &repository.BunReadRepository[models.BaseVoltage]{Db: db},
+		Timeout:         timeout,
 	}
 }
 
 func NewInMemValidationEndpoint() *ValidateEndpoint {
 	return &ValidateEndpoint{
-		TerminalRepo: &repository.InMemReadRepository[models.Terminal]{},
+		TerminalRepo:    &repository.InMemReadRepository[models.Terminal]{},
+		BaseVoltageRepo: &repository.InMemReadRepository[models.BaseVoltage]{},
 	}
 }
 
 type ValidateEndpoint struct {
-	TerminalRepo repository.ReadRepository[models.Terminal]
-	Timeout      time.Duration
+	TerminalRepo    repository.ReadRepository[models.Terminal]
+	BaseVoltageRepo repository.ReadRepository[models.BaseVoltage]
+	Timeout         time.Duration
 }
 
 func (v *ValidateEndpoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var terminals []models.Terminal
+	var (
+		terminals []models.Terminal
+		bvs       []models.BaseVoltage
+	)
 
 	ctx, cancel := context.WithTimeout(r.Context(), v.Timeout)
 	defer cancel()
@@ -43,6 +49,11 @@ func (v *ValidateEndpoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		func() error {
 			var ierr error
 			terminals, ierr = v.TerminalRepo.List(ctx)
+			return ierr
+		},
+		func() error {
+			var ierr error
+			bvs, ierr = v.BaseVoltageRepo.List(ctx)
 			return ierr
 		},
 	)
@@ -55,6 +66,7 @@ func (v *ValidateEndpoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	checks := []integrity.QualityCheck{
 		&integrity.UniqueSequenceNumberPerConductingEquipment{Terminals: terminals},
+		&integrity.UniqueNominalVoltage{BaseVoltages: bvs},
 	}
 
 	w.Header().Set("Content-Type", "application/x-ndjson")
