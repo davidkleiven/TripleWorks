@@ -15,30 +15,34 @@ type Extension struct {
 	IdAttr  string   `xml:"id,attr"`
 }
 
+const IidmNs = "http://www.powsybl.org/schema/iidm/1_16"
+
 // Network ...
 type Network struct {
+	XMLName                    xml.Name                   `xml:"network"`
+	Xmlns                      string                     `xml:"xmlns,attr"`
 	IdAttr                     string                     `xml:"id,attr"`
 	CaseDateAttr               string                     `xml:"caseDate,attr"`
 	ForecastDistanceAttr       int                        `xml:"forecastDistance,attr"`
 	SourceFormatAttr           string                     `xml:"sourceFormat,attr"`
 	MinimumValidationLevelAttr string                     `xml:"minimumValidationLevel,attr"`
-	Alias                      []Alias                    `xml:"alias"`
-	Property                   []Property                 `xml:"property"`
-	Network                    []Network                  `xml:"network"`
-	DcNode                     []DcNode                   `xml:"dcNode"`
-	DcSwitch                   []DcSwitch                 `xml:"dcSwitch"`
-	DcGround                   []DcGround                 `xml:"dcGround"`
-	DcLine                     []DcLine                   `xml:"dcLine"`
-	VoltageLevel               []VoltageLevel             `xml:"voltageLevel"`
-	Substation                 []Substation               `xml:"substation"`
-	TwoWindingsTransformer     []TwoWindingsTransformer   `xml:"twoWindingsTransformer"`
-	ThreeWindingsTransformer   []ThreeWindingsTransformer `xml:"threeWindingsTransformer"`
-	Line                       []Line                     `xml:"line"`
-	TieLine                    []TieLine                  `xml:"tieLine"`
-	HvdcLine                   []HvdcLine                 `xml:"hvdcLine"`
-	VoltageAngleLimit          []VoltageAngleLimit        `xml:"voltageAngleLimit"`
-	Area                       []Area                     `xml:"area"`
-	Extension                  []Extension                `xml:"extension"`
+	Alias                      []Alias                    `xml:"alias,omitempty"`
+	Property                   []Property                 `xml:"property,omitempty"`
+	Network                    []Network                  `xml:"network,omitempty"`
+	DcNode                     []DcNode                   `xml:"dcNode,omitempty"`
+	DcSwitch                   []DcSwitch                 `xml:"dcSwitch,omitempty"`
+	DcGround                   []DcGround                 `xml:"dcGround,omitempty"`
+	DcLine                     []DcLine                   `xml:"dcLine,omitempty"`
+	VoltageLevel               []VoltageLevel             `xml:"voltageLevel,omitempty"`
+	Substation                 []Substation               `xml:"substation,omitempty"`
+	TwoWindingsTransformer     []TwoWindingsTransformer   `xml:"twoWindingsTransformer,omitempty"`
+	ThreeWindingsTransformer   []ThreeWindingsTransformer `xml:"threeWindingsTransformer,omitempty"`
+	Line                       []Line                     `xml:"line,omitempty"`
+	TieLine                    []TieLine                  `xml:"tieLine,omitempty"`
+	HvdcLine                   []HvdcLine                 `xml:"hvdcLine,omitempty"`
+	VoltageAngleLimit          []VoltageAngleLimit        `xml:"voltageAngleLimit,omitempty"`
+	Area                       []Area                     `xml:"area,omitempty"`
+	Extension                  []Extension                `xml:"extension,omitempty"`
 }
 
 // Identifiable ...
@@ -46,8 +50,8 @@ type Identifiable struct {
 	IdAttr         string     `xml:"id,attr"`
 	NameAttr       string     `xml:"name,attr,omitempty"`
 	FictitiousAttr bool       `xml:"fictitious,attr,omitempty"`
-	Alias          []Alias    `xml:"alias"`
-	Property       []Property `xml:"property"`
+	Alias          []Alias    `xml:"alias,omitempty"`
+	Property       []Property `xml:"property,omitempty"`
 }
 
 // Alias ...
@@ -67,11 +71,11 @@ type Substation struct {
 	TsoAttr                  string                     `xml:"tso,attr,omitempty"`
 	CountryAttr              string                     `xml:"country,attr,omitempty"`
 	GeographicalTagsAttr     string                     `xml:"geographicalTags,attr,omitempty"`
-	VoltageLevel             []VoltageLevel             `xml:"voltageLevel"`
-	TwoWindingsTransformer   []TwoWindingsTransformer   `xml:"twoWindingsTransformer"`
-	ThreeWindingsTransformer []ThreeWindingsTransformer `xml:"threeWindingsTransformer"`
-	OverloadManagementSystem []OverloadManagementSystem `xml:"overloadManagementSystem"`
-	*Identifiable
+	VoltageLevel             []VoltageLevel             `xml:"voltageLevel,omitempty"`
+	TwoWindingsTransformer   []TwoWindingsTransformer   `xml:"twoWindingsTransformer,omitempty"`
+	ThreeWindingsTransformer []ThreeWindingsTransformer `xml:"threeWindingsTransformer,omitempty"`
+	OverloadManagementSystem []OverloadManagementSystem `xml:"overloadManagementSystem,omitempty"`
+	Identifiable
 }
 
 // TopologyKind ...
@@ -83,35 +87,35 @@ type VoltageLevel struct {
 	TopologyKindAttr        string                    `xml:"topologyKind,attr"`
 	LowVoltageLimitAttr     float64                   `xml:"lowVoltageLimit,attr,omitempty"`
 	HighVoltageLimitAttr    float64                   `xml:"highVoltageLimit,attr,omitempty"`
-	NodeBreakerTopology     *NodeBreakerTopology      `xml:"nodeBreakerTopology"`
-	BusBreakerTopology      *BusBreakerTopology       `xml:"busBreakerTopology"`
-	Generator               []Generator               `xml:"generator"`
-	Battery                 []Battery                 `xml:"battery"`
-	Load                    []Load                    `xml:"load"`
-	ShuntCompensator        []ShuntCompensator        `xml:"shuntCompensator"`
-	DanglingLine            []DanglingLine            `xml:"danglingLine"`
-	StaticVarCompensator    []StaticVarCompensator    `xml:"staticVarCompensator"`
-	VscConverterStation     []VscConverterStation     `xml:"vscConverterStation"`
-	LccConverterStation     []LccConverterStation     `xml:"lccConverterStation"`
-	VoltageSourceConverter  []VoltageSourceConverter  `xml:"voltageSourceConverter"`
-	LineCommutatedConverter []LineCommutatedConverter `xml:"lineCommutatedConverter"`
-	Ground                  []Ground                  `xml:"ground"`
-	*Identifiable
+	NodeBreakerTopology     *NodeBreakerTopology      `xml:"nodeBreakerTopology,omitempty"`
+	BusBreakerTopology      *BusBreakerTopology       `xml:"busBreakerTopology,omitempty"`
+	Generator               []Generator               `xml:"generator,omitempty"`
+	Battery                 []Battery                 `xml:"battery,omitempty"`
+	Load                    []Load                    `xml:"load,omitempty"`
+	ShuntCompensator        []ShuntCompensator        `xml:"shuntCompensator,omitempty"`
+	DanglingLine            []DanglingLine            `xml:"danglingLine,omitempty"`
+	StaticVarCompensator    []StaticVarCompensator    `xml:"staticVarCompensator,omitempty"`
+	VscConverterStation     []VscConverterStation     `xml:"vscConverterStation,omitempty"`
+	LccConverterStation     []LccConverterStation     `xml:"lccConverterStation,omitempty"`
+	VoltageSourceConverter  []VoltageSourceConverter  `xml:"voltageSourceConverter,omitempty"`
+	LineCommutatedConverter []LineCommutatedConverter `xml:"lineCommutatedConverter,omitempty"`
+	Ground                  []Ground                  `xml:"ground,omitempty"`
+	Identifiable
 }
 
 // NodeBreakerTopology ...
 type NodeBreakerTopology struct {
-	BusbarSection      []BusbarSection       `xml:"busbarSection"`
-	Switch             []SwitchNode          `xml:"switch"`
-	InternalConnection []InternalConnection  `xml:"internalConnection"`
-	Bus                []CalculatedBus       `xml:"bus"`
-	Inj                []FictitiousInjection `xml:"inj"`
+	BusbarSection      []BusbarSection       `xml:"busbarSection,omitempty"`
+	Switch             []SwitchNode          `xml:"switch,omitempty"`
+	InternalConnection []InternalConnection  `xml:"internalConnection,omitempty"`
+	Bus                []CalculatedBus       `xml:"bus,omitempty"`
+	Inj                []FictitiousInjection `xml:"inj,omitempty"`
 }
 
 // BusBreakerTopology ...
 type BusBreakerTopology struct {
-	Bus    []Bus       `xml:"bus"`
-	Switch []SwitchBus `xml:"switch"`
+	Bus    []Bus       `xml:"bus,omitempty"`
+	Switch []SwitchBus `xml:"switch,omitempty"`
 }
 
 // Bus ...
@@ -120,13 +124,13 @@ type Bus struct {
 	AngleAttr        float64 `xml:"angle,attr,omitempty"`
 	FictitiousP0Attr float64 `xml:"fictitiousP0,attr,omitempty"`
 	FictitiousQ0Attr float64 `xml:"fictitiousQ0,attr,omitempty"`
-	*Identifiable
+	Identifiable
 }
 
 // BusbarSection ...
 type BusbarSection struct {
 	NodeAttr int `xml:"node,attr"`
-	*Identifiable
+	Identifiable
 }
 
 // CalculatedBus ...
@@ -134,7 +138,7 @@ type CalculatedBus struct {
 	NodesAttr string     `xml:"nodes,attr"`
 	VAttr     float64    `xml:"v,attr,omitempty"`
 	AngleAttr float64    `xml:"angle,attr,omitempty"`
-	Property  []Property `xml:"property"`
+	Property  []Property `xml:"property,omitempty"`
 }
 
 // FictitiousInjection ...
@@ -152,21 +156,21 @@ type Switch struct {
 	KindAttr     string `xml:"kind,attr"`
 	RetainedAttr bool   `xml:"retained,attr"`
 	OpenAttr     bool   `xml:"open,attr"`
-	*Identifiable
+	Identifiable
 }
 
 // SwitchNode ...
 type SwitchNode struct {
 	Node1Attr int `xml:"node1,attr"`
 	Node2Attr int `xml:"node2,attr"`
-	*Switch
+	Switch
 }
 
 // SwitchBus ...
 type SwitchBus struct {
 	Bus1Attr string `xml:"bus1,attr"`
 	Bus2Attr string `xml:"bus2,attr"`
-	*Switch
+	Switch
 }
 
 // InternalConnection ...
@@ -184,7 +188,7 @@ type Point struct {
 
 // ReactiveCapabilityCurve ...
 type ReactiveCapabilityCurve struct {
-	Point []Point `xml:"point"`
+	Point []Point `xml:"point,omitempty"`
 }
 
 // MinMaxReactiveLimits ...
@@ -203,7 +207,7 @@ type Injection struct {
 	ConnectableBusAttr string  `xml:"connectableBus,attr,omitempty"`
 	PAttr              float64 `xml:"p,attr,omitempty"`
 	QAttr              float64 `xml:"q,attr,omitempty"`
-	*Identifiable
+	Identifiable
 }
 
 // Generator ...
@@ -221,7 +225,7 @@ type Generator struct {
 	RegulatingTerminal         *TerminalRef             `xml:"regulatingTerminal"`
 	ReactiveCapabilityCurve    *ReactiveCapabilityCurve `xml:"reactiveCapabilityCurve"`
 	MinMaxReactiveLimits       *MinMaxReactiveLimits    `xml:"minMaxReactiveLimits"`
-	*Injection
+	Injection
 }
 
 // Battery ...
@@ -232,7 +236,7 @@ type Battery struct {
 	MaxPAttr                float64                  `xml:"maxP,attr"`
 	ReactiveCapabilityCurve *ReactiveCapabilityCurve `xml:"reactiveCapabilityCurve"`
 	MinMaxReactiveLimits    *MinMaxReactiveLimits    `xml:"minMaxReactiveLimits"`
-	*Injection
+	Injection
 }
 
 // LoadType ...
@@ -245,7 +249,7 @@ type Load struct {
 	LoadTypeAttr     string                `xml:"loadType,attr,omitempty"`
 	ZipModel         *ZipLoadModel         `xml:"zipModel"`
 	ExponentialModel *ExponentialLoadModel `xml:"exponentialModel"`
-	*Injection
+	Injection
 }
 
 // ZipLoadModel ...
@@ -274,7 +278,7 @@ type ShuntCompensator struct {
 	ShuntLinearModel       *ShuntLinearModel    `xml:"shuntLinearModel"`
 	ShuntNonLinearModel    *ShuntNonLinearModel `xml:"shuntNonLinearModel"`
 	RegulatingTerminal     *TerminalRef         `xml:"regulatingTerminal"`
-	*Injection
+	Injection
 }
 
 // ShuntLinearModel ...
@@ -286,7 +290,7 @@ type ShuntLinearModel struct {
 
 // ShuntNonLinearModel ...
 type ShuntNonLinearModel struct {
-	Section []ShuntSection `xml:"section"`
+	Section []ShuntSection `xml:"section,omitempty"`
 }
 
 // ShuntSection ...
@@ -307,13 +311,13 @@ type TemporaryLimit struct {
 // LoadingLimit ...
 type LoadingLimit struct {
 	PermanentLimitAttr float64          `xml:"permanentLimit,attr,omitempty"`
-	TemporaryLimit     []TemporaryLimit `xml:"temporaryLimit"`
+	TemporaryLimit     []TemporaryLimit `xml:"temporaryLimit,omitempty"`
 }
 
 // OperationalLimitsGroup ...
 type OperationalLimitsGroup struct {
 	IdAttr              string        `xml:"id,attr"`
-	Property            []Property    `xml:"property"`
+	Property            []Property    `xml:"property,omitempty"`
 	ActivePowerLimits   *LoadingLimit `xml:"activePowerLimits"`
 	ApparentPowerLimits *LoadingLimit `xml:"apparentPowerLimits"`
 	CurrentLimits       *LoadingLimit `xml:"currentLimits"`
@@ -337,8 +341,8 @@ type DanglingLine struct {
 	PairingKeyAttr                       string                   `xml:"pairingKey,attr,omitempty"`
 	ReactiveCapabilityCurve              *ReactiveCapabilityCurve `xml:"reactiveCapabilityCurve"`
 	MinMaxReactiveLimits                 *MinMaxReactiveLimits    `xml:"minMaxReactiveLimits"`
-	OperationalLimitsGroup               []OperationalLimitsGroup `xml:"operationalLimitsGroup"`
-	*Injection
+	OperationalLimitsGroup               []OperationalLimitsGroup `xml:"operationalLimitsGroup,omitempty"`
+	Injection
 }
 
 // StaticVarCompensatorRegulationMode ...
@@ -353,7 +357,7 @@ type StaticVarCompensator struct {
 	RegulationModeAttr        string       `xml:"regulationMode,attr"`
 	RegulatingAttr            bool         `xml:"regulating,attr"`
 	RegulatingTerminal        *TerminalRef `xml:"regulatingTerminal"`
-	*Injection
+	Injection
 }
 
 // Branch ...
@@ -370,7 +374,7 @@ type Branch struct {
 	Q1Attr              float64 `xml:"q1,attr,omitempty"`
 	P2Attr              float64 `xml:"p2,attr,omitempty"`
 	Q2Attr              float64 `xml:"q2,attr,omitempty"`
-	*Identifiable
+	Identifiable
 }
 
 // TwoWindingsTransformer ...
@@ -386,9 +390,9 @@ type TwoWindingsTransformer struct {
 	RatedSAttr                            float64                  `xml:"ratedS,attr,omitempty"`
 	RatioTapChanger                       *RatioTapChanger         `xml:"ratioTapChanger"`
 	PhaseTapChanger                       *PhaseTapChanger         `xml:"phaseTapChanger"`
-	OperationalLimitsGroup1               []OperationalLimitsGroup `xml:"operationalLimitsGroup1"`
-	OperationalLimitsGroup2               []OperationalLimitsGroup `xml:"operationalLimitsGroup2"`
-	*Branch
+	OperationalLimitsGroup1               []OperationalLimitsGroup `xml:"operationalLimitsGroup1,omitempty"`
+	OperationalLimitsGroup2               []OperationalLimitsGroup `xml:"operationalLimitsGroup2,omitempty"`
+	Branch
 }
 
 // ThreeWindingsTransformer ...
@@ -439,10 +443,10 @@ type ThreeWindingsTransformer struct {
 	PhaseTapChanger2                      *PhaseTapChanger         `xml:"phaseTapChanger2"`
 	RatioTapChanger3                      *RatioTapChanger         `xml:"ratioTapChanger3"`
 	PhaseTapChanger3                      *PhaseTapChanger         `xml:"phaseTapChanger3"`
-	OperationalLimitsGroup1               []OperationalLimitsGroup `xml:"operationalLimitsGroup1"`
-	OperationalLimitsGroup2               []OperationalLimitsGroup `xml:"operationalLimitsGroup2"`
-	OperationalLimitsGroup3               []OperationalLimitsGroup `xml:"operationalLimitsGroup3"`
-	*Identifiable
+	OperationalLimitsGroup1               []OperationalLimitsGroup `xml:"operationalLimitsGroup1,omitempty"`
+	OperationalLimitsGroup2               []OperationalLimitsGroup `xml:"operationalLimitsGroup2,omitempty"`
+	OperationalLimitsGroup3               []OperationalLimitsGroup `xml:"operationalLimitsGroup3,omitempty"`
+	Identifiable
 }
 
 // OverloadManagementSystem ...
@@ -450,10 +454,10 @@ type OverloadManagementSystem struct {
 	EnabledAttr                      bool                               `xml:"enabled,attr,omitempty"`
 	MonitoredElementIdAttr           string                             `xml:"monitoredElementId,attr"`
 	SideAttr                         string                             `xml:"side,attr,omitempty"`
-	BranchTripping                   []BranchTripping                   `xml:"branchTripping"`
-	SwitchTripping                   []SwitchTripping                   `xml:"switchTripping"`
-	ThreeWindingsTransformerTripping []ThreeWindingsTransformerTripping `xml:"threeWindingsTransformerTripping"`
-	*Identifiable
+	BranchTripping                   []BranchTripping                   `xml:"branchTripping,omitempty"`
+	SwitchTripping                   []SwitchTripping                   `xml:"switchTripping,omitempty"`
+	ThreeWindingsTransformerTripping []ThreeWindingsTransformerTripping `xml:"threeWindingsTransformerTripping,omitempty"`
+	Identifiable
 }
 
 // AcDcConverterControlMode ...
@@ -461,7 +465,7 @@ type AcDcConverterControlMode string
 
 // DroopCurve ...
 type DroopCurve struct {
-	Segment []DroopCurveSegment `xml:"segment"`
+	Segment []DroopCurveSegment `xml:"segment,omitempty"`
 }
 
 // DroopCurveSegment ...
@@ -499,7 +503,7 @@ type AcDcConverter struct {
 	DcI2Attr            float64      `xml:"dcI2,attr,omitempty"`
 	PccTerminal         *TerminalRef `xml:"pccTerminal"`
 	DroopCurve          *DroopCurve  `xml:"droopCurve"`
-	*Identifiable
+	Identifiable
 }
 
 // LineCommutatedConverterReactiveModel ...
@@ -509,7 +513,7 @@ type LineCommutatedConverterReactiveModel string
 type LineCommutatedConverter struct {
 	ReactiveModelAttr string  `xml:"reactiveModel,attr"`
 	PowerFactorAttr   float64 `xml:"powerFactor,attr"`
-	*AcDcConverter
+	AcDcConverter
 }
 
 // VoltageSourceConverter ...
@@ -519,7 +523,7 @@ type VoltageSourceConverter struct {
 	ReactivePowerSetpointAttr float64                  `xml:"reactivePowerSetpoint,attr,omitempty"`
 	ReactiveCapabilityCurve   *ReactiveCapabilityCurve `xml:"reactiveCapabilityCurve"`
 	MinMaxReactiveLimits      *MinMaxReactiveLimits    `xml:"minMaxReactiveLimits"`
-	*AcDcConverter
+	AcDcConverter
 }
 
 // Tripping ...
@@ -534,20 +538,20 @@ type Tripping struct {
 type BranchTripping struct {
 	BranchIdAttr string `xml:"branchId,attr"`
 	SideAttr     string `xml:"side,attr,omitempty"`
-	*Tripping
+	Tripping
 }
 
 // SwitchTripping ...
 type SwitchTripping struct {
 	SwitchIdAttr string `xml:"switchId,attr"`
-	*Tripping
+	Tripping
 }
 
 // ThreeWindingsTransformerTripping ...
 type ThreeWindingsTransformerTripping struct {
 	ThreeWindingsTransformerIdAttr string `xml:"threeWindingsTransformerId,attr"`
 	SideAttr                       string `xml:"side,attr,omitempty"`
-	*Tripping
+	Tripping
 }
 
 // Side ...
@@ -596,7 +600,7 @@ type RatioTapChanger struct {
 	RegulationModeAttr              string                `xml:"regulationMode,attr,omitempty"`
 	RegulationValueAttr             float64               `xml:"regulationValue,attr,omitempty"`
 	TerminalRef                     *TerminalRef          `xml:"terminalRef"`
-	Step                            []RatioTapChangerStep `xml:"step"`
+	Step                            []RatioTapChangerStep `xml:"step,omitempty"`
 }
 
 // PhaseRegulationMode ...
@@ -613,7 +617,7 @@ type PhaseTapChanger struct {
 	RegulationValueAttr             float64               `xml:"regulationValue,attr,omitempty"`
 	RegulatingAttr                  bool                  `xml:"regulating,attr,omitempty"`
 	TerminalRef                     *TerminalRef          `xml:"terminalRef"`
-	Step                            []PhaseTapChangerStep `xml:"step"`
+	Step                            []PhaseTapChangerStep `xml:"step,omitempty"`
 }
 
 // Line ...
@@ -626,16 +630,16 @@ type Line struct {
 	G2Attr                                float64                  `xml:"g2,attr"`
 	B1Attr                                float64                  `xml:"b1,attr"`
 	B2Attr                                float64                  `xml:"b2,attr"`
-	OperationalLimitsGroup1               []OperationalLimitsGroup `xml:"operationalLimitsGroup1"`
-	OperationalLimitsGroup2               []OperationalLimitsGroup `xml:"operationalLimitsGroup2"`
-	*Branch
+	OperationalLimitsGroup1               []OperationalLimitsGroup `xml:"operationalLimitsGroup1,omitempty"`
+	OperationalLimitsGroup2               []OperationalLimitsGroup `xml:"operationalLimitsGroup2,omitempty"`
+	Branch
 }
 
 // TieLine ...
 type TieLine struct {
 	DanglingLineId1Attr string `xml:"danglingLineId1,attr"`
 	DanglingLineId2Attr string `xml:"danglingLineId2,attr"`
-	*Identifiable
+	Identifiable
 }
 
 // ConvertersMode ...
@@ -644,7 +648,7 @@ type ConvertersMode string
 // HvdcConverterStation ...
 type HvdcConverterStation struct {
 	LossFactorAttr float32 `xml:"lossFactor,attr"`
-	*Injection
+	Injection
 }
 
 // VscConverterStation ...
@@ -655,13 +659,13 @@ type VscConverterStation struct {
 	ReactiveCapabilityCurve   *ReactiveCapabilityCurve `xml:"reactiveCapabilityCurve"`
 	MinMaxReactiveLimits      *MinMaxReactiveLimits    `xml:"minMaxReactiveLimits"`
 	RegulatingTerminal        *TerminalRef             `xml:"regulatingTerminal"`
-	*HvdcConverterStation
+	HvdcConverterStation
 }
 
 // LccConverterStation ...
 type LccConverterStation struct {
 	PowerFactorAttr float32 `xml:"powerFactor,attr"`
-	*HvdcConverterStation
+	HvdcConverterStation
 }
 
 // HvdcLine ...
@@ -673,7 +677,7 @@ type HvdcLine struct {
 	ConvertersModeAttr      string  `xml:"convertersMode,attr"`
 	ConverterStation1Attr   string  `xml:"converterStation1,attr"`
 	ConverterStation2Attr   string  `xml:"converterStation2,attr"`
-	*Identifiable
+	Identifiable
 }
 
 // VoltageAngleLimit ...
@@ -687,7 +691,7 @@ type VoltageAngleLimit struct {
 
 // Ground ...
 type Ground struct {
-	*Injection
+	Injection
 }
 
 // VoltageLevelRef ...
@@ -707,16 +711,16 @@ type AreaBoundary struct {
 type Area struct {
 	AreaTypeAttr          string            `xml:"areaType,attr"`
 	InterchangeTargetAttr float64           `xml:"interchangeTarget,attr,omitempty"`
-	VoltageLevelRef       []VoltageLevelRef `xml:"voltageLevelRef"`
-	AreaBoundary          []AreaBoundary    `xml:"areaBoundary"`
-	*Identifiable
+	VoltageLevelRef       []VoltageLevelRef `xml:"voltageLevelRef,omitempty"`
+	AreaBoundary          []AreaBoundary    `xml:"areaBoundary,omitempty"`
+	Identifiable
 }
 
 // DcNode ...
 type DcNode struct {
 	NominalVAttr float64 `xml:"nominalV,attr"`
 	VAttr        float64 `xml:"v,attr,omitempty"`
-	*Identifiable
+	Identifiable
 }
 
 // DcGround ...
@@ -726,7 +730,7 @@ type DcGround struct {
 	ConnectedAttr bool    `xml:"connected,attr"`
 	DcPAttr       float64 `xml:"dcP,attr,omitempty"`
 	DcIAttr       float64 `xml:"dcI,attr,omitempty"`
-	*Identifiable
+	Identifiable
 }
 
 // DcLine ...
@@ -740,7 +744,7 @@ type DcLine struct {
 	DcI1Attr       float64 `xml:"dcI1,attr,omitempty"`
 	DcP2Attr       float64 `xml:"dcP2,attr,omitempty"`
 	DcI2Attr       float64 `xml:"dcI2,attr,omitempty"`
-	*Identifiable
+	Identifiable
 }
 
 // DcSwitchKind ...
@@ -752,5 +756,5 @@ type DcSwitch struct {
 	DcNode2Attr string `xml:"dcNode2,attr"`
 	KindAttr    string `xml:"kind,attr"`
 	OpenAttr    bool   `xml:"open,attr"`
-	*Identifiable
+	Identifiable
 }

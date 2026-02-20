@@ -31,3 +31,4 @@ go.work.sum
 # .idea/
 # .vscode/
 tripleworks
+pkg/testdata/*
