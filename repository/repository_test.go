@@ -96,3 +96,23 @@ func TestBunReadRepository(t *testing.T) {
 	})
 
 }
+
+func TestFailingRepo(t *testing.T) {
+	ctx := context.Background()
+	repo := FailingReadRepo[models.BaseVoltage]{}
+	t.Run("test by mrid", func(t *testing.T) {
+		_, err := repo.GetByMrid(ctx, "0000-000")
+		require.Error(t, err)
+	})
+
+	t.Run("list has error", func(t *testing.T) {
+		_, err := repo.List(ctx)
+		require.Error(t, err)
+	})
+
+	t.Run("list by mrid has error", func(t *testing.T) {
+		iter := func(yield func(v string) bool) {}
+		_, err := repo.ListByMrids(ctx, iter)
+		require.Error(t, err)
+	})
+}
