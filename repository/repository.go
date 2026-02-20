@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"iter"
 	"slices"
@@ -82,4 +83,21 @@ func (brp *BunReadRepository[T]) ListByMrids(ctx context.Context, mrids iter.Seq
 	var result []T
 	err := brp.Db.NewSelect().Model(&result).Where("mrid IN (?)", bun.In(slices.Collect(mrids))).Scan(ctx)
 	return result, err
+}
+
+type FailingReadRepo[T any] struct{}
+
+func (f *FailingReadRepo[T]) GetByMrid(ctx context.Context, mrid string) (T, error) {
+	var item T
+	return item, fmt.Errorf("Failed to read mrid: %s", mrid)
+}
+
+func (f *FailingReadRepo[T]) List(ctx context.Context) ([]T, error) {
+	var result []T
+	return result, errors.New("failed to list items")
+}
+
+func (f *FailingReadRepo[T]) ListByMrids(ctx context.Context, mrids iter.Seq[string]) ([]T, error) {
+	var items []T
+	return items, fmt.Errorf("Failed to list items: %v", mrids)
 }
