@@ -59,6 +59,7 @@ func downloadIfNotExist(t *testing.T, url, dir, filename string) string {
 	t.Log("Downloading file")
 	resp, err := http.Get(url)
 	require.NoError(t, err)
+	require.NotNil(t, resp)
 	defer resp.Body.Close()
 	out, err := os.Create(localPath)
 	require.NoError(t, err)
