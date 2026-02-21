@@ -78,7 +78,7 @@ func (p *PropertyList) WriteBunModel(w io.Writer, term rdf.Term, params WriteBun
 
 		if strings.HasSuffix(dataType, "_enumeration") {
 			dataType = strings.TrimSuffix(dataType, "_enumeration")
-			splitted := strings.Split(dataType, "#")
+			splitted := MustSlice(strings.Split(dataType, "#"))
 			dataType = splitted[len(splitted)-1]
 			fmt.Fprintf(w, "\t%sId int `bun:\"%s_id\" json:\"%s_id\"`\n", name, dbName, dbName)
 			fmt.Fprintf(w, "\t%s *%s `bun:\"rel:belongs-to,join:%s_id=id\" json:\"%s,omitempty\"`\n", name, dataType, dbName, dbName)
@@ -129,12 +129,12 @@ func (p *PropertyList) WriteAllBunModels(w io.Writer, params WriteBunModelParams
 
 func bunName(value string) string {
 	if strings.Contains(value, "#") {
-		splitted := strings.Split(value, "#")
+		splitted := MustSlice(strings.Split(value, "#"))
 		value = splitted[len(splitted)-1]
 	}
 
 	if strings.Contains(value, ".") {
-		splitted := strings.Split(value, ".")
+		splitted := MustSlice(strings.Split(value, "."))
 		value = splitted[len(splitted)-1]
 	}
 	value = strings.ReplaceAll(value, ">", "")
