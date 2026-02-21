@@ -56,6 +56,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 
 	commit := CommitEndpoint{Db: &repository.BunInserter{Db: db}, timeout: timeout}
 	validate := NewBunValidationEndpoint(db, timeout)
+	xiidmEndpoint := XiidmExport{BusBreakerRepo: &repository.BunBusBreakerRepo{Db: db}}
 
 	mux.HandleFunc("/", RootHandler)
 	mux.HandleFunc("/cim-types", CimTypes)
@@ -72,6 +73,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.HandleFunc("POST /autofill", AutofillHandler)
 	mux.HandleFunc("GET /substations/{mrid}/diagram", entityHandler.SubstationDiagram)
 	mux.HandleFunc("/export", entityHandler.Export)
+	mux.Handle("/xiidm", &xiidmEndpoint)
 	mux.HandleFunc("/upload/{kind}", entityHandler.SimpleUpload)
 	mux.HandleFunc("GET /commits", entityHandler.Commits)
 	mux.HandleFunc("/map", entityHandler.Map)
