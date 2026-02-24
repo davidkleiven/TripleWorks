@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -77,5 +78,31 @@ func TestApplyPatch(t *testing.T) {
 		}}
 		err = ApplyPatch(ctx, db, patch)
 		require.ErrorContains(t, err, "Unsupported operation")
+	})
+
+	t.Run("two ops on same object", func(t *testing.T) {
+		patches := []JsonPatch{
+			{
+				Op:    "replace",
+				Path:  fmt.Sprintf("/%s/nominal_voltage", bv.Mrid),
+				Value: []byte{0x31, 0x33, 0x35},
+			},
+			{
+				Op:    "replace",
+				Path:  fmt.Sprintf("/%s/name", bv.Mrid),
+				Value: json.RawMessage(`"double modified bv"`),
+			},
+		}
+		err = ApplyPatch(ctx, db, patches)
+		require.NoError(t, err)
+
+		var bvs []models.BaseVoltage
+		err = db.NewSelect().Model(&bvs).Scan(ctx)
+		require.NoError(t, err)
+
+		active := OnlyActiveLatest(bvs)
+		require.Equal(t, 1, len(active))
+		require.Equal(t, 135.0, active[0].NominalVoltage)
+		require.Equal(t, "double modified bv", active[0].Name)
 	})
 }

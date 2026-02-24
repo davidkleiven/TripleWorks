@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"slices"
 	"strings"
 
 	"com.github/davidkleiven/tripleworks/models"
@@ -61,11 +60,17 @@ func formTypeStep() Step[PreparePatchCtx] {
 	}
 }
 
-func extractLastEntryStep(ctx context.Context, db *bun.DB) Step[PreparePatchCtx] {
+func extractLastEntryStep(ctx context.Context, db *bun.DB, modelsCache map[string]any) Step[PreparePatchCtx] {
 	return Step[PreparePatchCtx]{
 		Name: "Extract last entity",
 		Run: func(pctx *PreparePatchCtx) error {
-			return db.NewSelect().Model(pctx.Model).Where("mrid = ?", pctx.Path.Mrid).OrderBy("commit_id", bun.OrderDesc).Limit(1).Scan(ctx)
+			if item, ok := modelsCache[pctx.Path.Mrid]; ok {
+				pctx.Model = item
+				return nil
+			}
+			err := db.NewSelect().Model(pctx.Model).Where("mrid = ?", pctx.Path.Mrid).OrderBy("commit_id", bun.OrderDesc).Limit(1).Scan(ctx)
+			modelsCache[pctx.Path.Mrid] = pctx.Model
+			return err
 		},
 	}
 }
@@ -130,14 +135,15 @@ func updatingOriginalModelStep() Step[PreparePatchCtx] {
 }
 
 func ApplyPatch(ctx context.Context, db *bun.DB, patches []JsonPatch) error {
-	var result []any
+	result := make(map[string]any)
+
 	for i, patch := range patches {
 		var prepCtx PreparePatchCtx
 		err := Pipe(&prepCtx,
 			parsePathStep(patch),
 			typeFromEntitiesStep(ctx, db),
 			formTypeStep(),
-			extractLastEntryStep(ctx, db),
+			extractLastEntryStep(ctx, db, result),
 			intepretValueStep(patch),
 			serializePatchStep(patch),
 			applyPatchStep(patch),
@@ -147,7 +153,7 @@ func ApplyPatch(ctx context.Context, db *bun.DB, patches []JsonPatch) error {
 		if err != nil {
 			return fmt.Errorf("Failed to apply patch %d: %s: %w", i, patch, err)
 		}
-		result = append(result, prepCtx.Model)
+		result[prepCtx.Path.Mrid] = prepCtx.Model
 	}
 
 	commit := models.Commit{
@@ -155,8 +161,16 @@ func ApplyPatch(ctx context.Context, db *bun.DB, patches []JsonPatch) error {
 		Author:  "Json patcher",
 	}
 
+	itemIter := func(yield func(v any) bool) {
+		for _, v := range result {
+			if !yield(v) {
+				return
+			}
+		}
+	}
+
 	inserter := repository.BunInserter{Db: db}
-	return InsertAllInserter(ctx, &inserter, commit, slices.Values(result), NoOpOnInsert)
+	return InsertAllInserter(ctx, &inserter, commit, itemIter, NoOpOnInsert)
 }
 
 type ParsedPath struct {
