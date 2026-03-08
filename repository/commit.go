@@ -25,7 +25,7 @@ type BunInserter struct {
 }
 
 func (b *BunInserter) Insert(ctx context.Context, item any) error {
-	_, err := b.Db.NewInsert().Model(item).Exec(ctx)
+	_, err := b.Db.NewInsert().Model(item).On("CONFLICT DO NOTHING").Exec(ctx)
 	return err
 }
 

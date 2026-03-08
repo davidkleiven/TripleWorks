@@ -69,3 +69,26 @@ func TestBunInserter(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 3, len(bvResult))
 }
+
+func TestBunsInserterNoActionIfModelExist(t *testing.T) {
+	sql, err := sql.Open("sqlite3", ":memory:")
+	require.NoError(t, err)
+	db := bun.NewDB(sql, sqlitedialect.New())
+	ctx := context.Background()
+	_, err = db.NewCreateTable().Model((*models.Model)(nil)).Exec(ctx)
+	require.NoError(t, err)
+
+	model := models.Model{Id: 1}
+	inserter := BunInserter{Db: db}
+	err = inserter.Insert(ctx, &model)
+	require.NoError(t, err)
+
+	// Second time nothing should happen
+	err = inserter.Insert(ctx, &model)
+	require.NoError(t, err)
+
+	var models []models.Model
+	err = db.NewSelect().Model(&models).Scan(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(models))
+}
