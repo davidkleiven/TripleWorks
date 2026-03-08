@@ -348,14 +348,19 @@ func (l *LineConnectionResult) All(modelId int) iter.Seq[any] {
 }
 
 func ConnectLineToSubstation(params LineConnectionParams) (*LineConnectionResult, error) {
-	terminalPerLine := make(map[uuid.UUID]models.Terminal)
 	var result LineConnectionResult
+	var (
+		existingTerminal models.Terminal
+		hasOneTerminal   bool
+	)
 	for _, terminal := range params.Terminals {
-		_, ok := terminalPerLine[terminal.ConductingEquipmentMrid]
-		if ok {
+		if terminal.ConductingEquipmentMrid == params.Line.Mrid && hasOneTerminal {
 			return &result, fmt.Errorf("Line %s already has two terminals and can not be connected further", terminal.ConductingEquipmentMrid)
 		}
-		terminalPerLine[terminal.ConductingEquipmentMrid] = terminal
+		if terminal.ConductingEquipmentMrid == params.Line.Mrid {
+			existingTerminal = terminal
+			hasOneTerminal = true
+		}
 	}
 
 	for _, vl := range params.VoltageLevels {
@@ -388,9 +393,8 @@ func ConnectLineToSubstation(params LineConnectionParams) (*LineConnectionResult
 	result.RepGroup.Name = params.Line.Name
 	result.BusNameMarker = CreateBusNameMarker(params.Line.Name, result.RepGroup.Mrid)
 
-	existingTerminal, ok := terminalPerLine[params.Line.Mrid]
 	seqNo := 1
-	if ok {
+	if hasOneTerminal {
 		seqNo = existingTerminal.SequenceNumber%2 + 1
 	}
 
