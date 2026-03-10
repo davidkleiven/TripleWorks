@@ -10,9 +10,9 @@ require (
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/mattn/go-sqlite3 v1.14.34
 	github.com/stretchr/testify v1.11.1
-	github.com/uptrace/bun v1.2.17
+	github.com/uptrace/bun v1.2.18
 	github.com/uptrace/bun/dialect/pgdialect v1.2.17
-	github.com/uptrace/bun/dialect/sqlitedialect v1.2.17
+	github.com/uptrace/bun/dialect/sqlitedialect v1.2.18
 	golang.org/x/sync v0.19.0
 	gonum.org/v1/gonum v0.17.0
 	gonum.org/v1/plot v0.16.0
