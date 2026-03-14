@@ -1,8 +1,6 @@
 module com.github/davidkleiven/tripleworks
 
-go 1.24.0
-
-toolchain go1.24.11
+go 1.25.0
 
 require (
 	github.com/go-faker/faker/v4 v4.7.0
@@ -13,7 +11,7 @@ require (
 	github.com/uptrace/bun v1.2.17
 	github.com/uptrace/bun/dialect/pgdialect v1.2.17
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.17
-	golang.org/x/sync v0.19.0
+	golang.org/x/sync v0.20.0
 	gonum.org/v1/gonum v0.17.0
 	gonum.org/v1/plot v0.16.0
 )
