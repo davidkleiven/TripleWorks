@@ -1,0 +1,43 @@
+package components
+
+templ DrillableList(items []DrillableListItem, includeFields []string) {
+	<div class="table-container">
+		<table class="table is-striped is-hoverable is-fullwidth">
+			if len(items) == 0 {
+				"No items"
+			}
+			<thead>
+				<tr>
+					for _, f := range includeFields {
+						<th>{ f }</th>
+					}
+				</tr>
+			</thead>
+			for _, item := range items {
+				@DrillableItemRow(item, includeFields)
+			}
+		</table>
+	</div>
+}
+
+templ DrillableItemRow(item DrillableListItem, fields []string) {
+	<tr>
+		for _, field := range fields {
+			if field == "mrid" {
+				@mridRow(item)
+			} else {
+				<td>{ asStringOrEmpty(item.Content, field) }</td>
+			}
+		}
+	</tr>
+}
+
+templ mridRow(item DrillableListItem) {
+	<td>
+		{ asStringOrEmpty(item.Content, "mrid") } @exploreIcon(asStringOrEmpty(item.Content, "mrid"))
+	</td>
+}
+
+templ exploreIcon(mrid string) {
+	<button hx-get={ "/entity-form/" + mrid } hx-trigger="click" hx-target="#entity-form">Details</button>
+}

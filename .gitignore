@@ -32,3 +32,4 @@ go.work.sum
 # .vscode/
 tripleworks
 pkg/testdata/*
+*_templ.go

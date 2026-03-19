@@ -1,77 +1,43 @@
 package pkg
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
-	"html"
 	"io"
-	"reflect"
-	"sort"
+	"log/slog"
 
-	"com.github/davidkleiven/tripleworks/models"
+	"com.github/davidkleiven/tripleworks/components"
 )
 
-// CreateList writes an HTML table of the given items using Bulma CSS.
-func CreateList(w io.Writer, items []models.VersionedObject) {
-	if len(items) == 0 {
-		fmt.Fprintln(w, `<table class="table is-striped is-hoverable"><tr><td>No items</td></tr></table>`)
-		return
-	}
-
-	// Use the first item's type to determine columns
-	firstType := reflect.TypeOf(items[0])
-	if firstType.Kind() == reflect.Ptr {
-		firstType = firstType.Elem()
-	}
-	RequireStruct(firstType)
-
-	// Collect field names
-	fields := FlattenStruct(items[0])
-	fieldNames := make([]string, 0, len(fields))
-	for name, v := range fields {
-		if !v.IsBunRelation {
-			fieldNames = append(fieldNames, name)
-		}
-	}
-
-	// Optional: sort fields alphabetically
-	sort.Strings(fieldNames)
-
-	// Start table with Bulma classes
-	fmt.Fprintln(w, `<table class="table is-striped is-hoverable is-fullwidth">`)
-
-	// Table header
-	fmt.Fprint(w, "<thead><tr>")
-	for _, name := range fieldNames {
-		fmt.Fprintf(w, "<th>%s</th>", html.EscapeString(name))
-	}
-	fmt.Fprintln(w, "</tr></thead>")
-
-	// Table body
-	fmt.Fprintln(w, "<tbody>")
-	for _, item := range items {
-		val := reflect.ValueOf(item)
-		if val.Kind() == reflect.Ptr {
-			val = val.Elem()
+func CreateList[T any](w io.Writer, items []T) {
+	var (
+		listItems []components.DrillableListItem
+		errs      []error
+	)
+	for i, item := range items {
+		name := StructName(item)
+		jsonBytes, err := json.Marshal(item)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("Failed to marshal item no %d: %w", i, err))
+			continue
 		}
 
-		fields := FlattenStruct(item)
-		fmt.Fprint(w, createHtmxClickableRow(fields))
-		for _, name := range fieldNames {
-			field := MustGet(fields, name)
-			cell := fmt.Sprint(field.Value)
-			// Escape HTML content
-			fmt.Fprintf(w, "<td>%s</td>", html.EscapeString(cell))
+		var mapRep map[string]any
+		if err := json.Unmarshal(jsonBytes, &mapRep); err != nil {
+			errs = append(errs, fmt.Errorf("Failed to unmarshal item no %d: %w", i, err))
+			continue
 		}
-		fmt.Fprintln(w, "</tr>")
-	}
-	fmt.Fprintln(w, "</tbody>")
-	fmt.Fprintln(w, "</table>")
-}
 
-func createHtmxClickableRow(fields map[string]formField) string {
-	mridField, ok := fields["Mrid"]
-	if !ok {
-		return "<tr>"
+		listItems = append(listItems, components.DrillableListItem{Type: name, Content: mapRep})
 	}
-	return fmt.Sprintf("<tr hx-get=\"/entity-form/%s\" hx-trigger=\"click\" hx-target=\"#entity-form\" style=\"cursor:pointer\">", mridField.Value)
+
+	listRep := components.MakeList(listItems)
+	err := listRep.Render(context.Background(), w)
+	errs = append(errs, err)
+
+	if err := errors.Join(errs...); err != nil {
+		slog.Warn("Failed to interpret some items", "error", err)
+	}
 }
