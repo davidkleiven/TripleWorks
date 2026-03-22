@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"slices"
+	"strings"
 	"time"
 
 	"com.github/davidkleiven/tripleworks/models"
@@ -84,8 +86,15 @@ func (e *EquipmentInVoltageLevelEndpoint) ServeHTTP(w http.ResponseWriter, r *ht
 		Mrid:      mrid,
 		Resources: data,
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(&respData)
+
+	switch accept := r.Header.Get("Accept"); {
+	case strings.Contains(accept, pkg.ContentTypeJSON):
+		w.Header().Set(pkg.ContentType, pkg.ContentTypeJSON)
+		json.NewEncoder(w).Encode(&respData)
+	default:
+		w.Header().Set(pkg.ContentType, pkg.ContentTypeHTML)
+		pkg.CreateList(w, slices.Collect(data.All()))
+	}
 }
 
 type InVoltageLevelResp struct {
