@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"com.github/davidkleiven/tripleworks/pkg"
 	"com.github/davidkleiven/tripleworks/repository"
 	"github.com/go-faker/faker/v4"
 	"github.com/go-faker/faker/v4/pkg/options"
@@ -28,6 +29,7 @@ func TestVoltageLevelsInSubstation(t *testing.T) {
 
 	t.Run("existing", func(t *testing.T) {
 		req := httptest.NewRequest("GET", fmt.Sprintf("/substations/%s/voltage-levels", targetMrid), nil)
+		req.Header.Set("Accept", pkg.ContentTypeJSON)
 		rec := httptest.NewRecorder()
 		mux.ServeHTTP(rec, req)
 		require.Equal(t, http.StatusOK, rec.Code)
@@ -45,6 +47,16 @@ func TestVoltageLevelsInSubstation(t *testing.T) {
 		require.Equal(t, targetMrid.String(), mrid.(string))
 	})
 
+	t.Run("exsisting html rep", func(t *testing.T) {
+		req := httptest.NewRequest("GET", fmt.Sprintf("/substations/%s/voltage-levels", targetMrid), nil)
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, rec.Header().Get(pkg.ContentType), pkg.ContentTypeHTML)
+		body := rec.Body.String()
+		require.Contains(t, body, "<table")
+	})
+
 	t.Run("non existing", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/substations/0000-0000/voltage-levels", nil)
 		rec := httptest.NewRecorder()
@@ -59,4 +71,5 @@ func TestVoltageLevelsInSubstation(t *testing.T) {
 		mux.ServeHTTP(rec, req)
 		require.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
+
 }
