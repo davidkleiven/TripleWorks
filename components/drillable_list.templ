@@ -1,5 +1,7 @@
 package components
 
+import "strings"
+
 templ DrillableList(items []DrillableListItem, includeFields []string) {
 	<div class="table-container">
 		<table class="table is-striped is-hoverable is-fullwidth">
@@ -25,6 +27,10 @@ templ DrillableItemRow(item DrillableListItem, fields []string) {
 		for _, field := range fields {
 			if field == "mrid" {
 				@mridRow(item)
+			} else if strings.HasSuffix(field, "mrid") {
+				<td>
+					@detailsLink(asStringOrEmpty(item.Content, field))
+				</td>
 			} else {
 				<td>{ asStringOrEmpty(item.Content, field) }</td>
 			}
@@ -34,16 +40,15 @@ templ DrillableItemRow(item DrillableListItem, fields []string) {
 
 templ mridRow(item DrillableListItem) {
 	<td class="is-flex is-justify-content-space-between is-align-items-center">
-		<span>{ asStringOrEmpty(item.Content, "mrid") }</span>
+		@detailsLink(asStringOrEmpty(item.Content, "mrid"))
 		<span class="is-flex is-align-items-center">
-			@exploreIcon(asStringOrEmpty(item.Content, "mrid"))
 			@voltageLevelIconIfSubstation(asStringOrEmpty(item.Content, "mrid"), item.Type)
 		</span>
 	</td>
 }
 
-templ exploreIcon(mrid string) {
-	<button class="button is-small is-primary is-light mx-1" hx-get={ "/entity-form/" + mrid } hx-trigger="click" hx-target="#entity-form">Details</button>
+templ detailsLink(mrid string) {
+	<a class="is-clickable mx-1" style="cursor: pointer;" hx-get={ "/entity-form/" + mrid } hx-trigger="click" hx-target="#entity-form">{ mrid }</a>
 }
 
 templ voltageLevelIconIfSubstation(mrid string, kind string) {
