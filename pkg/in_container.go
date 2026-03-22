@@ -3,6 +3,7 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"iter"
 
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/repository"
@@ -29,6 +30,19 @@ func (invl *InVoltageLevel) PickOnlyLatest() {
 	invl.Switches = OnlyActiveLatest(invl.Switches)
 	invl.Terminals = OnlyActiveLatest(invl.Terminals)
 	invl.Transformer = OnlyActiveLatest(invl.Transformer)
+}
+
+func (invl *InVoltageLevel) All() iter.Seq[any] {
+	return Chain(
+		SliceToAnySeq(invl.ConNodes),
+		SliceToAnySeq(invl.ConformLoads),
+		SliceToAnySeq(invl.Gens),
+		SliceToAnySeq(invl.Lines),
+		SliceToAnySeq(invl.NonConformLoads),
+		SliceToAnySeq(invl.Switches),
+		SliceToAnySeq(invl.Terminals),
+		SliceToAnySeq(invl.Transformer),
+	)
 }
 
 type InVoltageLevelDataSources struct {

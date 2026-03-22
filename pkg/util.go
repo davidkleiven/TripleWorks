@@ -350,3 +350,13 @@ func Set[T comparable](items ...T) map[T]struct{} {
 func EmptyAnyIter() iter.Seq[any] {
 	return func(yield func(v any) bool) {}
 }
+
+func SliceToAnySeq[T any](s []T) iter.Seq[any] {
+	return func(yield func(v any) bool) {
+		for _, item := range s {
+			if !yield(item) {
+				return
+			}
+		}
+	}
+}

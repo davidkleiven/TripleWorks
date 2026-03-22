@@ -63,7 +63,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.HandleFunc("/entity-form", EntityForm)
 	mux.HandleFunc("GET /entity-form/{mrid}", entityHandler.EditComponentForm)
 	mux.HandleFunc("GET /resource/{mrid}", entityHandler.Resource)
-	mux.Handle("GET /resources/voltage-level/{mrid}", &equipmentInVoltageLevel)
+	mux.Handle("GET /voltage-levels/{mrid}/items", &equipmentInVoltageLevel)
 	mux.HandleFunc("GET /substations/{mrid}/voltage-levels", inVoltageLevel.VoltageLevelsInSubstation)
 	mux.HandleFunc("/entities", entityHandler.GetEntityForKind)
 	mux.HandleFunc("/enum", entityHandler.GetEnumOptions)

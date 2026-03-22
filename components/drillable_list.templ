@@ -43,6 +43,7 @@ templ mridRow(item DrillableListItem) {
 		@detailsLink(asStringOrEmpty(item.Content, "mrid"))
 		<span class="is-flex is-align-items-center">
 			@voltageLevelIconIfSubstation(asStringOrEmpty(item.Content, "mrid"), item.Type)
+			@equipmentInVoltageLevel(asStringOrEmpty(item.Content, "mrid"), item.Type)
 		</span>
 	</td>
 }
@@ -54,5 +55,11 @@ templ detailsLink(mrid string) {
 templ voltageLevelIconIfSubstation(mrid string, kind string) {
 	if kind == "Substation" {
 		<button class="button is-small is-primary is-light mx-1" hx-get={ "substations/" + mrid + "/voltage-levels" } hx-trigger="click" hx-target="#list-content">V.L.</button>
+	}
+}
+
+templ equipmentInVoltageLevel(mrid string, kind string) {
+	if kind == "VoltageLevel" || kind == "ConnectivityNodeContainer" || kind == "EquipmentContainer" {
+		<button class="button is-small is-primary is-light mx-1" hx-get={ "voltage-levels/" + mrid + "/items" } hx-trigger="click" hx-target="#list-content">Eqp.</button>
 	}
 }
