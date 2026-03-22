@@ -161,16 +161,7 @@ func AllFinder(ctx context.Context, db *bun.DB, modelId int, candidates map[stri
 			if !include(item.GetName()) && !include(item.GetMrid().String()) {
 				continue
 			}
-			obj := models.IdentifiedObject{
-				Mrid: item.GetMrid(),
-				Name: item.GetName(),
-				BaseEntity: models.BaseEntity{
-					CommitId: item.GetCommitId(),
-					Deleted:  item.GetDeleted(),
-				},
-			}
-
-			result = append(result, obj)
+			result = append(result, item)
 			if len(result) >= limit {
 				return result, nil
 			}
