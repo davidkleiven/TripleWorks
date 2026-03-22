@@ -33,11 +33,21 @@ templ DrillableItemRow(item DrillableListItem, fields []string) {
 }
 
 templ mridRow(item DrillableListItem) {
-	<td>
-		{ asStringOrEmpty(item.Content, "mrid") } @exploreIcon(asStringOrEmpty(item.Content, "mrid"))
+	<td class="is-flex is-justify-content-space-between is-align-items-center">
+		<span>{ asStringOrEmpty(item.Content, "mrid") }</span>
+		<span class="is-flex is-align-items-center">
+			@exploreIcon(asStringOrEmpty(item.Content, "mrid"))
+			@voltageLevelIconIfSubstation(asStringOrEmpty(item.Content, "mrid"), item.Type)
+		</span>
 	</td>
 }
 
 templ exploreIcon(mrid string) {
-	<button hx-get={ "/entity-form/" + mrid } hx-trigger="click" hx-target="#entity-form">Details</button>
+	<button class="button is-small is-primary is-light mx-1" hx-get={ "/entity-form/" + mrid } hx-trigger="click" hx-target="#entity-form">Details</button>
+}
+
+templ voltageLevelIconIfSubstation(mrid string, kind string) {
+	if kind == "Substation" {
+		<button class="button is-small is-primary is-light mx-1" hx-get={ "substations/" + mrid + "/voltage-levels" } hx-trigger="click" hx-target="#list-content">V.L.</button>
+	}
 }
