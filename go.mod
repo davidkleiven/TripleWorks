@@ -1,14 +1,12 @@
 module com.github/davidkleiven/tripleworks
 
-go 1.24.0
-
-toolchain go1.24.11
+go 1.25.0
 
 require (
 	github.com/a-h/templ v0.3.1001
 	github.com/go-faker/faker/v4 v4.7.0
 	github.com/google/uuid v1.6.0
-	github.com/jackc/pgx/v5 v5.8.0
+	github.com/jackc/pgx/v5 v5.9.1
 	github.com/mattn/go-sqlite3 v1.14.37
 	github.com/stretchr/testify v1.11.1
 	github.com/uptrace/bun v1.2.17
