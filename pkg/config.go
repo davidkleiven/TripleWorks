@@ -3,6 +3,8 @@ package pkg
 import (
 	"database/sql"
 	"embed"
+	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"strings"
@@ -92,7 +94,35 @@ func GetConfig(name string) *Config {
 		return NewTestConfig()
 	case "local_pg":
 		return MustGetPredfinedProfile(name)
+	case "pg_env":
+		return PgEnv(&FsOpener{})
 	default:
 		return NewDefaultConfig()
 	}
+}
+
+func PgEnv(opener Opener) *Config {
+	config := NewDefaultConfig()
+	prefix := "TRIPLEWORKS_DB"
+	user := os.Getenv(prefix + "_USER")
+	port := os.Getenv(prefix + "_PORT")
+	host := os.Getenv(prefix + "_HOST")
+	db := os.Getenv(prefix + "_DATABASE")
+	passwordFile := os.Getenv(prefix + "_PW_FILE")
+	f, err := opener.Open(passwordFile)
+	if err != nil {
+		slog.Error("Could not open file", "error", err)
+		return config
+	}
+	defer f.Close()
+
+	passwordBytes, err := io.ReadAll(f)
+	if err != nil {
+		slog.Error("Could not read file content", "error", err)
+		return config
+	}
+	password := strings.TrimSpace(string(passwordBytes))
+	config.DbUrl = fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, password, host, port, db)
+	return config
+
 }
