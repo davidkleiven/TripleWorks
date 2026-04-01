@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"database/sql"
+	"embed"
 	"log/slog"
 	"strings"
 	"time"
@@ -11,7 +12,18 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
+	"gopkg.in/yaml.v3"
 )
+
+//go:embed profiles/*
+var configProfiles embed.FS
+
+func MustGetPredfinedProfile(name string) *Config {
+	reader := Must(configProfiles.Open("profiles/" + name + ".yaml"))
+	config := NewDefaultConfig()
+	PanicOnErr(yaml.NewDecoder(reader).Decode(&config))
+	return config
+}
 
 type Config struct {
 	Port    int           `yaml:"port"`
@@ -58,6 +70,8 @@ func GetConfig(name string) *Config {
 	switch name {
 	case "test":
 		return NewTestConfig()
+	case "local_pg":
+		return MustGetPredfinedProfile(name)
 	default:
 		return NewDefaultConfig()
 	}
