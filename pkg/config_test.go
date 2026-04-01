@@ -39,3 +39,8 @@ func TestGetConfig(t *testing.T) {
 	defaultConfig := GetConfig("")
 	require.Equal(t, defaultConfig.DbUrl, "tripleworks.db")
 }
+
+func TestLoadLocal(t *testing.T) {
+	config := GetConfig("local_pg")
+	require.Contains(t, config.DbUrl, "postgres")
+}

@@ -1,0 +1,1 @@
+dbUrl: postgresql://test:test@localhost:5432/testdb
