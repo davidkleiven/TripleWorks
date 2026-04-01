@@ -72,3 +72,32 @@ func TestLoadConfigFromFile(t *testing.T) {
 	loadedConfig := GetConfig(file)
 	require.Equal(t, "my-database", loadedConfig.DbUrl)
 }
+
+func TestPgEnv(t *testing.T) {
+	defaultConfig := NewDefaultConfig()
+	t.Run("default on non existent file", func(t *testing.T) {
+		config := PgEnv(&FsOpener{})
+		require.Equal(t, config, defaultConfig)
+	})
+
+	t.Run("default on failing read", func(t *testing.T) {
+		config := PgEnv(&FailingReadOpener{})
+		require.Equal(t, config, defaultConfig)
+	})
+
+	t.Run("load from env", func(t *testing.T) {
+		os.Setenv("TRIPLEWORKS_DB_USER", "user")
+		os.Setenv("TRIPLEWORKS_DB_HOST", "my-host")
+		os.Setenv("TRIPLEWORKS_DB_PORT", "1234")
+		os.Setenv("TRIPLEWORKS_DB_DATABASE", "mydatabase")
+
+		tmpDir := t.TempDir()
+		tmpFile := filepath.Join(tmpDir, "pg_password")
+		os.Setenv("TRIPLEWORKS_DB_PW_FILE", tmpFile)
+
+		err := os.WriteFile(tmpFile, []byte("top-secret-password"), 0644)
+		require.NoError(t, err)
+		config := GetConfig("pg_env")
+		require.Equal(t, "postgres://user:top-secret-password@my-host:1234/mydatabase", config.DbUrl)
+	})
+}
