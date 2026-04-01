@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,4 +45,30 @@ func TestGetConfig(t *testing.T) {
 func TestLoadLocal(t *testing.T) {
 	config := GetConfig("local_pg")
 	require.Contains(t, config.DbUrl, "postgres")
+}
+
+func TestDefaultConfigOnNonExistentFile(t *testing.T) {
+	config := NewDefaultConfig()
+	loadedConfig := ConfigFromExternalFile("config.yaml")
+	require.Equal(t, config, loadedConfig)
+}
+
+func TestDefaultConfigNotYamlFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	file := filepath.Join(tmpDir, "config.yaml")
+	err := os.WriteFile(file, []byte("not yaml"), 0644)
+	require.NoError(t, err)
+
+	config := NewDefaultConfig()
+	loadedConfig := ConfigFromExternalFile(file)
+	require.Equal(t, config, loadedConfig)
+}
+
+func TestLoadConfigFromFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	file := filepath.Join(tmpDir, "config.yaml")
+	err := os.WriteFile(file, []byte("dbUrl: my-database"), 0644)
+	require.NoError(t, err)
+	loadedConfig := GetConfig(file)
+	require.Equal(t, "my-database", loadedConfig.DbUrl)
 }

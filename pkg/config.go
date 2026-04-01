@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"embed"
 	"log/slog"
+	"os"
 	"strings"
 	"time"
 
@@ -22,6 +23,21 @@ func MustGetPredfinedProfile(name string) *Config {
 	reader := Must(configProfiles.Open("profiles/" + name + ".yaml"))
 	config := NewDefaultConfig()
 	PanicOnErr(yaml.NewDecoder(reader).Decode(&config))
+	return config
+}
+
+func ConfigFromExternalFile(name string) *Config {
+	config := NewDefaultConfig()
+	f, err := os.Open(name)
+	if err != nil {
+		slog.Error("Could not open file. Using default config", "error", err, "file", name)
+		return config
+	}
+
+	if err := yaml.NewDecoder(f).Decode(&config); err != nil {
+		slog.Error("Could not decode yaml file. Using default", "error", err)
+		return config
+	}
 	return config
 }
 
@@ -67,6 +83,10 @@ func WithDbName(name string) func(c *Config) {
 }
 
 func GetConfig(name string) *Config {
+	if strings.HasSuffix(name, ".yaml") {
+		return ConfigFromExternalFile(name)
+	}
+
 	switch name {
 	case "test":
 		return NewTestConfig()
