@@ -98,6 +98,17 @@ func TestPgEnv(t *testing.T) {
 		err := os.WriteFile(tmpFile, []byte("top-secret-password"), 0644)
 		require.NoError(t, err)
 		config := GetConfig("pg_env")
-		require.Equal(t, "postgres://user:top-secret-password@my-host:1234/mydatabase", config.DbUrl)
+		require.Equal(t, "postgres://user:top-secret-password@my-host:1234/mydatabase?sslmode=disable", config.DbUrl)
 	})
+}
+
+func TestLoggablePassword(t *testing.T) {
+	res := loggablePassword("e")
+	require.Equal(t, "e", res)
+
+	res = loggablePassword("ee")
+	require.Equal(t, "ee*******", res)
+
+	res = loggablePassword("very-secret")
+	require.Equal(t, "ve*******", res)
 }

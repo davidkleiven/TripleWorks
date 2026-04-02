@@ -51,7 +51,7 @@ type Config struct {
 
 func (c *Config) DatabaseConnection() *bun.DB {
 	if strings.Contains(c.DbUrl, "postgres") {
-		slog.Info("Connecting to postgres database", "url", c.DbUrl)
+		slog.Info("Connecting to postgres database")
 		sqldb := Must(sql.Open("pgx", c.DbUrl))
 		return bun.NewDB(sqldb, pgdialect.New())
 	}
@@ -122,7 +122,14 @@ func PgEnv(opener Opener) *Config {
 		return config
 	}
 	password := strings.TrimSpace(string(passwordBytes))
-	config.DbUrl = fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, password, host, port, db)
+	slog.Info("Loaded postgres config from env", "user", user, "port", port, "host", host, "db", db, "password", loggablePassword(password))
+	config.DbUrl = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, db)
 	return config
+}
 
+func loggablePassword(password string) string {
+	if len(password) < 2 {
+		return password
+	}
+	return password[:2] + "*******"
 }
