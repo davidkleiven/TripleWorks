@@ -3,6 +3,8 @@ FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 
+RUN apk add --no-cache make
+
 RUN go install github.com/a-h/templ/cmd/templ@latest
 
 COPY . .
