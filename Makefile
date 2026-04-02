@@ -16,4 +16,4 @@ run: build
 	./tripleworks
 
 release:
-	go-semantic-release --provider github --allow-initial-releases
+	go-semantic-release --provider github --token $$(gh auth token) --provider-opt "slug=davidkleiven/Tripleworks"

@@ -33,3 +33,4 @@ go.work.sum
 tripleworks
 pkg/testdata/*
 *_templ.go
+.semrel/*
