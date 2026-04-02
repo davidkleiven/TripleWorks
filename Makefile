@@ -14,3 +14,6 @@ build: build-templates
 
 run: build
 	./tripleworks
+
+release:
+	go-semantic-release --provider github --allow-initial-releases
