@@ -112,3 +112,23 @@ func TestLoggablePassword(t *testing.T) {
 	res = loggablePassword("very-secret")
 	require.Equal(t, "ve*******", res)
 }
+
+func TestNewEnvParseConfig(t *testing.T) {
+	key := "WITH_TAILSCALE_USER_IDENTIFICATION"
+	orig, ok := os.LookupEnv(key)
+	defer func() {
+		if !ok {
+			os.Unsetenv(key)
+		} else {
+			os.Setenv(key, orig)
+		}
+	}()
+
+	os.Setenv(key, "1")
+	config := NewEnvParsedConfig()
+	require.True(t, config.WithTailscaleUserIdentification)
+
+	os.Setenv(key, "0")
+	config = NewEnvParsedConfig()
+	require.False(t, config.WithTailscaleUserIdentification)
+}
