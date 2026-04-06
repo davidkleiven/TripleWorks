@@ -23,6 +23,7 @@ func main() {
 
 	configName := os.Getenv("TRIPLE_WORKS_CONFIG")
 	config := pkg.GetConfig(configName)
+	slog.Info("Loaded config", "config", config.SafeString())
 
 	mux := http.NewServeMux()
 	api.Setup(mux, config)

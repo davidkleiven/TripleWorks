@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -61,6 +62,18 @@ func (c *Config) DatabaseConnection() *bun.DB {
 	slog.Info("Connecting to sqlite database", "url", c.DbUrl)
 	sqldb := Must(sql.Open("sqlite3", c.DbUrl))
 	return bun.NewDB(sqldb, sqlitedialect.New())
+}
+
+// SafeString returns a loggable (e.g. no secrets) string represenation of the config object
+func (c *Config) SafeString() string {
+	var builder strings.Builder
+	builder.WriteString("port=")
+	builder.WriteString(strconv.Itoa(c.Port))
+	builder.WriteString(", timeout=")
+	builder.WriteString(c.Timeout.String())
+	builder.WriteString(", withTailscaleUserIdentification=")
+	builder.WriteString(strconv.FormatBool(c.WithTailscaleUserIdentification))
+	return builder.String()
 }
 
 func NewDefaultConfig() *Config {
