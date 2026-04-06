@@ -11,9 +11,13 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type ReadRepository[T any] interface {
-	GetByMrid(ctx context.Context, mrid string) (T, error)
+type Lister[T any] interface {
 	List(ctx context.Context) ([]T, error)
+}
+
+type ReadRepository[T any] interface {
+	Lister[T]
+	GetByMrid(ctx context.Context, mrid string) (T, error)
 	ListByMrids(ctx context.Context, mrids iter.Seq[string]) ([]T, error)
 }
 
@@ -100,4 +104,13 @@ func (f *FailingReadRepo[T]) List(ctx context.Context) ([]T, error) {
 func (f *FailingReadRepo[T]) ListByMrids(ctx context.Context, mrids iter.Seq[string]) ([]T, error) {
 	var items []T
 	return items, fmt.Errorf("Failed to list items: %v", mrids)
+}
+
+type InMemLister[T any] struct {
+	Items []T
+	Err   error
+}
+
+func (i *InMemLister[T]) List(ctx context.Context) ([]T, error) {
+	return i.Items, i.Err
 }
