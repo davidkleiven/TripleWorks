@@ -27,7 +27,7 @@ func (m *MockIdentifier) WhoIs(ctx context.Context, addr string) (string, error)
 func TestNoUserAddedOnError(t *testing.T) {
 	identifier := MockIdentifier{Err: errors.New("something went wrong")}
 
-	middleware := TailscaleUserMiddleware{
+	middleware := UserIdentificationMiddleware{
 		Identifier: &identifier,
 	}
 
