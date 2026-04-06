@@ -132,3 +132,9 @@ func TestNewEnvParseConfig(t *testing.T) {
 	config = NewEnvParsedConfig()
 	require.False(t, config.WithTailscaleUserIdentification)
 }
+
+func TestSafeString(t *testing.T) {
+	config := NewTestConfig()
+	strRep := config.SafeString()
+	require.Contains(t, strRep, "port=36000")
+}
