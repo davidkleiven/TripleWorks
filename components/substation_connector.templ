@@ -1,0 +1,50 @@
+package components
+
+import "com.github/davidkleiven/tripleworks/models"
+
+templ SubstationConnectionWorkbench(p SubstationSelectorParams) {
+	<div class="mb-4">
+		<h2 class="title is-4 has-text-primary">Substation connector</h2>
+		<div class="tags">
+			<span class="tag is-light">
+				<span class="has-text-grey-light is-size-7">Line: </span>
+				<span class="has-text-weight-semibold ml-1" id="line-name">{ p.LineName }</span>
+			</span>
+			<span class="tag is-light">
+				<span class="has-text-grey-light is-size-7">MRID: </span>
+				<span class="is-size-7" id="line-mrid">{ p.LineMrid }</span>
+			</span>
+		</div>
+	</div>
+	<div class="control">
+		@SearchablePicker(p.FromSelector)
+	</div>
+	<div class="control">
+		@SearchablePicker(p.ToSelector)
+	</div>
+	<div class="field mt-4">
+		<button
+			class="button is-success"
+			hx-post={ "/connect/" + p.LineMrid }
+			hx-include="[id^='selected-']"
+			hx-target="#status-message"
+			hx-swap="innerHTML"
+		>Connect</button>
+	</div>
+}
+
+templ SubstationPickResult(substations []models.Substation, resultTargetId string) {
+	<div class="tags are-small are-hoverable">
+		for _, substation := range substations {
+		<span
+			class="tag is-light"
+			style="cursor: pointer;"
+			hx-get="/substation-selection"
+			data-mrid={ substation.Mrid.String() }
+			data-name={ substation.Name }
+			hx-target={ "#" + resultTargetId }
+			hx-vals="js:{mrid: this.dataset.mrid, name: this.dataset.name}"
+		>{ substation.Name }</span>
+		}
+	</div>
+}
