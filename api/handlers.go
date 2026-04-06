@@ -65,6 +65,11 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 		userIdentificator = tailscaleMiddleware.Apply
 	}
 
+	modelsEndpoint := ModelsEndpoint{
+		Repo:    &repository.BunReadRepository[models.Model]{Db: db},
+		Timeout: timeout,
+	}
+
 	mux.HandleFunc("/", RootHandler)
 	mux.HandleFunc("/cim-types", CimTypes)
 	mux.HandleFunc("/entity-form", EntityForm)
@@ -88,6 +93,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.Handle("PATCH /resource", userIdentificator(http.HandlerFunc(entityHandler.ApplyJsonPatch)))
 	mux.HandleFunc("/connection/{mrid}", entityHandler.Connection)
 	mux.Handle("PUT /validate", validate)
+	mux.Handle("/models", &modelsEndpoint)
 
 	mux.Handle("/js/", pkg.JsServer())
 }

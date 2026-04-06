@@ -31,8 +31,17 @@
   <body>
     <div class="container is-fluid">
       <header class="hero is-primary is-small">
-        <div class="hero-body">
-          <h1 class="title">TripleWorks</h1>
+        <div class="hero-body py-3">
+          <div class="columns is-vcentered is-mobile">
+            <div class="column">
+              <h1 class="title is-4 mb-0">TripleWorks</h1>
+            </div>
+            <div class="column is-narrow">
+              <div class="select is-small">
+                <div hx-get="/models" hx-trigger="load"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -191,7 +200,7 @@
       if (!payload || Object.keys(payload).length === 0) return;
 
       payload["cim_type"] = document.getElementById("type-select").value;
-      payload["modelId"] = 1;
+      payload["modelId"] = document.getElementById("model-selection").value;
       payload["modelName"] = "national grid model";
       console.log("Commit payload", payload);
 
