@@ -184,7 +184,7 @@ func TestFilteredFinder(t *testing.T) {
 func TestCommitInsertFailsOnNoTables(t *testing.T) {
 	db := NewTestConfig(WithDbName(t.Name())).DatabaseConnection()
 	items := func(yield func(v any) bool) {}
-	err := InsertAll(context.Background(), db, "insert commit", items, NoOpOnInsert)
+	err := InsertAll(context.Background(), db, models.Commit{}, items, NoOpOnInsert)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "Failed to insert commit")
 }
@@ -199,7 +199,7 @@ func TestCommitInsertAllStopWhenCallbackFails(t *testing.T) {
 	cb := func(v any) error {
 		return errors.New("something went wrong")
 	}
-	err = InsertAll(context.Background(), db, "insert commit", items, cb)
+	err = InsertAll(context.Background(), db, models.Commit{}, items, cb)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "went wrong")
 }

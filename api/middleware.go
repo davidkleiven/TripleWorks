@@ -16,3 +16,9 @@ func LogRequest(handler http.Handler) http.HandlerFunc {
 		handler.ServeHTTP(w, r.WithContext(ctx))
 	}
 }
+
+func NoopMiddleware(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handler.ServeHTTP(w, r)
+	})
+}

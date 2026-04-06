@@ -86,7 +86,7 @@ func (c *CommitEndpoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	commit := models.Commit{
 		Branch:    "main",
 		Message:   modelMetaData.CommitMessage,
-		Author:    "TripleWorks",
+		Author:    UserFromCtx(r.Context()),
 		CreatedAt: time.Now(),
 	}
 

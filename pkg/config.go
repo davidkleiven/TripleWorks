@@ -44,9 +44,10 @@ func ConfigFromExternalFile(name string) *Config {
 }
 
 type Config struct {
-	Port    int           `yaml:"port"`
-	DbUrl   string        `yaml:"dbUrl"`
-	Timeout time.Duration `yaml:"timeout"`
+	Port                            int           `yaml:"port"`
+	DbUrl                           string        `yaml:"dbUrl"`
+	Timeout                         time.Duration `yaml:"timeout"`
+	WithTailscaleUserIdentification bool          `yaml:"withTailscaleUserIdentification"`
 }
 
 func (c *Config) DatabaseConnection() *bun.DB {

@@ -134,7 +134,7 @@ func updatingOriginalModelStep() Step[PreparePatchCtx] {
 	}
 }
 
-func ApplyPatch(ctx context.Context, db *bun.DB, patches []JsonPatch) error {
+func ApplyPatch(ctx context.Context, db *bun.DB, author string, patches []JsonPatch) error {
 	result := make(map[string]any)
 
 	for i, patch := range patches {
@@ -158,7 +158,7 @@ func ApplyPatch(ctx context.Context, db *bun.DB, patches []JsonPatch) error {
 
 	commit := models.Commit{
 		Message: fmt.Sprintf("Applied json patch to %d objects", len(result)),
-		Author:  "Json patcher",
+		Author:  author,
 	}
 
 	itemIter := func(yield func(v any) bool) {
