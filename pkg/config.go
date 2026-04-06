@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caarlos0/env"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/uptrace/bun"
@@ -44,10 +45,10 @@ func ConfigFromExternalFile(name string) *Config {
 }
 
 type Config struct {
-	Port                            int           `yaml:"port"`
+	Port                            int           `yaml:"port" env:"TRIPLEWORKS_PORT"`
 	DbUrl                           string        `yaml:"dbUrl"`
-	Timeout                         time.Duration `yaml:"timeout"`
-	WithTailscaleUserIdentification bool          `yaml:"withTailscaleUserIdentification"`
+	Timeout                         time.Duration `yaml:"timeout" env:"TRIPLEWORKS_TIMEOUT"`
+	WithTailscaleUserIdentification bool          `yaml:"withTailscaleUserIdentification" env:"WITH_TAILSCALE_USER_IDENTIFICATION"`
 }
 
 func (c *Config) DatabaseConnection() *bun.DB {
@@ -79,6 +80,12 @@ func NewTestConfig(opts ...func(c *Config)) *Config {
 	return config
 }
 
+func NewEnvParsedConfig() *Config {
+	config := NewDefaultConfig()
+	env.Parse(config)
+	return config
+}
+
 func WithDbName(name string) func(c *Config) {
 	return func(c *Config) {
 		c.DbUrl = strings.ReplaceAll(c.DbUrl, "memdb", name)
@@ -103,7 +110,7 @@ func GetConfig(name string) *Config {
 }
 
 func PgEnv(opener Opener) *Config {
-	config := NewDefaultConfig()
+	config := NewEnvParsedConfig()
 	prefix := "TRIPLEWORKS_DB"
 	user := os.Getenv(prefix + "_USER")
 	port := os.Getenv(prefix + "_PORT")
