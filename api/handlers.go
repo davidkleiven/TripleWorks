@@ -59,7 +59,9 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	xiidmEndpoint := XiidmExport{BusBreakerRepo: &repository.BunBusBreakerRepo{Db: db}}
 	userIdentificator := NoopMiddleware
 	if config.WithTailscaleUserIdentification {
-		tailscaleMiddleware := TailscaleUserMiddleware{}
+		tailscaleMiddleware := UserIdentificationMiddleware{
+			Identifier: &TailscaleUserIdentifier{},
+		}
 		userIdentificator = tailscaleMiddleware.Apply
 	}
 

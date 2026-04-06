@@ -30,11 +30,11 @@ func (t *TailscaleUserIdentifier) WhoIs(ctx context.Context, addr string) (strin
 	return who.UserProfile.LoginName, nil
 }
 
-type TailscaleUserMiddleware struct {
+type UserIdentificationMiddleware struct {
 	Identifier UserIdentifier
 }
 
-func (t *TailscaleUserMiddleware) Apply(h http.Handler) http.Handler {
+func (t *UserIdentificationMiddleware) Apply(h http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			user, err := t.Identifier.WhoIs(r.Context(), r.RemoteAddr)
