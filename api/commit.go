@@ -70,7 +70,7 @@ func (c *CommitEndpoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	entity := models.Entity{
-		ModelEntity: models.ModelEntity{ModelId: 0},
+		ModelEntity: models.ModelEntity{ModelId: modelMetaData.ModelId},
 		Mrid:        modelMetaData.Mrid,
 		EntityType:  pkg.StructName(model),
 	}
