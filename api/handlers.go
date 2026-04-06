@@ -70,6 +70,20 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 		Timeout: timeout,
 	}
 
+	substationWorkbench := SubstationConnectorWorkbench{
+		LineRepo: &repository.BunReadRepository[models.ACLineSegment]{Db: db},
+		Timeout:  timeout,
+	}
+
+	querySub := SubstationListQueryHandler{
+		SubstationRepo: &repository.BunReadRepository[models.Substation]{Db: db},
+		Timeout:        timeout,
+	}
+
+	substationConnector := SubstationConnector{
+		LineRepo: &repository.BunReadRepository[models.ACLineSegment]{Db: db},
+	}
+
 	mux.HandleFunc("/", RootHandler)
 	mux.HandleFunc("/cim-types", CimTypes)
 	mux.HandleFunc("/entity-form", EntityForm)
@@ -94,6 +108,12 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.HandleFunc("/connection/{mrid}", entityHandler.Connection)
 	mux.Handle("PUT /validate", validate)
 	mux.Handle("/models", &modelsEndpoint)
+
+	// Substation connection workkbench
+	mux.Handle("POST /connect/{mrid}", &substationConnector)
+	mux.Handle("GET /substation-connector/{mrid}", &substationWorkbench)
+	mux.Handle("/substation-list", &querySub)
+	mux.HandleFunc("/substation-selection", SetSelectedSubstation)
 
 	mux.Handle("/js/", pkg.JsServer())
 }

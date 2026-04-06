@@ -44,6 +44,7 @@ templ mridRow(item DrillableListItem) {
 		<span class="is-flex is-align-items-center">
 			@voltageLevelIconIfSubstation(asStringOrEmpty(item.Content, "mrid"), item.Type)
 			@equipmentInVoltageLevel(asStringOrEmpty(item.Content, "mrid"), item.Type)
+			@toSubstationConnector(asStringOrEmpty(item.Content, "mrid"), item.Type)
 		</span>
 	</td>
 }
@@ -61,5 +62,11 @@ templ voltageLevelIconIfSubstation(mrid string, kind string) {
 templ equipmentInVoltageLevel(mrid string, kind string) {
 	if kind == "VoltageLevel" || kind == "ConnectivityNodeContainer" || kind == "EquipmentContainer" {
 		<button class="button is-small is-primary is-light mx-1" hx-get={ "voltage-levels/" + mrid + "/items" } hx-trigger="click" hx-target="#list-content">Eqp.</button>
+	}
+}
+
+templ toSubstationConnector(mrid string, kind string) {
+	if kind == "ACLineSegment" {
+		<button class="button is-small is-primary is-light mx-1" hx-get={ "substation-connector/" + mrid } hx-trigger="click" hx-target="#list-content">Con sub.</button>
 	}
 }
