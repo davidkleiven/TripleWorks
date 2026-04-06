@@ -38,7 +38,8 @@ func TestSubstation(t *testing.T) {
 	db, modelId := setupDb(t)
 	itemIterator := substation.CimItems(modelId)
 
-	err := InsertAll(ctx, db, "Create sub A", itemIterator, NoOpOnInsert)
+	commit := models.Commit{Message: "Create sub A"}
+	err := InsertAll(ctx, db, commit, itemIterator, NoOpOnInsert)
 	require.NoError(t, err)
 }
 
@@ -52,7 +53,8 @@ func TestLine(t *testing.T) {
 
 	db, modelId := setupDb(t)
 	itemIterator := line.CimItems(modelId)
-	err := InsertAll(context.Background(), db, "Create line A-B", itemIterator, NoOpOnInsert)
+	commit := models.Commit{Message: "Create line A-B"}
+	err := InsertAll(context.Background(), db, commit, itemIterator, NoOpOnInsert)
 	require.NoError(t, err)
 }
 
@@ -81,17 +83,22 @@ func TestGenerator(t *testing.T) {
 	_, err = db.NewInsert().Model(&substationEntity).Exec(context.Background())
 	require.NoError(t, err)
 
-	err = InsertAll(context.Background(), db, "Create generator in substation A", itemIterator, NoOpOnInsert)
+	insertCommit := models.Commit{Message: "Create generator in substation A"}
+	err = InsertAll(context.Background(), db, insertCommit, itemIterator, NoOpOnInsert)
 	require.NoError(t, err)
 
 	gen.Kind = "wind"
 	itemIterator = gen.CimItems(modelId)
-	err = InsertAll(context.Background(), db, "Create wind generator in substation A", itemIterator, NoOpOnInsert)
+
+	insertCommit.Message = "Create wind generator in substation A"
+	err = InsertAll(context.Background(), db, insertCommit, itemIterator, NoOpOnInsert)
 	require.NoError(t, err)
 
 	gen.Kind = "thermal"
 	itemIterator = gen.CimItems(modelId)
-	err = InsertAll(context.Background(), db, "Create thermal generator in substation A", itemIterator, NoOpOnInsert)
+
+	insertCommit.Message = "Create thermal generator in substation A"
+	err = InsertAll(context.Background(), db, insertCommit, itemIterator, NoOpOnInsert)
 	require.NoError(t, err)
 }
 
@@ -136,6 +143,7 @@ func TestConformLoad(t *testing.T) {
 	_, err = db.NewInsert().Model(&substationEntity).Exec(context.Background())
 	require.NoError(t, err)
 
-	err = InsertAll(context.Background(), db, "Create load in substation A", itemIterator, NoOpOnInsert)
+	loadCommit := models.Commit{Message: "Create load in substation A"}
+	err = InsertAll(context.Background(), db, loadCommit, itemIterator, NoOpOnInsert)
 	require.NoError(t, err)
 }

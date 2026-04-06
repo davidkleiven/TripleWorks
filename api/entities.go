@@ -367,7 +367,12 @@ func (e *EntityStore) SimpleUpload(w http.ResponseWriter, r *http.Request) {
 	itemIterator := pkg.Chain(itemIterators...)
 	if doCommit == "true" {
 		msg := fmt.Sprintf("Add %d %s", num, kind)
-		err := pkg.InsertAll(ctx, e.db, msg, itemIterator, writeNTriplesCallback(w))
+		commit := models.Commit{
+			Message: msg,
+			Author:  UserFromCtx(r.Context()),
+		}
+
+		err := pkg.InsertAll(ctx, e.db, commit, itemIterator, writeNTriplesCallback(w))
 		if err != nil {
 			slog.ErrorContext(ctx, "Could not insert new items", "error", err)
 			http.Error(w, "Could not insert new items: "+err.Error(), http.StatusInternalServerError)
@@ -660,7 +665,11 @@ func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Reques
 			lineName += line.Name + " "
 		}
 		msg := fmt.Sprintf("Connect %d lines to two substations each", len(lines))
-		err := pkg.InsertAll(ctx, e.db, msg, allItems, writeNTriplesCallback(w))
+		commit := models.Commit{
+			Message: msg,
+			Author:  UserFromCtx(r.Context()),
+		}
+		err := pkg.InsertAll(ctx, e.db, commit, allItems, writeNTriplesCallback(w))
 		if err != nil {
 			slog.ErrorContext(ctx, "Could not insert items", "error", err)
 			http.Error(w, "Could not insert items", http.StatusInternalServerError)
@@ -686,7 +695,9 @@ func (e *EntityStore) ApplyJsonPatch(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
 	defer cancel()
-	if err := pkg.ApplyPatch(ctx, e.db, jsonPatch); err != nil {
+
+	user := UserFromCtx(r.Context())
+	if err := pkg.ApplyPatch(ctx, e.db, user, jsonPatch); err != nil {
 		slog.ErrorContext(ctx, "Failed to apply patch", "error", err)
 		http.Error(w, "Failed to apply patch: "+err.Error(), http.StatusInternalServerError)
 		return

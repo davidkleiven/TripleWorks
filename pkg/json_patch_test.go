@@ -38,7 +38,7 @@ func TestApplyPatch(t *testing.T) {
 	}}
 
 	t.Run("success", func(t *testing.T) {
-		err = ApplyPatch(ctx, db, patch)
+		err = ApplyPatch(ctx, db, "author", patch)
 		require.NoError(t, err)
 
 		var bvs []models.BaseVoltage
@@ -57,7 +57,7 @@ func TestApplyPatch(t *testing.T) {
 			Op:   "replace",
 			Path: "/0000-0000/nominal_voltage",
 		}}
-		err = ApplyPatch(ctx, db, patch)
+		err = ApplyPatch(ctx, db, "author", patch)
 		require.ErrorContains(t, err, "in result set")
 	})
 
@@ -66,7 +66,7 @@ func TestApplyPatch(t *testing.T) {
 			Op:   "replace",
 			Path: "/0000-0000/nominal_voltage/what",
 		}}
-		err = ApplyPatch(ctx, db, patch)
+		err = ApplyPatch(ctx, db, "author", patch)
 		require.ErrorContains(t, err, "Parse patch")
 	})
 
@@ -76,7 +76,7 @@ func TestApplyPatch(t *testing.T) {
 			Path:  fmt.Sprintf("/%s/nominal_voltage", bv.Mrid),
 			Value: []byte{0x32, 0x32},
 		}}
-		err = ApplyPatch(ctx, db, patch)
+		err = ApplyPatch(ctx, db, "author", patch)
 		require.ErrorContains(t, err, "Unsupported operation")
 	})
 
@@ -93,7 +93,7 @@ func TestApplyPatch(t *testing.T) {
 				Value: json.RawMessage(`"double modified bv"`),
 			},
 		}
-		err = ApplyPatch(ctx, db, patches)
+		err = ApplyPatch(ctx, db, "author", patches)
 		require.NoError(t, err)
 
 		var bvs []models.BaseVoltage

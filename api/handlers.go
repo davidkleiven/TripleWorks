@@ -57,6 +57,11 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	commit := CommitEndpoint{Db: &repository.BunInserter{Db: db}, timeout: timeout}
 	validate := NewBunValidationEndpoint(db, timeout)
 	xiidmEndpoint := XiidmExport{BusBreakerRepo: &repository.BunBusBreakerRepo{Db: db}}
+	userIdentificator := NoopMiddleware
+	if config.WithTailscaleUserIdentification {
+		tailscaleMiddleware := TailscaleUserMiddleware{}
+		userIdentificator = tailscaleMiddleware.Apply
+	}
 
 	mux.HandleFunc("/", RootHandler)
 	mux.HandleFunc("/cim-types", CimTypes)
@@ -68,7 +73,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.HandleFunc("/entities", entityHandler.GetEntityForKind)
 	mux.HandleFunc("/enum", entityHandler.GetEnumOptions)
 	mux.HandleFunc("/entity-list", entityHandler.EntityList)
-	mux.Handle("POST /commit", &commit)
+	mux.Handle("POST /commit", userIdentificator(&commit))
 	mux.HandleFunc("DELETE /commit/{id}", entityHandler.DeleteCommit)
 	mux.HandleFunc("POST /autofill", AutofillHandler)
 	mux.HandleFunc("GET /substations/{mrid}/diagram", entityHandler.SubstationDiagram)
@@ -77,8 +82,8 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.HandleFunc("/upload/{kind}", entityHandler.SimpleUpload)
 	mux.HandleFunc("GET /commits", entityHandler.Commits)
 	mux.HandleFunc("/map", entityHandler.Map)
-	mux.HandleFunc("POST /connect-dangling", entityHandler.ConnectDanglingLines)
-	mux.HandleFunc("PATCH /resource", entityHandler.ApplyJsonPatch)
+	mux.Handle("POST /connect-dangling", userIdentificator(http.HandlerFunc(entityHandler.ConnectDanglingLines)))
+	mux.Handle("PATCH /resource", userIdentificator(http.HandlerFunc(entityHandler.ApplyJsonPatch)))
 	mux.HandleFunc("/connection/{mrid}", entityHandler.Connection)
 	mux.Handle("PUT /validate", validate)
 

@@ -187,12 +187,8 @@ func NoOpOnInsert(v any) error {
 	return nil
 }
 
-func InsertAll(ctx context.Context, db *bun.DB, msg string, items iter.Seq[any], onInsert func(v any) error) error {
-	commit := models.Commit{
-		Author:    "TripleWorks",
-		Message:   msg,
-		CreatedAt: time.Now(),
-	}
+func InsertAll(ctx context.Context, db *bun.DB, commit models.Commit, items iter.Seq[any], onInsert func(v any) error) error {
+	commit.CreatedAt = time.Now()
 	return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().Model(&commit).Exec(ctx)
 		if err != nil {
