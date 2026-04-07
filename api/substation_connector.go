@@ -40,11 +40,12 @@ func (s *SubstationConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	defer cancel()
 
 	var (
-		body        SubstationConnectorBody
-		line        models.ACLineSegment
-		substations []models.Substation
-		terminals   []models.Terminal
-		vls         []models.VoltageLevel
+		modelId             int
+		selectedSubstations []string
+		line                models.ACLineSegment
+		substations         []models.Substation
+		terminals           []models.Terminal
+		vls                 []models.VoltageLevel
 	)
 
 	failNo, err := pkg.ReturnOnFirstError(
@@ -52,11 +53,10 @@ func (s *SubstationConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			return r.ParseForm()
 		},
 		func() error {
-			body.FromSubstation = r.FormValue("fromSubstation")
-			body.ToSubstation = r.FormValue("toSubstation")
+			selectedSubstations = r.PostForm["substation-mrid"]
 			modelIdStr := r.FormValue("modelId")
 			var ierr error
-			body.ModelId, ierr = strconv.Atoi(modelIdStr)
+			modelId, ierr = strconv.Atoi(modelIdStr)
 			return ierr
 		},
 		func() error {
@@ -66,7 +66,7 @@ func (s *SubstationConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		},
 		func() error {
 			var ierr error
-			substations, ierr = s.SubstationRepo.ListByMrids(ctx, slices.Values([]string{body.FromSubstation, body.ToSubstation}))
+			substations, ierr = s.SubstationRepo.ListByMrids(ctx, slices.Values(selectedSubstations))
 			return ierr
 		},
 		func() error {
@@ -127,7 +127,7 @@ func (s *SubstationConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 		// Error cases should be covered by earlier checks, thus we panic on error here
 		result := pkg.Must(pkg.ConnectLineToSubstation(params))
-		newItems = append(newItems, result.All(body.ModelId))
+		newItems = append(newItems, result.All(modelId))
 	}
 
 	commit := models.Commit{
@@ -161,18 +161,12 @@ func (s *SubstationConnectorWorkbench) ServeHTTP(w http.ResponseWriter, r *http.
 	}
 	params := components.SubstationSelectorParams{
 		FromSelector: components.SearchablePickerParams{
-			Endpoint:       "/substation-list",
-			Name:           "from-substation",
-			SelectedId:     "selected-from-substation",
-			ResultTargetId: "selected-from-substation",
-			FieldName:      "fromSubstation",
+			Endpoint: "/substation-list",
+			Name:     "from-substation",
 		},
 		ToSelector: components.SearchablePickerParams{
-			Endpoint:       "/substation-list",
-			Name:           "to-substation",
-			SelectedId:     "selected-to-substation",
-			ResultTargetId: "selected-to-substation",
-			FieldName:      "toSubstation",
+			Endpoint: "/substation-list",
+			Name:     "to-substation",
 		},
 		LineMrid: line.Mrid.String(),
 		LineName: line.Name,
@@ -189,6 +183,8 @@ type SubstationListQueryHandler struct {
 
 func (s *SubstationListQueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	query := strings.ToLower(r.URL.Query().Get("q"))
+	display := r.URL.Query().Get("selection-display")
+
 	ctx, cancel := context.WithTimeout(r.Context(), s.Timeout)
 	defer cancel()
 
@@ -211,18 +207,13 @@ func (s *SubstationListQueryHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	listComponent := components.SubstationPickResult(keep, r.URL.Query().Get("target"))
+	listComponent := components.SubstationPickResult(keep, "#"+display)
 	listComponent.Render(ctx, w)
 }
 
 func SetSelectedSubstation(w http.ResponseWriter, r *http.Request) {
 	mrid := r.URL.Query().Get("mrid")
 	name := r.URL.Query().Get("name")
-	fieldName := r.URL.Query().Get("fieldName")
 
-	fmt.Fprintf(w, `
-		<input type="hidden" name="%s" value="%s" />
-		<span class="tag is-primary is-light">%s</span>
-		<span class="is-size-7 has-text-grey-light">%s</span>
-	`, fieldName, mrid, name, mrid)
+	fmt.Fprintf(w, `<span class="tag is-primary is-light">%s</span><span class="is-size-7 has-text-grey-light">%s</span><input name="substation-mrid" type="hidden" value="%s"/>`, name, mrid, mrid)
 }

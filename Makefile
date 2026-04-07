@@ -19,7 +19,8 @@ release:
 	go-semantic-release --provider github --token $$(gh auth token) --provider-opt "slug=davidkleiven/Tripleworks"
 
 e2e: build
-	TRIPLE_WORKS_CONFIG="e2e_sqlite" ./tripleworks
+	rm -f tripleworks-e2e.db
+	TRIPLE_WORKS_CONFIG="e2e_sqlite" TRIPLEWORKS_E2E="1" ./tripleworks
 
 e2e-cleanup:
 	rm tripleworks-e2e.db

@@ -24,16 +24,17 @@ templ SubstationConnectionWorkbench(p SubstationSelectorParams) {
 	</div>
 	<div class="field mt-4">
 		<button
+			id="connect-substations-btn"
 			class="button is-success"
 			hx-post={ "/connect/" + p.LineMrid }
-			hx-include="[id^='selected-']"
+			hx-include={"[name='modelId'],[name='substation-mrid']" }
 			hx-target="#status-message"
 			hx-swap="innerHTML"
 		>Connect</button>
 	</div>
 }
 
-templ SubstationPickResult(substations []models.Substation, resultTargetId string) {
+templ SubstationPickResult(substations []models.Substation, hxTarget string) {
 	<div class="tags are-small are-hoverable">
 		for _, substation := range substations {
 		<span
@@ -42,7 +43,7 @@ templ SubstationPickResult(substations []models.Substation, resultTargetId strin
 			hx-get="/substation-selection"
 			data-mrid={ substation.Mrid.String() }
 			data-name={ substation.Name }
-			hx-target={ "#" + resultTargetId }
+			hx-target={ hxTarget }
 			hx-vals="js:{mrid: this.dataset.mrid, name: this.dataset.name}"
 		>{ substation.Name }</span>
 		}
