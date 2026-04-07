@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "e2e": "start-server-and-test 'make e2e' http://localhost:36000 'npx cypress run'"
+    "e2e": "start-server-and-test 'make e2e' http://localhost:36000 'npx cypress run'",
+    "e2e-open": "start-server-and-test 'make e2e' http://localhost:36000 'npx cypress open'"
   },
   "devDependencies": {
     "cypress": "^15.13.0",

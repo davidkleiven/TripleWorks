@@ -18,11 +18,11 @@ import (
 
 func TestSetSelectedSubstation(t *testing.T) {
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/selected?mrid=000&name=componentName&fieldName=field", nil)
+	req := httptest.NewRequest("GET", "/selected?mrid=000&name=componentName", nil)
 	SetSelectedSubstation(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code)
 	body := rec.Body.String()
-	require.Contains(t, body, "name=\"field\"")
+	require.Contains(t, body, "name=\"substation-mrid\"")
 	require.Contains(t, body, "value=\"000\"")
 }
 
@@ -148,11 +148,15 @@ func TestSubstationConnector(t *testing.T) {
 
 	form := url.Values{}
 	form.Set("modelId", "1")
-	form.Set("fromSubstation", substations[0].Mrid.String())
-	form.Set("toSubstation", substations[1].Mrid.String())
+	form.Add("substation-mrid", substations[0].Mrid.String())
+	form.Add("substation-mrid", substations[1].Mrid.String())
 	validValues := form.Encode()
 
-	form.Set("fromSubstation", "0000-0000")
+	mrids, ok := form["substation-mrid"]
+	require.True(t, ok)
+	require.Equal(t, len(mrids), 2)
+	mrids[0] = "0000-0000"
+	form["substation-mrid"] = mrids
 	unknownSubstation := form.Encode()
 
 	form.Set("modelId", "not an int")

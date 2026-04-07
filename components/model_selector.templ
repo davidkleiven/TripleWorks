@@ -3,7 +3,7 @@ package components
 import "com.github/davidkleiven/tripleworks/models"
 
 templ ModelSelector(models []models.Model) {
-	<select id="model-selection">
+	<select id="model-selection" name="modelId">
 		for _, model := range models {
 			<option value={ model.Id }>{ model.Id }: { model.Name }</option>
 		}

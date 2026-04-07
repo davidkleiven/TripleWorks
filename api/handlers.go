@@ -81,7 +81,12 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	}
 
 	substationConnector := SubstationConnector{
-		LineRepo: &repository.BunReadRepository[models.ACLineSegment]{Db: db},
+		LineRepo:         &repository.BunReadRepository[models.ACLineSegment]{Db: db},
+		SubstationRepo:   &repository.BunReadRepository[models.Substation]{Db: db},
+		TerminalRepo:     &repository.BunReadRepository[models.Terminal]{Db: db},
+		VoltageLevelRepo: &repository.BunReadRepository[models.VoltageLevel]{Db: db},
+		Inserter:         &repository.BunInserter{Db: db},
+		Timeout:          timeout,
 	}
 
 	mux.HandleFunc("/", RootHandler)

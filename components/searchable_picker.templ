@@ -4,11 +4,12 @@ templ SearchablePicker(p SearchablePickerParams) {
 	<div class="field">
 		<div class="control has-icons-right" id={ p.Name + "-control" }>
 			<input
+				id={p.Name + "-search-input"}
 				class="input"
 				type="text"
 				name="q"
 				placeholder="Search items..."
-				hx-get={ p.Endpoint + "?target=" + p.ResultTargetId + "&fieldName=" + p.FieldName }
+				hx-get={ p.Endpoint + "?selection-display=" + p.Name + "-display"}
 				hx-trigger="input changed delay:300ms"
 				hx-target={ "#" + p.Name + "-results" }
 				hx-indicator={ "#" + p.Name + "-control" }
@@ -21,8 +22,7 @@ templ SearchablePicker(p SearchablePickerParams) {
 		class="box p-2 is-size-7"
 		style="max-height: 120px; overflow-y: auto;"
 	></div>
-
-	<div id={ p.SelectedId } class="pick-result mt-2">
+	<div id={ p.Name + "-display" } class="pick-result mt-2">
 		<span class="has-text-grey-light is-size-7">No selection</span>
 	</div>
 }
