@@ -40,6 +40,12 @@ jobs:
         | grep -v '^migrations/migration_test.go' \
         && echo "❌ Existing migration modified or deleted" && exit 1 || true
 
+  check-typos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: crate-ci/typos@v1.45.0
+
   check-nil:
     runs-on: ubuntu-latest
     steps:
