@@ -47,7 +47,7 @@ func TestVoltageLevelsInSubstation(t *testing.T) {
 		require.Equal(t, targetMrid.String(), mrid.(string))
 	})
 
-	t.Run("exsisting html rep", func(t *testing.T) {
+	t.Run("existing html rep", func(t *testing.T) {
 		req := httptest.NewRequest("GET", fmt.Sprintf("/substations/%s/voltage-levels", targetMrid), nil)
 		rec := httptest.NewRecorder()
 		mux.ServeHTTP(rec, req)

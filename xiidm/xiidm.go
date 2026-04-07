@@ -98,7 +98,7 @@ type VoltageLevel struct {
 	VscConverterStation     []VscConverterStation     `xml:"vscConverterStation,omitempty"`
 	LccConverterStation     []LccConverterStation     `xml:"lccConverterStation,omitempty"`
 	VoltageSourceConverter  []VoltageSourceConverter  `xml:"voltageSourceConverter,omitempty"`
-	LineCommutatedConverter []LineCommutatedConverter `xml:"lineCommutatedConverter,omitempty"`
+	LineCommutedConverter []LineCommutedConverter `xml:"lineCommutedConverter,omitempty"`
 	Ground                  []Ground                  `xml:"ground,omitempty"`
 	Identifiable
 }
@@ -506,11 +506,11 @@ type AcDcConverter struct {
 	Identifiable
 }
 
-// LineCommutatedConverterReactiveModel ...
-type LineCommutatedConverterReactiveModel string
+// LineCommutedConverterReactiveModel ...
+type LineCommutedConverterReactiveModel string
 
-// LineCommutatedConverter ...
-type LineCommutatedConverter struct {
+// LineCommutedConverter ...
+type LineCommutedConverter struct {
 	ReactiveModelAttr string  `xml:"reactiveModel,attr"`
 	PowerFactorAttr   float64 `xml:"powerFactor,attr"`
 	AcDcConverter

@@ -71,7 +71,7 @@ func (e *EntityStore) GetEnumOptions(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		slog.ErrorContext(ctx, "Failed to process enum equest", "error", err, "call no.", failed)
+		slog.ErrorContext(ctx, "Failed to process enum request", "error", err, "call no.", failed)
 		http.Error(w, err.Error(), errCode)
 		return
 	}

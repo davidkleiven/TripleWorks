@@ -243,11 +243,11 @@ func NewVoltageLevelEquipmentFromDb(ctx context.Context, db *bun.DB, substation 
 		}
 		AssertDifferent(0, baseVoltage)
 		vl := CreateVoltageLevel(substation.Name, baseVoltage)
-		equipments := VoltageLevelEquipment{
+		equipment := VoltageLevelEquipment{
 			VoltageLevel: vl,
 			Lines:        lines,
 		}
-		result = append(result, equipments)
+		result = append(result, equipment)
 	}
 	return result, nil
 }

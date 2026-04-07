@@ -6,15 +6,15 @@ import (
 	"gonum.org/v1/gonum/graph/formats/rdf"
 )
 
-type StatmentMatcher func(stmt *rdf.Statement) bool
+type StatementMatcher func(stmt *rdf.Statement) bool
 
-func SubjectEndswith(suffix string) StatmentMatcher {
+func SubjectEndswith(suffix string) StatementMatcher {
 	return func(stmt *rdf.Statement) bool {
 		return strings.HasSuffix(stmt.Subject.Value, suffix)
 	}
 }
 
-func FindFirstMatch(g *rdf.Graph, matcher StatmentMatcher) *rdf.Statement {
+func FindFirstMatch(g *rdf.Graph, matcher StatementMatcher) *rdf.Statement {
 	it := g.AllStatements()
 
 	for it.Next() {

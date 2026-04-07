@@ -49,9 +49,9 @@ var floatAutofillers = map[string]FloatAutofiller{
 
 var stringAutofillers = map[string]StringAutofiller{
 	"ShortName": func(f *FormState) string {
-		splitted := splitOnAny(f.Name, ",- ")
+		split := splitOnAny(f.Name, ",- ")
 		result := ""
-		for _, part := range splitted {
+		for _, part := range split {
 			if len(part) > 3 {
 				result += part[:3]
 			} else {
