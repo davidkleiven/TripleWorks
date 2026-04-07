@@ -1,6 +1,6 @@
 COVEROUT ?= coverage.html
 
-.PHONY: build-templates
+.PHONY: build-templates e2e-cleanup release
 
 build-templates:
 	templ generate
@@ -17,3 +17,9 @@ run: build
 
 release:
 	go-semantic-release --provider github --token $$(gh auth token) --provider-opt "slug=davidkleiven/Tripleworks"
+
+e2e: build
+	TRIPLE_WORKS_CONFIG="e2e_sqlite" ./tripleworks
+
+e2e-cleanup:
+	rm tripleworks-e2e.db

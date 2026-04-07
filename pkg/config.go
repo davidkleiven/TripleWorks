@@ -113,7 +113,7 @@ func GetConfig(name string) *Config {
 	switch name {
 	case "test":
 		return NewTestConfig()
-	case "local_pg":
+	case "local_pg", "e2e_sqlite":
 		return MustGetPredfinedProfile(name)
 	case "pg_env":
 		return PgEnv(&FsOpener{})

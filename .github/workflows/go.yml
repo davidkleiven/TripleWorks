@@ -53,3 +53,27 @@ jobs:
       uses: vladopajic/go-test-coverage@v2
       with:
         config: ./.testcoverage.yml
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: 1.26
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 25
+
+    - name: Install npm dependencies
+      run: npm ci
+
+    - name: Install templ
+      run: go install github.com/a-h/templ/cmd/templ@latest
+
+    - name: Run e2e tests
+      run: npm run e2e
