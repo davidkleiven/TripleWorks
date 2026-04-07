@@ -23,7 +23,7 @@ import (
 //go:embed profiles/*
 var configProfiles embed.FS
 
-func MustGetPredfinedProfile(name string) *Config {
+func MustGetPredefinedProfile(name string) *Config {
 	reader := Must(configProfiles.Open("profiles/" + name + ".yaml"))
 	config := NewDefaultConfig()
 	PanicOnErr(yaml.NewDecoder(reader).Decode(&config))
@@ -64,7 +64,7 @@ func (c *Config) DatabaseConnection() *bun.DB {
 	return bun.NewDB(sqldb, sqlitedialect.New())
 }
 
-// SafeString returns a loggable (e.g. no secrets) string represenation of the config object
+// SafeString returns a loggable (e.g. no secrets) string representation of the config object
 func (c *Config) SafeString() string {
 	var builder strings.Builder
 	builder.WriteString("port=")
@@ -114,7 +114,7 @@ func GetConfig(name string) *Config {
 	case "test":
 		return NewTestConfig()
 	case "local_pg", "e2e_sqlite":
-		return MustGetPredfinedProfile(name)
+		return MustGetPredefinedProfile(name)
 	case "pg_env":
 		return PgEnv(&FsOpener{})
 	default:

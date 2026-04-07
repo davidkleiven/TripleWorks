@@ -23,7 +23,7 @@ func (m *ModelsEndpoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	models, err := m.Repo.List(ctx)
 	if err != nil {
 		http.Error(w, "Could not fetch models: "+err.Error(), http.StatusInternalServerError)
-		slog.ErrorContext(ctx, "Coult not fetch models", "error", err)
+		slog.ErrorContext(ctx, "Could not fetch models", "error", err)
 		return
 	}
 

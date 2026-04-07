@@ -268,11 +268,11 @@
       const selectedOption = select.options[select.selectedIndex];
 
       if (targetInput && selectedOption) {
-        const valuesCandiates = [
+        const valuesCandidates = [
           selectedOption.getAttribute("mrid"),
           selectedOption.value,
         ];
-        targetInput.value = valuesCandiates.find(
+        targetInput.value = valuesCandidates.find(
           (v) => v !== null && v !== undefined,
         );
 

@@ -84,11 +84,11 @@ func TestGetEntityForKind(t *testing.T) {
 
 		content := rec.Body.String()
 		require.Contains(t, content, "<option")
-		splitted := strings.Split(content, "\n")
-		require.Equal(t, len(bvs), len(splitted)-1)
+		split := strings.Split(content, "\n")
+		require.Equal(t, len(bvs), len(split)-1)
 
 		// Confirm that the chosen item is the first
-		require.Contains(t, splitted[0], chosen)
+		require.Contains(t, split[0], chosen)
 	})
 
 	t.Run("invalid type", func(t *testing.T) {
@@ -123,9 +123,9 @@ func TestGetEnumItems(t *testing.T) {
 		require.Equal(t, http.StatusOK, rec.Code)
 
 		content := rec.Body.String()
-		splitted := strings.Split(content, "\n")
-		require.Greater(t, len(splitted), 1)
-		require.Contains(t, splitted[0], "value=\"4\"")
+		split := strings.Split(content, "\n")
+		require.Greater(t, len(split), 1)
+		require.Contains(t, split[0], "value=\"4\"")
 	})
 
 	t.Run("no choice", func(t *testing.T) {
@@ -323,7 +323,7 @@ func TestEditComponentForm(t *testing.T) {
 		require.Contains(t, rec.Body.String(), "<input")
 	})
 
-	t.Run("success corresonding resource", func(t *testing.T) {
+	t.Run("success corresponding resource", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", fmt.Sprintf("/resource/%s", entity.Mrid), nil)
 		mux.ServeHTTP(rec, req)
@@ -709,7 +709,7 @@ func TestMap(t *testing.T) {
 	for i := range substations {
 		substations[i].Mrid = uuid.New()
 		if i != 0 {
-			// Deliberatly make one substation not having a loc mrid
+			// Deliberately make one substation not having a loc mrid
 			// to make sure the code handles it
 			substations[i].LocationMrid = locations[i].Mrid
 		}

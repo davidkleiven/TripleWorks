@@ -38,7 +38,7 @@ func TestMaxFieldsAreReturned(t *testing.T) {
 	require.Equal(t, 20, len(fields))
 }
 
-func TestEmptyStringOnNonExsitingField(t *testing.T) {
+func TestEmptyStringOnNonExistingField(t *testing.T) {
 	result := asStringOrEmpty(map[string]any{}, "whatever-key")
 	require.Equal(t, "", result)
 }

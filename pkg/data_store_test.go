@@ -115,7 +115,7 @@ func TestFilteredFinder(t *testing.T) {
 	_, err = db.NewInsert().Model(&vls).Exec(ctx)
 	require.NoError(t, err)
 
-	t.Run("error on unkown key", func(t *testing.T) {
+	t.Run("error on unknown key", func(t *testing.T) {
 		_, err := GetFinder("my random object", "", "")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "find a finder")
@@ -169,7 +169,7 @@ func TestFilteredFinder(t *testing.T) {
 		require.Equal(t, 0, len(result))
 	})
 
-	t.Run("return immediatly on failing finder", func(t *testing.T) {
+	t.Run("return immediately on failing finder", func(t *testing.T) {
 		finder := func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 			return nil, errors.New("something went wrong")
 		}

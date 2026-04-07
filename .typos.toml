@@ -1,0 +1,12 @@
+[type.po]
+extend-glob = ["*.nq"]
+check-file = false
+
+[files]
+extend-exclude = [
+"migrations/20251230060000_populate_enum_tables.go",
+"migrations/20260124104000_add_simple_upload_tables.go",
+"migrations/20251230180000_populate_phase_code.go"
+]
+
+

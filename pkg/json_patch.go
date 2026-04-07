@@ -75,9 +75,9 @@ func extractLastEntryStep(ctx context.Context, db *bun.DB, modelsCache map[strin
 	}
 }
 
-func intepretValueStep(patch JsonPatch) Step[PreparePatchCtx] {
+func interpretValueStep(patch JsonPatch) Step[PreparePatchCtx] {
 	return Step[PreparePatchCtx]{
-		Name: "Interprete value",
+		Name: "Interpret value",
 		Run: func(ctx *PreparePatchCtx) error {
 			return json.Unmarshal(patch.Value, &ctx.Value)
 		},
@@ -144,7 +144,7 @@ func ApplyPatch(ctx context.Context, db *bun.DB, author string, patches []JsonPa
 			typeFromEntitiesStep(ctx, db),
 			formTypeStep(),
 			extractLastEntryStep(ctx, db, result),
-			intepretValueStep(patch),
+			interpretValueStep(patch),
 			serializePatchStep(patch),
 			applyPatchStep(patch),
 			serializingGenericModelStep(),
@@ -181,7 +181,7 @@ type ParsedPath struct {
 func ParsePath(path string) (ParsedPath, error) {
 	result := strings.Split(path, "/")
 	if len(result) != 3 {
-		return ParsedPath{}, fmt.Errorf("Path %s must match /<resoureId>/<field>", path)
+		return ParsedPath{}, fmt.Errorf("Path %s must match /<resourceId>/<field>", path)
 	}
 	return ParsedPath{Mrid: result[1], Field: result[2]}, nil
 }
