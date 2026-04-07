@@ -34,3 +34,5 @@ tripleworks
 pkg/testdata/*
 *_templ.go
 .semrel/*
+node_modules/*
+*.db
