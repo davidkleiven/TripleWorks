@@ -29,7 +29,7 @@ func setupSqliteTestDb(t *testing.T) *bun.DB {
 func setupPostgresTestDb(t *testing.T) *bun.DB {
 	sqldb, err := sql.Open("pgx", pgTestUrl())
 	require.NoError(t, err)
-	return bun.NewDB(sqldb, pgdialect.New())
+	return bun.NewDB(sqldb, pgdialect.New(), bun.WithDiscardUnknownColumns())
 }
 
 func pgTestUrl() string {
@@ -413,4 +413,82 @@ func TestCanNotInsertZeroNominalVoltage(t *testing.T) {
 	_, err = db.NewInsert().Model(&bv).Exec(ctx)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "nominal_voltage_positive")
+}
+
+func TestLatestSubstationView(t *testing.T) {
+	db := setupPostgresTestDb(t)
+	ctx := context.Background()
+	defer clearPgDataBase(ctx, db)
+	_, err := RunUp(ctx, db)
+	require.NoError(t, err)
+
+	model := models.Model{Name: "test model"}
+	_, err = db.NewInsert().Model(&model).Exec(ctx)
+	require.NoError(t, err)
+
+	var commit models.Commit
+	commit.Message = "add substation"
+	commit.CreatedAt = time.Now()
+
+	_, err = db.NewInsert().Model(&commit).Exec(ctx)
+	require.NoError(t, err)
+
+	var entity models.Entity
+	entity.CommitId = int(commit.Id)
+	entity.ModelId = model.Id
+	entity.Mrid = uuid.New()
+	entity.EntityType = "Substation"
+	_, err = db.NewInsert().Model(&entity).Exec(ctx)
+	require.NoError(t, err)
+
+	var locEntity models.Entity
+	locEntity.CommitId = int(commit.Id)
+	locEntity.ModelId = model.Id
+	locEntity.Mrid = uuid.New()
+	locEntity.EntityType = "Location"
+
+	_, err = db.NewInsert().Model(&locEntity).Exec(ctx)
+	require.NoError(t, err)
+
+	var regionEntity models.Entity
+	regionEntity.CommitId = int(commit.Id)
+	regionEntity.ModelId = model.Id
+	regionEntity.Mrid = uuid.New()
+	regionEntity.EntityType = "Location"
+
+	_, err = db.NewInsert().Model(&regionEntity).Exec(ctx)
+	require.NoError(t, err)
+
+	var substation models.Substation
+	substation.Mrid = entity.Mrid
+	substation.CommitId = int(commit.Id)
+	substation.Name = "Substation A"
+	substation.LocationMrid = locEntity.Mrid
+	substation.SubGeographicalRegionMrid = regionEntity.Mrid
+
+	_, err = db.NewInsert().Model(&substation).Exec(ctx)
+	require.NoError(t, err)
+
+	var updateCommit models.Commit
+	updateCommit.Message = "Fix name"
+	updateCommit.CreatedAt = time.Now().Add(time.Hour)
+	_, err = db.NewInsert().Model(&updateCommit).Exec(ctx)
+	require.NoError(t, err)
+
+	substation.Id = 0
+	substation.Name = "Substation B"
+	substation.CommitId = int(updateCommit.Id)
+	_, err = db.NewInsert().Model(&substation).Exec(ctx)
+	require.NoError(t, err)
+
+	var allSubstations []models.Substation
+	err = db.NewSelect().Model(&allSubstations).Scan(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(allSubstations))
+
+	var latestSubstations []models.Substation
+	err = db.NewSelect().TableExpr("v_substations_latest").Scan(ctx, &latestSubstations)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(latestSubstations))
+	require.Equal(t, "Substation B", latestSubstations[0].Name)
 }
