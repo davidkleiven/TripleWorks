@@ -177,7 +177,11 @@
           />
         </div>
         <div class="control ml-2">
-          <button class="button is-success" onclick="commitChanges()">
+          <button
+            id="commit-btn"
+            class="button is-success"
+            onclick="commitChanges()"
+          >
             Commit
           </button>
         </div>
@@ -200,7 +204,9 @@
       if (!payload || Object.keys(payload).length === 0) return;
 
       payload["cim_type"] = document.getElementById("type-select").value;
-      payload["modelId"] = document.getElementById("model-selection").value;
+      payload["modelId"] = ensureNumber(
+        document.getElementById("model-selection").value,
+      );
       payload["modelName"] = "national grid model";
       console.log("Commit payload", payload);
 
@@ -216,6 +222,11 @@
         .then((response) => response.text())
         .then((text) => (statusField.textContent = text))
         .catch((err) => console.error("Failed to post commit:", err));
+    }
+
+    function ensureNumber(val) {
+      const num = Number(val);
+      return Number.isFinite(num) ? num : -1;
     }
 
     function collectEditorValues() {
