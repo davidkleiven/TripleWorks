@@ -91,7 +91,7 @@ func (c *CommitEndpoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	itemIter := func(yield func(v any) bool) {
-		pkg.YieldMany(yield, &gridModel, &entity, &model)
+		pkg.YieldMany(yield, &gridModel, &entity, model)
 	}
 	err = pkg.InsertAllInserter(ctx, c.Db, commit, itemIter, pkg.NoOpOnInsert)
 
