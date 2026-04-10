@@ -14,12 +14,12 @@ FROM (
         ROW_NUMBER() OVER (
             PARTITION BY t.mrid
             ORDER BY c.created_at DESC
-        ) AS rn
+        ) AS row_num
     FROM {{.TableName}} t
     JOIN commits c 
         ON t.commit_id = c.id
 ) sub
-WHERE sub.rn = 1;
+WHERE sub.row_num = 1;
 `
 
 func MustGetViewSql(name string) string {
