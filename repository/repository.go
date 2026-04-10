@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"reflect"
 	"slices"
 
 	"com.github/davidkleiven/tripleworks/models"
@@ -73,20 +74,29 @@ type BunReadRepository[T any] struct {
 
 func (brp *BunReadRepository[T]) GetByMrid(ctx context.Context, mrid string) (T, error) {
 	var result T
-	err := brp.Db.NewSelect().Model(&result).Where("mrid = ?", mrid).OrderBy("commit_id", bun.OrderDesc).Limit(1).Scan(ctx)
+	latestView := brp.LatestView()
+	err := brp.Db.NewSelect().Table(latestView).Where("mrid = ?", mrid).OrderBy("commit_id", bun.OrderDesc).Limit(1).Scan(ctx, &result)
 	return result, err
 }
 
 func (brp *BunReadRepository[T]) List(ctx context.Context) ([]T, error) {
 	var result []T
-	err := brp.Db.NewSelect().Model(&result).Scan(ctx)
+	latestView := brp.LatestView()
+	err := brp.Db.NewSelect().Table(latestView).Scan(ctx, &result)
 	return result, err
 }
 
 func (brp *BunReadRepository[T]) ListByMrids(ctx context.Context, mrids iter.Seq[string]) ([]T, error) {
 	var result []T
-	err := brp.Db.NewSelect().Model(&result).Where("mrid IN (?)", bun.In(slices.Collect(mrids))).Scan(ctx)
+	latestView := brp.LatestView()
+	err := brp.Db.NewSelect().Table(latestView).Where("mrid IN (?)", bun.List(slices.Collect(mrids))).Scan(ctx, &result)
 	return result, err
+}
+
+func (brp *BunReadRepository[T]) LatestView() string {
+	var item T
+	tableName := brp.Db.Table(reflect.TypeOf(item)).Name
+	return fmt.Sprintf("v_%s_latest", tableName)
 }
 
 type FailingReadRepo[T any] struct{}
