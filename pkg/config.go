@@ -56,12 +56,12 @@ func (c *Config) DatabaseConnection() *bun.DB {
 	if strings.Contains(c.DbUrl, "postgres") {
 		slog.Info("Connecting to postgres database")
 		sqldb := Must(sql.Open("pgx", c.DbUrl))
-		return bun.NewDB(sqldb, pgdialect.New())
+		return bun.NewDB(sqldb, pgdialect.New(), bun.WithDiscardUnknownColumns())
 	}
 
 	slog.Info("Connecting to sqlite database", "url", c.DbUrl)
 	sqldb := Must(sql.Open("sqlite3", c.DbUrl))
-	return bun.NewDB(sqldb, sqlitedialect.New())
+	return bun.NewDB(sqldb, sqlitedialect.New(), bun.WithDiscardUnknownColumns())
 }
 
 // SafeString returns a loggable (e.g. no secrets) string representation of the config object
