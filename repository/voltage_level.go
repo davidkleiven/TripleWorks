@@ -29,7 +29,7 @@ func (imv *InMemVoltageLevelReadRepository) InSubstation(ctx context.Context, mr
 
 func NewBunVoltageLevelReadRepository(db *bun.DB) *BunVoltageLevelRepository {
 	return &BunVoltageLevelRepository{
-		BunReadRepository: BunReadRepository[models.VoltageLevel]{Db: db},
+		BunReadRepository: BunReadRepository[models.VoltageLevel]{Db: db, UseLatestView: true},
 	}
 }
 

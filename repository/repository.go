@@ -69,34 +69,38 @@ func (i *InMemReadRepository[T]) ListByMrids(ctx context.Context, mrids iter.Seq
 }
 
 type BunReadRepository[T any] struct {
-	Db *bun.DB
+	Db            *bun.DB
+	UseLatestView bool
 }
 
 func (brp *BunReadRepository[T]) GetByMrid(ctx context.Context, mrid string) (T, error) {
 	var result T
-	latestView := brp.LatestView()
+	latestView := brp.TableName()
 	err := brp.Db.NewSelect().Table(latestView).Where("mrid = ?", mrid).OrderBy("commit_id", bun.OrderDesc).Limit(1).Scan(ctx, &result)
 	return result, err
 }
 
 func (brp *BunReadRepository[T]) List(ctx context.Context) ([]T, error) {
 	var result []T
-	latestView := brp.LatestView()
+	latestView := brp.TableName()
 	err := brp.Db.NewSelect().Table(latestView).Scan(ctx, &result)
 	return result, err
 }
 
 func (brp *BunReadRepository[T]) ListByMrids(ctx context.Context, mrids iter.Seq[string]) ([]T, error) {
 	var result []T
-	latestView := brp.LatestView()
+	latestView := brp.TableName()
 	err := brp.Db.NewSelect().Table(latestView).Where("mrid IN (?)", bun.List(slices.Collect(mrids))).Scan(ctx, &result)
 	return result, err
 }
 
-func (brp *BunReadRepository[T]) LatestView() string {
+func (brp *BunReadRepository[T]) TableName() string {
 	var item T
 	tableName := brp.Db.Table(reflect.TypeOf(item)).Name
-	return fmt.Sprintf("v_%s_latest", tableName)
+	if brp.UseLatestView {
+		return fmt.Sprintf("v_%s_latest", tableName)
+	}
+	return tableName
 }
 
 type FailingReadRepo[T any] struct{}
