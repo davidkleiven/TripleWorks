@@ -42,15 +42,15 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	inVoltageLevel := InVoltageLevelEndpoint{voltageLevelRepo: repository.NewBunVoltageLevelReadRepository(db), timeout: timeout}
 
 	equipmentInVoltageLevel := EquipmentInVoltageLevelEndpoint{
-		VoltageLevel:    &repository.BunReadRepository[models.VoltageLevel]{Db: db},
-		ConNodes:        &repository.BunConnectivityNodeReadRepository{BunReadRepository: repository.BunReadRepository[models.ConnectivityNode]{Db: db}},
-		Terminals:       &repository.BunTerminalReadRepository{BunReadRepository: repository.BunReadRepository[models.Terminal]{Db: db}},
-		Generators:      &repository.BunReadRepository[models.SynchronousMachine]{Db: db},
-		Lines:           &repository.BunReadRepository[models.ACLineSegment]{Db: db},
-		Switches:        &repository.BunReadRepository[models.Switch]{Db: db},
-		ConformLoads:    &repository.BunReadRepository[models.ConformLoad]{Db: db},
-		NonConformLoads: &repository.BunReadRepository[models.NonConformLoad]{Db: db},
-		Transformers:    &repository.BunReadRepository[models.PowerTransformer]{Db: db},
+		VoltageLevel:    &repository.BunReadRepository[models.VoltageLevel]{Db: db, UseLatestView: true},
+		ConNodes:        &repository.BunConnectivityNodeReadRepository{BunReadRepository: repository.BunReadRepository[models.ConnectivityNode]{Db: db, UseLatestView: true}},
+		Terminals:       &repository.BunTerminalReadRepository{BunReadRepository: repository.BunReadRepository[models.Terminal]{Db: db, UseLatestView: true}},
+		Generators:      &repository.BunReadRepository[models.SynchronousMachine]{Db: db, UseLatestView: true},
+		Lines:           &repository.BunReadRepository[models.ACLineSegment]{Db: db, UseLatestView: true},
+		Switches:        &repository.BunReadRepository[models.Switch]{Db: db, UseLatestView: true},
+		ConformLoads:    &repository.BunReadRepository[models.ConformLoad]{Db: db, UseLatestView: true},
+		NonConformLoads: &repository.BunReadRepository[models.NonConformLoad]{Db: db, UseLatestView: true},
+		Transformers:    &repository.BunReadRepository[models.PowerTransformer]{Db: db, UseLatestView: true},
 		timeout:         timeout,
 	}
 
@@ -71,20 +71,20 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	}
 
 	substationWorkbench := SubstationConnectorWorkbench{
-		LineRepo: &repository.BunReadRepository[models.ACLineSegment]{Db: db},
+		LineRepo: &repository.BunReadRepository[models.ACLineSegment]{Db: db, UseLatestView: true},
 		Timeout:  timeout,
 	}
 
 	querySub := SubstationListQueryHandler{
-		SubstationRepo: &repository.BunReadRepository[models.Substation]{Db: db},
+		SubstationRepo: &repository.BunReadRepository[models.Substation]{Db: db, UseLatestView: true},
 		Timeout:        timeout,
 	}
 
 	substationConnector := SubstationConnector{
-		LineRepo:         &repository.BunReadRepository[models.ACLineSegment]{Db: db},
-		SubstationRepo:   &repository.BunReadRepository[models.Substation]{Db: db},
-		TerminalRepo:     &repository.BunReadRepository[models.Terminal]{Db: db},
-		VoltageLevelRepo: &repository.BunReadRepository[models.VoltageLevel]{Db: db},
+		LineRepo:         &repository.BunReadRepository[models.ACLineSegment]{Db: db, UseLatestView: true},
+		SubstationRepo:   &repository.BunReadRepository[models.Substation]{Db: db, UseLatestView: true},
+		TerminalRepo:     &repository.BunReadRepository[models.Terminal]{Db: db, UseLatestView: true},
+		VoltageLevelRepo: &repository.BunReadRepository[models.VoltageLevel]{Db: db, UseLatestView: true},
 		Inserter:         &repository.BunInserter{Db: db},
 		Timeout:          timeout,
 	}

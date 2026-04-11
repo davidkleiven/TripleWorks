@@ -58,7 +58,7 @@ func dbWithBaseVoltageTable(t *testing.T) *bun.DB {
 	sqldb, err := sql.Open("sqlite3", dburl)
 	require.NoError(t, err)
 	db := bun.NewDB(sqldb, sqlitedialect.New())
-	_, err = db.NewCreateTable().Model((*models.BaseVoltage)(nil)).ModelTableExpr("v_base_voltages_latest").Exec(context.Background())
+	_, err = db.NewCreateTable().Model((*models.BaseVoltage)(nil)).Exec(context.Background())
 	require.NoError(t, err)
 	return db
 }
@@ -73,7 +73,7 @@ func TestBunReadRepository(t *testing.T) {
 	bvs[1].Mrid = uuid.New()
 	bvs[2].Mrid = bvs[0].Mrid
 	ctx := context.Background()
-	_, err := db.NewInsert().Model(&bvs).ModelTableExpr("v_base_voltages_latest").Exec(ctx)
+	_, err := db.NewInsert().Model(&bvs).Exec(ctx)
 	require.NoError(t, err)
 
 	t.Run("get by mrid", func(t *testing.T) {
