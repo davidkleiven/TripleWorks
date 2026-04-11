@@ -42,9 +42,14 @@ func TestFindAll(t *testing.T) {
 	uuid, err := uuid.NewUUID()
 	require.NoError(t, err)
 
+	var commit models.Commit
+	_, err = db.NewInsert().Model(&commit).Exec(ctx)
+	require.NoError(t, err)
+
 	bv := models.BaseVoltage{
 		IdentifiedObject: models.IdentifiedObject{Mrid: uuid, Name: "420kV"},
 	}
+	bv.CommitId = int(commit.Id)
 
 	_, err = db.NewInsert().Model(&bv).Exec(ctx)
 	require.NoError(t, err)
@@ -98,10 +103,15 @@ func TestFilteredFinder(t *testing.T) {
 	_, err := migrations.RunUp(ctx, db)
 	require.NoError(t, err)
 
+	var commit models.Commit
+	_, err = db.NewInsert().Model(&commit).Exec(ctx)
+	require.NoError(t, err)
+
 	obj := models.IdentifiedObject{
 		Mrid: uuid.New(),
 		Name: "My object",
 	}
+	obj.CommitId = int(commit.Id)
 
 	_, err = db.NewInsert().Model(&obj).Exec(ctx)
 	require.NoError(t, err)
@@ -110,6 +120,7 @@ func TestFilteredFinder(t *testing.T) {
 	vls := make([]models.VoltageLevel, 120)
 	for i := range len(vls) {
 		vls[i].Mrid = uuid.New()
+		vls[i].CommitId = int(commit.Id)
 	}
 
 	_, err = db.NewInsert().Model(&vls).Exec(ctx)
