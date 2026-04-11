@@ -28,9 +28,8 @@ type DataStore struct {
 func FindAll[T any](db *bun.DB, ctx context.Context, modelId int) ([]T, error) {
 	_ = modelId // TODO: add multi model support later
 
-	var entities []T
-	err := db.NewSelect().Model(&entities).Scan(ctx)
-	return entities, err
+	repo := repository.BunReadRepository[T]{Db: db, UseLatestView: true}
+	return repo.List(ctx)
 }
 
 func FindNameAndMrid[T models.VersionedObject](db *bun.DB, ctx context.Context, modelId int) ([]models.VersionedObject, error) {
@@ -523,6 +522,9 @@ var Finders = map[string]Finder{
 	},
 	"LoadGroup": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.LoadGroup](db, ctx, modelId)
+	},
+	"Location": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
+		return FindNameAndMrid[models.Location](db, ctx, modelId)
 	},
 	"LoadResponseCharacteristic": func(ctx context.Context, db *bun.DB, modelId int) ([]models.VersionedObject, error) {
 		return FindNameAndMrid[models.LoadResponseCharacteristic](db, ctx, modelId)

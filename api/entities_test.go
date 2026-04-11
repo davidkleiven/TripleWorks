@@ -59,6 +59,12 @@ func (f *FailingWriter) WriteHeader(statusCode int) {
 
 func TestGetEntityForKind(t *testing.T) {
 	store := setupStore(t)
+	ctx := context.Background()
+
+	var commit models.Commit
+	commit.Message = "Insert base voltage"
+	_, err := store.db.NewInsert().Model(&commit).Exec(ctx)
+	require.NoError(t, err)
 
 	bvs := make([]models.BaseVoltage, 10)
 	for i := range bvs {
@@ -67,12 +73,12 @@ func TestGetEntityForKind(t *testing.T) {
 
 		bvs[i].Mrid = mrid
 		bvs[i].NominalVoltage = 22.0 + float64(10*i)
+		bvs[i].CommitId = int(commit.Id)
 	}
 
 	chosen := bvs[5].Mrid.String()
 
-	ctx := context.Background()
-	_, err := store.db.NewInsert().Model(&bvs).Exec(ctx)
+	_, err = store.db.NewInsert().Model(&bvs).Exec(ctx)
 	require.NoError(t, err)
 
 	t.Run("valid request", func(t *testing.T) {
@@ -172,6 +178,11 @@ func TestLogMsgOnNotEmpty(t *testing.T) {
 
 func TestSubstationReturnedWhenRequestingEquipmentContainer(t *testing.T) {
 	store := setupStore(t)
+	ctx := context.Background()
+	commit := models.Commit{Message: "Insert substation"}
+	_, err := store.db.NewInsert().Model(&commit).Exec(ctx)
+	require.NoError(t, err)
+
 	uuid, err := uuid.NewUUID()
 	require.NoError(t, err)
 	substation := models.Substation{
@@ -183,8 +194,8 @@ func TestSubstationReturnedWhenRequestingEquipmentContainer(t *testing.T) {
 			},
 		},
 	}
+	substation.CommitId = int(commit.Id)
 
-	ctx := context.Background()
 	_, err = store.db.NewInsert().Model(&substation).Exec(ctx)
 	require.NoError(t, err)
 
@@ -204,6 +215,11 @@ func TestSubstationReturnedWhenRequestingEquipmentContainer(t *testing.T) {
 
 func TestACLineSegmentReturnedWhenRequestingConductingEquipment(t *testing.T) {
 	store := setupStore(t)
+	ctx := context.Background()
+	var commit models.Commit
+	_, err := store.db.NewInsert().Model(&commit).Exec(ctx)
+	require.NoError(t, err)
+
 	acLine := models.ACLineSegment{
 		Conductor: models.Conductor{
 			ConductingEquipment: models.ConductingEquipment{
@@ -215,8 +231,8 @@ func TestACLineSegmentReturnedWhenRequestingConductingEquipment(t *testing.T) {
 			},
 		},
 	}
-	ctx := context.Background()
-	_, err := store.db.NewInsert().Model(&acLine).Exec(ctx)
+	acLine.CommitId = int(commit.Id)
+	_, err = store.db.NewInsert().Model(&acLine).Exec(ctx)
 	require.NoError(t, err)
 
 	rec := httptest.NewRecorder()
@@ -363,9 +379,13 @@ func TestEditComponentForm(t *testing.T) {
 func TestExport(t *testing.T) {
 
 	store := setupStore(t)
+	ctx := context.Background()
+	var commit models.Commit
+	_, err := store.db.NewInsert().Model(&commit).Exec(ctx)
+	require.NoError(t, err)
 
 	var bv models.BaseVoltage
-	_, err := store.db.NewInsert().Model(&bv).Exec(context.Background())
+	_, err = store.db.NewInsert().Model(&bv).Exec(ctx)
 	require.NoError(t, err)
 
 	t.Run("success", func(t *testing.T) {
@@ -687,6 +707,12 @@ func TestConnectDanglingLines(t *testing.T) {
 }
 
 func TestMap(t *testing.T) {
+	store := setupStore(t)
+	ctx := context.Background()
+	var commit models.Commit
+	_, err := store.db.NewInsert().Model(&commit).Exec(ctx)
+	require.NoError(t, err)
+
 	var (
 		substations = make([]models.Substation, 5)
 		acLines     = make([]models.ACLineSegment, 5)
@@ -700,6 +726,7 @@ func TestMap(t *testing.T) {
 
 	for i := range locations {
 		locations[i].Mrid = uuid.New()
+		locations[i].CommitId = int(commit.Id)
 	}
 
 	for i := range points {
@@ -708,6 +735,7 @@ func TestMap(t *testing.T) {
 
 	for i := range substations {
 		substations[i].Mrid = uuid.New()
+		substations[i].CommitId = int(commit.Id)
 		if i != 0 {
 			// Deliberately make one substation not having a loc mrid
 			// to make sure the code handles it
@@ -715,25 +743,30 @@ func TestMap(t *testing.T) {
 		}
 	}
 	bv.Mrid = uuid.New()
+	bv.CommitId = int(commit.Id)
 
 	for i := range vls {
 		vls[i].Mrid = uuid.New()
 		vls[i].BaseVoltageMrid = bv.Mrid
 		vls[i].SubstationMrid = substations[i].Mrid
+		vls[i].CommitId = int(commit.Id)
 	}
 
 	for i := range cns {
 		cns[i].Mrid = uuid.New()
 		cns[i].ConnectivityNodeContainerMrid = vls[i%len(vls)].Mrid
+		cns[i].CommitId = int(commit.Id)
 	}
 
 	for i := range acLines {
 		acLines[i].Mrid = uuid.New()
+		acLines[i].CommitId = int(commit.Id)
 	}
 
 	for i := range terminals {
 		terminals[i].Mrid = uuid.New()
 		terminals[i].ConnectivityNodeMrid = cns[i%len(cns)].Mrid
+		terminals[i].CommitId = int(commit.Id)
 
 		// Make one ac line have only one terminal. The line should then be skipped
 		if i != 0 {
@@ -741,9 +774,7 @@ func TestMap(t *testing.T) {
 		}
 	}
 
-	store := setupStore(t)
-	ctx := context.Background()
-	_, err := store.db.NewInsert().Model(&locations).Exec(ctx)
+	_, err = store.db.NewInsert().Model(&locations).Exec(ctx)
 	require.NoError(t, err)
 	_, err = store.db.NewInsert().Model(&points).Exec(ctx)
 	require.NoError(t, err)
@@ -765,6 +796,15 @@ func TestMap(t *testing.T) {
 		req := httptest.NewRequest("GET", "/map", nil)
 		store.Map(rec, req)
 		require.Equal(t, http.StatusOK, rec.Code)
+	})
+
+	t.Run("internal server error on cancelled context", func(t *testing.T) {
+		canceledCtx, cancel := context.WithCancel(ctx)
+		cancel()
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/map", nil)
+		store.Map(rec, req.WithContext(canceledCtx))
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
 }
 

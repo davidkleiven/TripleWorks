@@ -41,15 +41,21 @@ func TestExport(t *testing.T) {
 func TestListAll(t *testing.T) {
 	var bv models.BaseVoltage
 	var sync models.SynchronousMachine
+	var commit models.Commit
 
 	db := NewTestConfig(WithDbName(t.Name())).DatabaseConnection()
 	ctx := context.Background()
 	_, err := migrations.RunUp(ctx, db)
 	require.NoError(t, err)
 
+	_, err = db.NewInsert().Model(&commit).Exec(ctx)
+	require.NoError(t, err)
+
+	bv.CommitId = int(commit.Id)
 	_, err = db.NewInsert().Model(&bv).Exec(ctx)
 	require.NoError(t, err)
 
+	sync.CommitId = int(commit.Id)
 	_, err = db.NewInsert().Model(&sync).Exec(ctx)
 	require.NoError(t, err)
 
