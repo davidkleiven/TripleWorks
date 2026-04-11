@@ -19,6 +19,7 @@ import (
 
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/pkg"
+	"com.github/davidkleiven/tripleworks/repository"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
@@ -451,6 +452,13 @@ func (e *EntityStore) DeleteCommit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
+	substationRepo := repository.BunReadRepository[models.Substation]{Db: e.db, UseLatestView: true}
+	acLineRepo := repository.BunReadRepository[models.ACLineSegment]{Db: e.db, UseLatestView: true}
+	bvRepo := repository.BunReadRepository[models.BaseVoltage]{Db: e.db, UseLatestView: true}
+	vlRepo := repository.BunReadRepository[models.VoltageLevel]{Db: e.db, UseLatestView: true}
+	terminalRepo := repository.BunReadRepository[models.Terminal]{Db: e.db, UseLatestView: true}
+	cnRepo := repository.BunReadRepository[models.ConnectivityNode]{Db: e.db, UseLatestView: true}
+
 	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
 	defer cancel()
 
@@ -467,25 +475,37 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 
 	failNo, err := pkg.ReturnOnFirstError(
 		func() error {
-			return e.db.NewSelect().Model(&substations).Scan(ctx)
+			var ierr error
+			substations, ierr = substationRepo.List(ctx)
+			return ierr
 		},
 		func() error {
-			return e.db.NewSelect().Model(&acLines).Scan(ctx)
+			var ierr error
+			acLines, ierr = acLineRepo.List(ctx)
+			return ierr
 		},
 		func() error {
 			return e.db.NewSelect().Model(&points).Scan(ctx)
 		},
 		func() error {
-			return e.db.NewSelect().Model(&bvs).Scan(ctx)
+			var ierr error
+			bvs, ierr = bvRepo.List(ctx)
+			return ierr
 		},
 		func() error {
-			return e.db.NewSelect().Model(&vls).Scan(ctx)
+			var ierr error
+			vls, ierr = vlRepo.List(ctx)
+			return ierr
 		},
 		func() error {
-			return e.db.NewSelect().Model(&terminals).Scan(ctx)
+			var ierr error
+			terminals, ierr = terminalRepo.List(ctx)
+			return ierr
 		},
 		func() error {
-			return e.db.NewSelect().Model(&cns).Scan(ctx)
+			var ierr error
+			cns, ierr = cnRepo.List(ctx)
+			return ierr
 		},
 	)
 
@@ -494,12 +514,6 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to extract substations: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	substations = pkg.OnlyActiveLatest(substations)
-	bvs = pkg.OnlyActiveLatest(bvs)
-	acLines = pkg.OnlyActiveLatest(acLines)
-	vls = pkg.OnlyActiveLatest(vls)
-	terminals = pkg.OnlyActiveLatest(terminals)
-	cns = pkg.OnlyActiveLatest(cns)
 
 	ptMap := pkg.IndexBy(points, func(p models.PositionPoint) uuid.UUID { return p.LocationMrid })
 	bvMap := pkg.IndexBy(bvs, func(b models.BaseVoltage) uuid.UUID { return b.Mrid })
