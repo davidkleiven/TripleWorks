@@ -56,7 +56,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 
 	commit := CommitEndpoint{Db: &repository.BunInserter{Db: db}, timeout: timeout}
 	validate := NewBunValidationEndpoint(db, timeout)
-	xiidmEndpoint := XiidmExport{BusBreakerRepo: &repository.BunBusBreakerRepo{Db: db}}
+	xiidmEndpoint := XiidmExport{BusBreakerRepo: &repository.BunBusBreakerRepo{Db: db}, Timeout: timeout}
 	userIdentifier := NoopMiddleware
 	if config.WithTailscaleUserIdentification {
 		tailscaleMiddleware := UserIdentificationMiddleware{

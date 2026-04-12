@@ -17,4 +17,11 @@ describe("Load front page", () => {
 
     cy.get("#status-message").should("contain", "Successfully updated");
   });
+
+  it("can download xiidm", () => {
+    cy.request("/xiidm").then((resp) => {
+      expect(resp.status).to.equal(200);
+      expect(resp.body.length).to.be.greaterThan(10);
+    });
+  });
 });
