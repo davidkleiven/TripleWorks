@@ -102,6 +102,8 @@ func XiidmBusBreakerModel(data []repository.BusBreakerConnection) *XiidmResult {
 			Branch: xiidm.Branch{
 				Node1Attr:           node1,
 				Node2Attr:           node2,
+				Bus1Attr:            sub1Mrid.String() + "_bus",
+				Bus2Attr:            sub2Mrid.String() + "_bus",
 				VoltageLevelId1Attr: sub1.VoltageLevel[0].IdAttr,
 				VoltageLevelId2Attr: sub2.VoltageLevel[0].IdAttr,
 				Identifiable:        xiidm.Identifiable{IdAttr: mrid.String(), NameAttr: con[0].Name},
