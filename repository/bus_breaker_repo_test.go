@@ -28,7 +28,12 @@ func TestBusBreakerConnection(t *testing.T) {
 	_, err = migrations.RunUp(ctx, db)
 	require.NoError(t, err)
 
-	for commitId := range 3 {
+	for range 3 {
+		var commit models.Commit
+		_, err = db.NewInsert().Model(&commit).Exec(ctx)
+		require.NoError(t, err)
+		commitId := int(commit.Id)
+
 		var bv models.BaseVoltage
 		bv.Mrid = uuidFromString("bv")
 		bv.CommitId = commitId
