@@ -46,7 +46,7 @@ func XiidmBusBreakerModel(data []repository.BusBreakerConnection) *XiidmResult {
 		CaseDateAttr:               time.Now().Format(time.RFC3339),
 		Xmlns:                      xiidm.IidmNs,
 		IdAttr:                     uuid.New().String(),
-		MinimumValidationLevelAttr: "STRICT",
+		MinimumValidationLevelAttr: "EQUIPMENT",
 	}
 	for subMrid := range nodeNums {
 		bus := xiidm.Bus{
