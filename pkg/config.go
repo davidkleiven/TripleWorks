@@ -55,6 +55,7 @@ type Config struct {
 	Port                            int           `yaml:"port" env:"TRIPLEWORKS_PORT"`
 	Timeout                         time.Duration `yaml:"timeout" env:"TRIPLEWORKS_TIMEOUT"`
 	WithTailscaleUserIdentification bool          `yaml:"withTailscaleUserIdentification" env:"WITH_TAILSCALE_USER_IDENTIFICATION"`
+	PtdfProvider                    string        `yaml:"ptdf_provider" env:"TRIPLEWORKS_PTDF_PROVIDER"`
 }
 
 func (c *Config) DatabaseConnection() *bun.DB {
@@ -101,9 +102,10 @@ func (c *Config) PtdfWriterFactory() *MultiWriterFactory {
 
 func NewDefaultConfig() *Config {
 	return &Config{
-		Port:    36000,
-		DbUrl:   "tripleworks.db",
-		Timeout: 10 * time.Minute,
+		Port:         36000,
+		DbUrl:        "tripleworks.db",
+		Timeout:      10 * time.Minute,
+		PtdfProvider: "random",
 	}
 }
 
