@@ -1,21 +1,33 @@
-function getFlowColor(value) {
-  var absValue = Math.abs(value);
-  var ratio = Math.min(1, Math.max(0, absValue));
+var voltageLevels = [
+  { min: 0, max: 66, color: "#808080", label: "< 66 kV" },
+  { min: 66, max: 132, color: "#4169E1", label: "66-132 kV" },
+  { min: 132, max: 220, color: "#000000", label: "132-220 kV" },
+  { min: 220, max: 300, color: "#9370DB", label: "220-300 kV" },
+  { min: 300, max: 380, color: "#D5B60A", label: "220-300 kV" },
+  { min: 380, max: Infinity, color: "#DC143C", label: "> 380 kV" },
+];
 
-  var g = Math.round(255 * (1 - ratio));
-
-  return "rgb(255, " + g + ", 0)";
+function getVoltageLevelIndex(voltage) {
+  for (var i = 0; i < voltageLevels.length; i++) {
+    if (voltage >= voltageLevels[i].min && voltage < voltageLevels[i].max) {
+      return i;
+    }
+  }
+  return voltageLevels.length - 1;
 }
 
-function updateFlowValues(flowData, lineByMrid, map, flowLayer) {
-  flowLayer.clearLayers();
-
+function updateFlowValues(flowData, lineByMrid, map, flowLayers) {
+  for (var levelIndex in flowLayers) {
+    flowLayers[levelIndex].clearLayers();
+  }
   for (var mrid in flowData) {
     var value = flowData[mrid];
     if (!value) continue;
 
     var line = lineByMrid[mrid];
     if (!line) continue;
+
+    var levelIndex = getVoltageLevelIndex(line.Voltage || 0);
 
     var midLat = (line.LatFrom + line.LatTo) / 2;
     var midLng = (line.LngFrom + line.LngTo) / 2;
@@ -55,8 +67,7 @@ function updateFlowValues(flowData, lineByMrid, map, flowLayer) {
     });
 
     var marker = L.marker([midLat, midLng], { icon: label });
-    flowLayer.addLayer(marker);
-    marker.getElement().style.backgroundColor = color;
+    flowLayers[levelIndex].addLayer(marker);
   }
 }
 

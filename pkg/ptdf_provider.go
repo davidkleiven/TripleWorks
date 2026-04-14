@@ -96,7 +96,6 @@ func NewPtdfMatrix(records []PtdfRecord) *PtdfMatrix {
 			col := MustGet(buses, record.Node)
 			matrix.Set(row, col, record.Ptdf)
 		}
-
 	}
 	return &PtdfMatrix{
 		Lines: lines,
