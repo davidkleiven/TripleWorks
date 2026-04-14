@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"database/sql"
 	"embed"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/storage"
 	"github.com/caarlos0/env"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/mattn/go-sqlite3"
@@ -46,8 +48,11 @@ func ConfigFromExternalFile(name string) *Config {
 }
 
 type Config struct {
-	Port                            int           `yaml:"port" env:"TRIPLEWORKS_PORT"`
 	DbUrl                           string        `yaml:"dbUrl"`
+	LoadflowServiceEndpoint         string        `yaml:"load_flow_service" env:"TRIPLEWORKS_LOAD_FLOW_SERVICE"`
+	LocalPtdfFolder                 string        `yaml:"local_parquest_folder" env:"TRIPLEWORKS_LOCAL_PTDF_FOLDER"`
+	PtdfBucket                      string        `yaml:"parquet_bucket" env:"TRIPLEWORKS_PTDF_BUCKET"`
+	Port                            int           `yaml:"port" env:"TRIPLEWORKS_PORT"`
 	Timeout                         time.Duration `yaml:"timeout" env:"TRIPLEWORKS_TIMEOUT"`
 	WithTailscaleUserIdentification bool          `yaml:"withTailscaleUserIdentification" env:"WITH_TAILSCALE_USER_IDENTIFICATION"`
 }
@@ -73,7 +78,25 @@ func (c *Config) SafeString() string {
 	builder.WriteString(c.Timeout.String())
 	builder.WriteString(", withTailscaleUserIdentification=")
 	builder.WriteString(strconv.FormatBool(c.WithTailscaleUserIdentification))
+	builder.WriteString("ptdfBucket=")
+	builder.WriteString(c.PtdfBucket)
+	builder.WriteString("localPtdfFolder=")
+	builder.WriteString(c.LocalPtdfFolder)
+	builder.WriteString("loadflowServiceEndpoint=")
+	builder.WriteString(c.LoadflowServiceEndpoint)
 	return builder.String()
+}
+
+func (c *Config) PtdfWriterFactory() *MultiWriterFactory {
+	var factory MultiWriterFactory
+	if c.LocalPtdfFolder != "" {
+		factory.Factories = append(factory.Factories, &LocalWriterFactory{})
+	}
+	if c.PtdfBucket != "" {
+		client := Must(storage.NewClient(context.Background()))
+		factory.Factories = append(factory.Factories, &GcsWriterFactory{Client: client})
+	}
+	return &factory
 }
 
 func NewDefaultConfig() *Config {

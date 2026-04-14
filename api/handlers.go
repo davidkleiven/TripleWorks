@@ -89,6 +89,15 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 		Timeout:          timeout,
 	}
 
+	ptdfRecalc := RecalcPtdf{
+		Bucket:            config.PtdfBucket,
+		Doer:              &http.Client{},
+		Model:             &repository.BunBusBreakerRepo{Db: db},
+		PtdfEndpoint:      config.LoadflowServiceEndpoint + "/ptdf",
+		PtdfWriterFactory: config.PtdfWriterFactory(),
+		Timeout:           timeout,
+	}
+
 	mux.HandleFunc("/", RootHandler)
 	mux.HandleFunc("/cim-types", CimTypes)
 	mux.HandleFunc("/entity-form", EntityForm)
@@ -119,6 +128,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.Handle("GET /substation-connector/{mrid}", &substationWorkbench)
 	mux.Handle("/substation-list", &querySub)
 	mux.HandleFunc("/substation-selection", SetSelectedSubstation)
+	mux.Handle("POST /ptdf/recalculate", &ptdfRecalc)
 
 	mux.Handle("/js/", pkg.JsServer())
 }
