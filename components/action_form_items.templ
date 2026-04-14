@@ -1,0 +1,24 @@
+package components
+
+templ ActionFormItems(items []NamedInjection) {
+	for _, item := range items {
+		<div class="field has-addons is-align-items-center">
+			<div class="control">
+				<label class="label is-small has-text-centered is-marginless">{ item.Name }</label>
+			</div>
+			<div class="control">
+				<!-- Note: order of these input is important -->
+				<input type="hidden" name={item.Mrid} value={item.Name}/>
+				<input class="input is-small" style="width:80px" name={item.Mrid} value={item.Value} type="number"/>
+			</div>
+			<div class="control">
+				<button
+				class="button is-small is-danger is-outlined"
+				hx-post={ "/production?mrid=" + item.Mrid + "&action=delete" }
+				hx-include="#active-production-form"
+				hx-swap="innerHTML"
+				hx-target="#active-production-form">×</button>
+			</div>
+		</div>
+	}
+}
