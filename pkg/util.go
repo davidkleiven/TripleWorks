@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"iter"
 	"math"
+	"net/http"
 	"reflect"
 	"slices"
 	"strings"
@@ -359,4 +360,8 @@ func SliceToAnySeq[T any](s []T) iter.Seq[any] {
 			}
 		}
 	}
+}
+
+type Doer interface {
+	Do(req *http.Request) (*http.Response, error)
 }

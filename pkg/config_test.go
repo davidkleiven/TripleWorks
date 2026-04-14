@@ -138,3 +138,11 @@ func TestSafeString(t *testing.T) {
 	strRep := config.SafeString()
 	require.Contains(t, strRep, "port=36000")
 }
+
+func TestPtdfWriters(t *testing.T) {
+	config := NewDefaultConfig()
+	require.Equal(t, 0, len(config.PtdfWriterFactory().Factories))
+
+	config.LocalPtdfFolder = "/tmp/ptdf"
+	require.Equal(t, 1, len(config.PtdfWriterFactory().Factories))
+}
