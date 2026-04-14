@@ -41,12 +41,14 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	entityHandler := NewEntityStore(db, config.Timeout)
 	inVoltageLevel := InVoltageLevelEndpoint{voltageLevelRepo: repository.NewBunVoltageLevelReadRepository(db), timeout: timeout}
 
+	acLineRepo := repository.BunReadRepository[models.ACLineSegment]{Db: db, UseLatestView: true}
+	substationRepo := repository.BunReadRepository[models.Substation]{Db: db, UseLatestView: true}
 	equipmentInVoltageLevel := EquipmentInVoltageLevelEndpoint{
 		VoltageLevel:    &repository.BunReadRepository[models.VoltageLevel]{Db: db, UseLatestView: true},
 		ConNodes:        &repository.BunConnectivityNodeReadRepository{BunReadRepository: repository.BunReadRepository[models.ConnectivityNode]{Db: db, UseLatestView: true}},
 		Terminals:       &repository.BunTerminalReadRepository{BunReadRepository: repository.BunReadRepository[models.Terminal]{Db: db, UseLatestView: true}},
 		Generators:      &repository.BunReadRepository[models.SynchronousMachine]{Db: db, UseLatestView: true},
-		Lines:           &repository.BunReadRepository[models.ACLineSegment]{Db: db, UseLatestView: true},
+		Lines:           &acLineRepo,
 		Switches:        &repository.BunReadRepository[models.Switch]{Db: db, UseLatestView: true},
 		ConformLoads:    &repository.BunReadRepository[models.ConformLoad]{Db: db, UseLatestView: true},
 		NonConformLoads: &repository.BunReadRepository[models.NonConformLoad]{Db: db, UseLatestView: true},
@@ -71,18 +73,18 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	}
 
 	substationWorkbench := SubstationConnectorWorkbench{
-		LineRepo: &repository.BunReadRepository[models.ACLineSegment]{Db: db, UseLatestView: true},
+		LineRepo: &acLineRepo,
 		Timeout:  timeout,
 	}
 
 	querySub := SubstationListQueryHandler{
-		SubstationRepo: &repository.BunReadRepository[models.Substation]{Db: db, UseLatestView: true},
+		SubstationRepo: &substationRepo,
 		Timeout:        timeout,
 	}
 
 	substationConnector := SubstationConnector{
-		LineRepo:         &repository.BunReadRepository[models.ACLineSegment]{Db: db, UseLatestView: true},
-		SubstationRepo:   &repository.BunReadRepository[models.Substation]{Db: db, UseLatestView: true},
+		LineRepo:         &acLineRepo,
+		SubstationRepo:   &substationRepo,
 		TerminalRepo:     &repository.BunReadRepository[models.Terminal]{Db: db, UseLatestView: true},
 		VoltageLevelRepo: &repository.BunReadRepository[models.VoltageLevel]{Db: db, UseLatestView: true},
 		Inserter:         &repository.BunInserter{Db: db},
@@ -99,6 +101,17 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	}
 
 	actionForm := ActionFormEndpoint{Timeout: timeout}
+
+	var ptdfs []pkg.PtdfRecord
+	if config.PtdfProvider == "random" {
+		slog.Info("Initializing random ptdfs")
+		ptdfs = pkg.MustCreateRandomPtdf(&acLineRepo, &substationRepo)
+	}
+	flow := FlowEndpoint{
+		Ptdf:        pkg.NewPtdfMatrix(ptdfs),
+		MaxNumFlows: 100,
+		Timeout:     timeout,
+	}
 
 	mux.HandleFunc("/", RootHandler)
 	mux.HandleFunc("/cim-types", CimTypes)
@@ -132,6 +145,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.HandleFunc("/substation-selection", SetSelectedSubstation)
 	mux.Handle("POST /ptdf/recalculate", &ptdfRecalc)
 	mux.Handle("POST /production", &actionForm)
+	mux.Handle("POST /flow", &flow)
 
 	mux.Handle("/js/", pkg.JsServer())
 }

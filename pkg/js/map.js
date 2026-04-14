@@ -1,3 +1,65 @@
+function getFlowColor(value) {
+  var absValue = Math.abs(value);
+  var ratio = Math.min(1, Math.max(0, absValue));
+
+  var g = Math.round(255 * (1 - ratio));
+
+  return "rgb(255, " + g + ", 0)";
+}
+
+function updateFlowValues(flowData, lineByMrid, map, flowLayer) {
+  flowLayer.clearLayers();
+
+  for (var mrid in flowData) {
+    var value = flowData[mrid];
+    if (!value) continue;
+
+    var line = lineByMrid[mrid];
+    if (!line) continue;
+
+    var midLat = (line.LatFrom + line.LatTo) / 2;
+    var midLng = (line.LngFrom + line.LngTo) / 2;
+
+    var isPositive = value >= 0;
+    var deltaLat = line.LatTo - line.LatFrom;
+    var deltaLng = line.LngTo - line.LngFrom;
+    var isVertical = Math.abs(deltaLat) > Math.abs(deltaLng);
+
+    var arrowSymbol;
+    if (isVertical) {
+      arrowSymbol = isPositive
+        ? deltaLat > 0
+          ? "↓"
+          : "↑"
+        : deltaLat > 0
+          ? "↑"
+          : "↓";
+    } else {
+      arrowSymbol = isPositive ? "→" : "←";
+    }
+
+    var displayValue = Math.abs(parseFloat(value)).toFixed(1);
+
+    var html =
+      '<span class="flow-arrow">' +
+      arrowSymbol +
+      '</span><span class="flow-value">' +
+      displayValue +
+      "</span>";
+
+    var label = L.divIcon({
+      className: "flow-label",
+      html: html,
+      iconSize: [50, 24],
+      iconAnchor: [25, 12],
+    });
+
+    var marker = L.marker([midLat, midLng], { icon: label });
+    flowLayer.addLayer(marker);
+    marker.getElement().style.backgroundColor = color;
+  }
+}
+
 function initMap(substations, lines) {
   var map = L.map("map").setView([59.9139, 10.7522], 6);
 
@@ -123,6 +185,31 @@ function initMap(substations, lines) {
       lineLayers[i].addLayer(polyline);
     });
   }
+
+  var lineByMrid = {};
+  lines.forEach(function (line) {
+    lineByMrid[line.Mrid] = line;
+  });
+
+  document.addEventListener("action-form-changed", function () {
+    var form = document.getElementById("active-production-form");
+    var formData = new FormData(form);
+    var urlEncoded = new URLSearchParams(formData).toString();
+
+    fetch("/flow", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: urlEncoded,
+    })
+      .then(function (response) {
+        return response.json();
+      })
+      .then(function (flowData) {
+        updateFlowValues(flowData.flow, lineByMrid, map, flowLayers);
+      });
+  });
 
   document.getElementById("line-count").textContent = totalLines;
 
