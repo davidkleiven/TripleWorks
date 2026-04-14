@@ -120,6 +120,11 @@ function initMap(substations, lines) {
     lineVisibility[index] = true;
   });
 
+  var flowLayers = {};
+  voltageLevels.forEach(function (level, index) {
+    flowLayers[index] = L.layerGroup().addTo(map);
+  });
+
   var substationMarkers = [];
 
   substations.forEach(function (sub) {
