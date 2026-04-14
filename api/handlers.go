@@ -98,6 +98,8 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 		Timeout:           timeout,
 	}
 
+	actionForm := ActionFormEndpoint{Timeout: timeout}
+
 	mux.HandleFunc("/", RootHandler)
 	mux.HandleFunc("/cim-types", CimTypes)
 	mux.HandleFunc("/entity-form", EntityForm)
@@ -129,6 +131,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.Handle("/substation-list", &querySub)
 	mux.HandleFunc("/substation-selection", SetSelectedSubstation)
 	mux.Handle("POST /ptdf/recalculate", &ptdfRecalc)
+	mux.Handle("POST /production", &actionForm)
 
 	mux.Handle("/js/", pkg.JsServer())
 }
