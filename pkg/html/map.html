@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Substations Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css" />
     <style>
       * {
         margin: 0;
@@ -24,27 +25,19 @@
         width: 100%;
       }
 
-      .control-panel {
+      .map-overlay {
         position: absolute;
         top: 20px;
         right: 20px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-        padding: 20px;
         z-index: 1000;
-        min-width: 220px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.8);
       }
 
-      .control-panel h3 {
-        margin: 0 0 15px 0;
-        font-size: 18px;
-        font-weight: 600;
-        color: #2c3e50;
-        border-bottom: 2px solid #3498db;
-        padding-bottom: 10px;
+      .substation-info {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #ededed;
+        font-size: 0.875rem;
+        color: #7f8c8d;
       }
 
       .voltage-group {
@@ -87,28 +80,31 @@
         color: #34495e;
         font-weight: 500;
       }
-
-      .substation-info {
-        margin-top: 15px;
-        padding-top: 15px;
-        border-top: 1px solid #e0e0e0;
-        font-size: 12px;
-        color: #7f8c8d;
-      }
-
-      .substation-info strong {
-        color: #2c3e50;
-      }
     </style>
   </head>
   <body>
     <div id="map"></div>
-    <div class="control-panel">
-      <h3>Voltage Levels</h3>
-      <div id="voltage-controls"></div>
-      <div class="substation-info">
-        <strong id="substation-count">0</strong> substations<br />
-        <strong id="line-count">0</strong> lines
+    <div class="columns is-flex is-flex-direction-column is-align-items-flex-end mr-3 mt-3 map-overlay">
+      <div class="column is-narrow">
+        <div class="box">
+          <p class="title is-5">Voltage Levels</p>
+          <div id="voltage-controls"></div>
+          <p class="substation-info">
+            <strong id="substation-count">0</strong> substations<br />
+            <strong id="line-count">0</strong> lines
+          </p>
+        </div>
+      </div>
+
+      <div class="column is-narrow">
+        <div class="box">
+          <p class="title is-5">Actions</p>
+          <div id="active-production-container">
+            <form hx-post="/flow" hx-swap="innerHTML">
+              <!-- Inputs will be added here -->
+            </form>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -183,7 +179,7 @@
              fillOpacity: 0.7
            })
            .addTo(map)
-           .bindPopup('<p><strong>' + sub.Name + '</strong></p><p>' + sub.Mrid + '</p>');
+           .bindPopup('<p><strong>' + sub.Name + '</strong></p><p>' + sub.Mrid + '</p><button class="button is-small is-primary" hx-get="/production?mrid=' + sub.Mrid + '" hx-target="#active-production-container" hx-swap="innerHTML">Produce</button>');
 
            substationMarkers.push(circle);
          });
