@@ -146,7 +146,6 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.Handle("POST /ptdf/recalculate", &ptdfRecalc)
 	mux.Handle("POST /production", &actionForm)
 	mux.Handle("POST /flow", &flow)
-
 	mux.Handle("/js/", pkg.JsServer())
 }
 
