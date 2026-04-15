@@ -229,21 +229,14 @@ function initMap(substations, lines) {
 
   document.getElementById("line-count").textContent = totalLines;
 
-  function getVoltageLevelIndex(voltage) {
-    for (var i = 0; i < voltageLevels.length; i++) {
-      if (voltage >= voltageLevels[i].min && voltage < voltageLevels[i].max) {
-        return i;
-      }
-    }
-    return voltageLevels.length - 1;
-  }
-
   function toggleVoltageLevel(levelIndex, visible) {
     lineVisibility[levelIndex] = visible;
     if (visible) {
       map.addLayer(lineLayers[levelIndex]);
+      map.addLayer(flowLayers[levelIndex]);
     } else {
       map.removeLayer(lineLayers[levelIndex]);
+      map.removeLayer(flowLayers[levelIndex]);
     }
   }
 
