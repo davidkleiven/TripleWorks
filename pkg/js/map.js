@@ -137,6 +137,7 @@ function initMap(substations, lines) {
   });
 
   var substationMarkers = [];
+  window.substationMarkers = substationMarkers;
 
   substations.forEach(function (sub) {
     var circle = L.circleMarker([sub.Lat, sub.Lng], {

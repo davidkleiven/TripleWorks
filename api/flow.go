@@ -24,7 +24,6 @@ type FlowEndpoint struct {
 }
 
 func (f *FlowEndpoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	var production map[string]float64
 	failNo, err := pkg.ReturnOnFirstError(
 		func() error {

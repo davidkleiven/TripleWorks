@@ -56,6 +56,7 @@ type Config struct {
 	Timeout                         time.Duration `yaml:"timeout" env:"TRIPLEWORKS_TIMEOUT"`
 	WithTailscaleUserIdentification bool          `yaml:"withTailscaleUserIdentification" env:"WITH_TAILSCALE_USER_IDENTIFICATION"`
 	PtdfProvider                    string        `yaml:"ptdf_provider" env:"TRIPLEWORKS_PTDF_PROVIDER"`
+	E2e                             bool          `yaml:"e2e" env: "TRIPLEWORKS_E2E"`
 }
 
 func (c *Config) DatabaseConnection() *bun.DB {

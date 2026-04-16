@@ -37,6 +37,10 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	db := config.DatabaseConnection()
 	timeout := 10 * time.Minute
 	mustPerformMigrations(db, timeout)
+	if config.E2e {
+		data := pkg.MakeE2eData()
+		pkg.InsertE2eData(data, &repository.BunInserter{Db: config.DatabaseConnection()})
+	}
 
 	entityHandler := NewEntityStore(db, config.Timeout)
 	inVoltageLevel := InVoltageLevelEndpoint{voltageLevelRepo: repository.NewBunVoltageLevelReadRepository(db), timeout: timeout}
