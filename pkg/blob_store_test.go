@@ -52,3 +52,31 @@ func TestMultiWriter(t *testing.T) {
 	require.Equal(t, 1, len(factory2.CreatedWriters))
 	require.NoError(t, writer.Close())
 }
+
+func TestLocalReader(t *testing.T) {
+	dir := t.TempDir()
+	readerFactory := LocalReaderFactory{Folder: dir}
+	ctx := context.Background()
+	_, err := readerFactory.MakeReadCloser(ctx, "my-bucket")
+	require.ErrorContains(t, err, "Could not read")
+
+	err = os.Mkdir(filepath.Join(dir, "my-bucket"), 0755)
+	require.NoError(t, err)
+
+	_, err = readerFactory.MakeReadCloser(ctx, "my-bucket")
+	require.ErrorContains(t, err, "no files")
+
+	err = os.WriteFile(filepath.Join(dir, "my-bucket", "data.bin"), []byte("content"), 0755)
+	require.NoError(t, err)
+
+	reader, err := readerFactory.MakeReadCloser(ctx, "my-bucket")
+	require.NoError(t, err)
+
+	file, ok := reader.(*os.File)
+	require.True(t, ok)
+
+	content, err := io.ReadAll(file)
+	require.NoError(t, err)
+	require.Equal(t, []byte("content"), content)
+
+}

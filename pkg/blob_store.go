@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"cloud.google.com/go/storage"
 )
@@ -30,10 +32,12 @@ func (g *GcsWriterFactory) MakeWriteCloser(ctx context.Context, bucket, object s
 	return w, nil
 }
 
-type LocalWriterFactory struct{}
+type LocalWriterFactory struct {
+	Folder string
+}
 
 func (l *LocalWriterFactory) MakeWriteCloser(ctx context.Context, bucket, object string) (io.WriteCloser, error) {
-	filename := filepath.Join(bucket, object)
+	filename := filepath.Join(l.Folder, bucket, object)
 	f, err := os.Create(filename)
 	if err != nil {
 		return nil, fmt.Errorf("Could not create file %s: %w", filename, err)
@@ -126,4 +130,37 @@ func (i *InMemWriterFactory) MakeWriteCloser(ctx context.Context, bucket, object
 	writer := InMemWriter{Name: filepath.Join(bucket, object)}
 	i.CreatedWriters = append(i.CreatedWriters, &writer)
 	return &writer, i.Err
+}
+
+type ReaderAtCloser interface {
+	io.ReaderAt
+	io.Closer
+}
+
+type LatestReadCloserFactory interface {
+	// MakeReadCloser creates a reader to the latest item
+	MakeReadCloser(ctx context.Context, bucket string) (ReaderAtCloser, error)
+}
+
+type LocalReaderFactory struct {
+	Folder string
+}
+
+func (l *LocalReaderFactory) MakeReadCloser(ctx context.Context, bucket string) (ReaderAtCloser, error) {
+	dirPath := filepath.Join(l.Folder, bucket)
+	entries, err := os.ReadDir(dirPath)
+	if err != nil {
+		return nil, fmt.Errorf("Could not read directory: %w", err)
+	}
+	var names []string
+	for _, entry := range entries {
+		names = append(names, entry.Name())
+	}
+	if len(names) == 0 {
+		return nil, fmt.Errorf("no files in directory: %s", bucket)
+	}
+	sort.Strings(names)
+	filename := names[len(names)-1]
+	slog.Info("Found latest local file", "filename", filename)
+	return os.Open(filepath.Join(dirPath, filename))
 }

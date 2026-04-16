@@ -26,7 +26,7 @@ func main() {
 	slog.Info("Loaded config", "config", config.SafeString())
 
 	mux := http.NewServeMux()
-	api.Setup(mux, config)
+	cleanup := api.Setup(mux, config)
 
 	slog.Info("Starting server", "port", config.Port)
 	server := &http.Server{Addr: fmt.Sprintf(":%d", config.Port), Handler: api.LogRequest(mux)}
@@ -38,6 +38,7 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
+	cleanup()
 
 	fmt.Println("\nShutting down server...")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

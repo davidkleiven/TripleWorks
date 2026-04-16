@@ -6,12 +6,14 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
 	"com.github/davidkleiven/tripleworks/pkg"
 	"com.github/davidkleiven/tripleworks/repository"
 	"github.com/google/uuid"
+	"github.com/parquet-go/parquet-go"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,10 +24,12 @@ type FixedDataDoer struct {
 }
 
 func (f *FixedDataDoer) Do(req *http.Request) (*http.Response, error) {
+	header := make(http.Header)
+	header.Set("Content-Type", "application/x-parquet")
 	return &http.Response{
 		StatusCode: f.StatusCode,
 		Body:       io.NopCloser(bytes.NewBuffer(f.Data)),
-		Header:     make(http.Header),
+		Header:     header,
 	}, f.Err
 }
 
@@ -42,9 +46,16 @@ func TestRecalcPtdfEndpoint(t *testing.T) {
 
 	writerFactory := pkg.InMemWriterFactory{}
 
+	records := []pkg.PtdfRecord{{Node: "a", Line: "b", Ptdf: 1.0}}
+	var buf bytes.Buffer
+	writer := parquet.NewGenericWriter[pkg.PtdfRecord](&buf)
+	_, err := writer.Write(records)
+	require.NoError(t, err)
+	require.NoError(t, writer.Close())
+
 	successFullResp := FixedDataDoer{
 		StatusCode: http.StatusOK,
-		Data:       []byte("some parquet data"),
+		Data:       buf.Bytes(),
 	}
 
 	recalcPtdf := RecalcPtdf{
@@ -126,4 +137,29 @@ func TestIsSuccessful(t *testing.T) {
 	success, code = isSuccessful(&resp)
 	require.Equal(t, http.StatusOK, code)
 	require.True(t, success)
+}
+
+func TestSendToChannel(t *testing.T) {
+	ptdfChan := make(chan []pkg.PtdfRecord)
+	endpoint := RecalcPtdf{}
+	data := []pkg.PtdfRecord{{}}
+	require.NotPanics(t, func() { endpoint.Send(data) })
+
+	endpoint.PtdfChan = ptdfChan
+	var (
+		result []pkg.PtdfRecord
+		mu     sync.RWMutex
+	)
+	go func() {
+		mu.Lock()
+		defer mu.Unlock()
+		result = <-ptdfChan
+	}()
+	endpoint.Send(data)
+	require.Eventually(t, func() bool {
+		mu.RLock()
+		defer mu.RUnlock()
+		return result != nil
+	}, time.Second, 10*time.Millisecond)
+	require.Equal(t, data, result)
 }

@@ -88,3 +88,27 @@ func TestNthLargest(t *testing.T) {
 	require.False(t, bOk)
 	require.True(t, cOk)
 }
+
+func TestReceiveNewPtdfOnChannel(t *testing.T) {
+	ptdfChannel := make(chan []pkg.PtdfRecord)
+	flow := FlowEndpoint{}
+	go flow.UpdatePtdf(ptdfChannel)
+	defer func() {
+		close(ptdfChannel)
+	}()
+
+	data := []pkg.PtdfRecord{{Node: "A", Line: "B", Ptdf: 1.0}}
+	ptdfChannel <- data
+
+	require.Eventually(t, func() bool {
+		flow.PtdfMutex.RLock()
+		defer flow.PtdfMutex.RUnlock()
+		return flow.Ptdf != nil
+	}, time.Second, 10*time.Millisecond)
+
+	require.NotNil(t, flow.Ptdf.Data)
+	_, ok := flow.Ptdf.Nodes["A"]
+	require.True(t, ok)
+	_, ok = flow.Ptdf.Lines["B"]
+	require.True(t, ok)
+}
