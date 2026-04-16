@@ -16,6 +16,7 @@ import (
 )
 
 type RecalcPtdf struct {
+	PtdfChan          chan []pkg.PtdfRecord
 	Doer              pkg.Doer
 	Model             repository.BusBreakerRepo
 	PtdfEndpoint      string
@@ -81,20 +82,42 @@ func (rp *RecalcPtdf) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer writer.Close()
 
 	// Transfer body to buffer to support multiple writes
-	var buf bytes.Buffer
+	var (
+		parquetBytes []byte
+		ptdfs        []pkg.PtdfRecord
+	)
 	failNo, err = pkg.ReturnOnFirstError(
 		func() error {
 			var ierr error
-			_, ierr = io.Copy(&buf, loadFlowServiceReq.Body)
+			var buf bytes.Buffer
+			_, ierr = io.Copy(&buf, loadFlowServiceResp.Body)
+			parquetBytes = buf.Bytes()
 			return ierr
 		},
 		func() error {
 			var ierr error
-			_, ierr = io.Copy(writer, &buf)
+			_, ierr = io.Copy(writer, bytes.NewReader(parquetBytes))
 			return ierr
+		},
+		func() error {
+			var ierr error
+			reader := bytes.NewReader(parquetBytes)
+			ptdfs, ierr = pkg.LoadParquetPtdf(reader)
+			return ierr
+		},
+		func() error {
+			rp.Send(ptdfs)
+			return nil
 		},
 	)
 	uploadPtdfRespMessage(w, err, parquetName)
+}
+
+func (rp *RecalcPtdf) Send(ptdfs []pkg.PtdfRecord) {
+	if rp.PtdfChan != nil {
+		slog.Info("Sending ptdfs")
+		rp.PtdfChan <- ptdfs
+	}
 }
 
 func uploadPtdfRespMessage(w io.Writer, err error, name string) {

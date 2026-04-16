@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"sync"
 	"time"
 
 	"com.github/davidkleiven/tripleworks/pkg"
@@ -18,9 +19,22 @@ type FlowResponse struct {
 }
 
 type FlowEndpoint struct {
+	PtdfMutex   sync.RWMutex
 	Ptdf        *pkg.PtdfMatrix
 	MaxNumFlows int
 	Timeout     time.Duration
+}
+
+func (f *FlowEndpoint) UpdatePtdf(newPtdfs chan []pkg.PtdfRecord) {
+	slog.Info("Starting update ptdf task")
+	for records := range newPtdfs {
+		slog.Info("Received new ptdfs")
+		ptdf := pkg.NewPtdfMatrix(records)
+		f.PtdfMutex.Lock()
+		f.Ptdf = ptdf
+		f.PtdfMutex.Unlock()
+	}
+	slog.Info("Stopping update ptdf task")
 }
 
 func (f *FlowEndpoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +62,10 @@ func (f *FlowEndpoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	f.PtdfMutex.RLock()
 	flow := f.Ptdf.Flow(production)
+	f.PtdfMutex.RUnlock()
+
 	flow = NLargest(flow, f.MaxNumFlows)
 	w.Header().Set("Content-Type", "application/json")
 

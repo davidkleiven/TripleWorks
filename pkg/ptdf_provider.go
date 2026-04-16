@@ -2,18 +2,20 @@ package pkg
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"math/rand/v2"
 
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/repository"
+	"github.com/parquet-go/parquet-go"
 	"gonum.org/v1/gonum/mat"
 )
 
 type PtdfRecord struct {
 	Node string  `parquet:"node"`
 	Line string  `parquet:"line"`
-	Ptdf float64 `parquet:"float64"`
+	Ptdf float64 `parquet:"ptdf"`
 }
 
 type PtdfProvider interface {
@@ -120,4 +122,26 @@ func MustCreateRandomPtdf(lineRepo repository.Lister[models.ACLineSegment], subR
 		}
 	}
 	return result
+}
+
+func LoadParquetPtdf(r io.ReaderAt) ([]PtdfRecord, error) {
+	parquetReader := parquet.NewGenericReader[PtdfRecord](r)
+	var ptdfs []PtdfRecord
+	_, err := parquetReader.Read(ptdfs)
+	return ptdfs, err
+}
+
+func LoadParquetFromFactory(factory LatestReadCloserFactory, bucket string) []PtdfRecord {
+	reader, err := factory.MakeReadCloser(context.Background(), bucket)
+	if err != nil {
+		slog.Error("Could not make ptdf read closer", "error", err)
+		return nil
+	}
+	defer reader.Close()
+
+	ptdf, err := LoadParquetPtdf(reader)
+	if err != nil {
+		slog.Error("Could not load ptdf: %w", "error", err)
+	}
+	return ptdf
 }

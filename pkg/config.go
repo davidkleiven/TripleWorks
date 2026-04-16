@@ -56,7 +56,7 @@ type Config struct {
 	Timeout                         time.Duration `yaml:"timeout" env:"TRIPLEWORKS_TIMEOUT"`
 	WithTailscaleUserIdentification bool          `yaml:"withTailscaleUserIdentification" env:"WITH_TAILSCALE_USER_IDENTIFICATION"`
 	PtdfProvider                    string        `yaml:"ptdf_provider" env:"TRIPLEWORKS_PTDF_PROVIDER"`
-	E2e                             bool          `yaml:"e2e" env: "TRIPLEWORKS_E2E"`
+	E2e                             bool          `yaml:"e2e" env:"TRIPLEWORKS_E2E"`
 }
 
 func (c *Config) DatabaseConnection() *bun.DB {
@@ -92,13 +92,17 @@ func (c *Config) SafeString() string {
 func (c *Config) PtdfWriterFactory() *MultiWriterFactory {
 	var factory MultiWriterFactory
 	if c.LocalPtdfFolder != "" {
-		factory.Factories = append(factory.Factories, &LocalWriterFactory{})
+		factory.Factories = append(factory.Factories, &LocalWriterFactory{Folder: c.LocalPtdfFolder})
 	}
 	if c.PtdfBucket != "" {
 		client := Must(storage.NewClient(context.Background()))
 		factory.Factories = append(factory.Factories, &GcsWriterFactory{Client: client})
 	}
 	return &factory
+}
+
+func (c *Config) PtdfReaderFactory() *LocalReaderFactory {
+	return &LocalReaderFactory{Folder: c.LocalPtdfFolder}
 }
 
 func NewDefaultConfig() *Config {

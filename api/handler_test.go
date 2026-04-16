@@ -21,7 +21,9 @@ func TestRootHandler(t *testing.T) {
 func TestSetup(t *testing.T) {
 	mux := http.NewServeMux()
 	config := pkg.NewTestConfig()
-	Setup(mux, config)
+	cleanup := Setup(mux, config)
+	defer cleanup()
+
 	req := httptest.NewRequest("GET", "/", nil)
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)

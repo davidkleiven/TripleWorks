@@ -33,7 +33,7 @@ func EntityForm(w http.ResponseWriter, r *http.Request) {
 	pkg.FormInputFields(w, item)
 }
 
-func Setup(mux *http.ServeMux, config *pkg.Config) {
+func Setup(mux *http.ServeMux, config *pkg.Config) func() error {
 	db := config.DatabaseConnection()
 	timeout := 10 * time.Minute
 	mustPerformMigrations(db, timeout)
@@ -95,7 +95,12 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 		Timeout:          timeout,
 	}
 
+	actionForm := ActionFormEndpoint{Timeout: timeout}
+
+	ptdfChan := make(chan []pkg.PtdfRecord)
+
 	ptdfRecalc := RecalcPtdf{
+		PtdfChan:          ptdfChan,
 		Bucket:            config.PtdfBucket,
 		Doer:              &http.Client{},
 		Model:             &repository.BunBusBreakerRepo{Db: db},
@@ -104,18 +109,19 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 		Timeout:           timeout,
 	}
 
-	actionForm := ActionFormEndpoint{Timeout: timeout}
-
 	var ptdfs []pkg.PtdfRecord
 	if config.PtdfProvider == "random" {
 		slog.Info("Initializing random ptdfs")
 		ptdfs = pkg.MustCreateRandomPtdf(&acLineRepo, &substationRepo)
+	} else {
+		ptdfs = pkg.LoadParquetFromFactory(config.PtdfReaderFactory(), config.PtdfBucket)
 	}
 	flow := FlowEndpoint{
 		Ptdf:        pkg.NewPtdfMatrix(ptdfs),
 		MaxNumFlows: 100,
 		Timeout:     timeout,
 	}
+	go flow.UpdatePtdf(ptdfChan)
 
 	mux.HandleFunc("/", RootHandler)
 	mux.HandleFunc("/cim-types", CimTypes)
@@ -151,6 +157,12 @@ func Setup(mux *http.ServeMux, config *pkg.Config) {
 	mux.Handle("POST /production", &actionForm)
 	mux.Handle("POST /flow", &flow)
 	mux.Handle("/js/", pkg.JsServer())
+
+	// Trigger the ptdf updater on startup
+	return func() error {
+		close(ptdfChan)
+		return nil
+	}
 }
 
 func mustPerformMigrations(db *bun.DB, timeout time.Duration) {
