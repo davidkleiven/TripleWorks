@@ -21,9 +21,15 @@ describe("test map", () => {
       expect(body.flow).to.have.property(lineMrid);
     });
 
+    // Trigger flow recalculation
+    cy.get("#recalc-flow-btn").click();
+    cy.wait("@flowReq").then((inter) => {
+      expect(inter.response.statusCode).to.equal(200);
+    });
+
     // Check that that a flow label exists
     cy.get(".flow-value").should("exist");
-    cy.get("#active-production-form").find("button").click();
+    cy.get("#active-production-form").find('button[id^="delete-"]').click();
     cy.get(".flow-value").should("not.exist");
     cy.get('#active-production-form input[type="number"]').should(
       "have.length",

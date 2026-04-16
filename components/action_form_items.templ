@@ -14,6 +14,7 @@ templ ActionFormItems(items []NamedInjection) {
 			<div class="control">
 				<button
 				class="button is-small is-danger is-outlined"
+				id={ "delete-" + item.Mrid + "-btn"}
 				hx-post={ "/production?mrid=" + item.Mrid + "&action=delete" }
 				hx-include="#active-production-form"
 				hx-swap="innerHTML"
@@ -21,4 +22,9 @@ templ ActionFormItems(items []NamedInjection) {
 			</div>
 		</div>
 	}
+	<div class="mb-2">
+		<button id="recalc-flow-btn" class="button is-primary is-small" type="button" onclick="document.dispatchEvent(new Event('action-form-changed'))">
+			Recalc. Flow
+		</button>
+	</div>
 }
