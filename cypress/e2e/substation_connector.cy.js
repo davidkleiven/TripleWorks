@@ -2,7 +2,7 @@ describe("substation connector works", () => {
   it("connect sends correct body", () => {
     cy.visit("/");
     cy.get("#list-all-btn").click();
-    cy.contains("button", "Con sub.").click();
+    cy.contains('button[hx-get*="ce8e57c7"]', "Con sub.").click();
     cy.get("h2").should("have.text", "Substation connector");
 
     cy.get("#from-substation-search-input").type("Substation A");

@@ -12,7 +12,6 @@ import (
 
 	"com.github/davidkleiven/tripleworks/api"
 	"com.github/davidkleiven/tripleworks/pkg"
-	"com.github/davidkleiven/tripleworks/repository"
 )
 
 func main() {
@@ -28,11 +27,6 @@ func main() {
 
 	mux := http.NewServeMux()
 	api.Setup(mux, config)
-
-	if os.Getenv("TRIPLEWORKS_E2E") == "1" {
-		data := pkg.MakeE2eData()
-		pkg.InsertE2eData(data, &repository.BunInserter{Db: config.DatabaseConnection()})
-	}
 
 	slog.Info("Starting server", "port", config.Port)
 	server := &http.Server{Addr: fmt.Sprintf(":%d", config.Port), Handler: api.LogRequest(mux)}
