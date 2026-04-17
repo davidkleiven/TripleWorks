@@ -15,6 +15,7 @@ type BusBreakerConnection struct {
 	Name           string    `bun:"name"`
 	NominalVoltage float64   `bun:"nominal_voltage"`
 	SubstationMrid uuid.UUID `bun:"substation_mrid"`
+	SequenceNumber int       `bun:"sequence_number"`
 }
 
 type BusBreakerRepo interface {
