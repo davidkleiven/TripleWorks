@@ -38,6 +38,11 @@ type LocalWriterFactory struct {
 
 func (l *LocalWriterFactory) MakeWriteCloser(ctx context.Context, bucket, object string) (io.WriteCloser, error) {
 	filename := filepath.Join(l.Folder, bucket, object)
+	dir := filepath.Dir(filename)
+	err := os.MkdirAll(dir, 0755)
+	if err != nil {
+		return nil, fmt.Errorf("Could not create necessary directories (%s): %w", dir, err)
+	}
 	f, err := os.Create(filename)
 	if err != nil {
 		return nil, fmt.Errorf("Could not create file %s: %w", filename, err)
