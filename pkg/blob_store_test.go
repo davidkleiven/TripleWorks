@@ -54,23 +54,21 @@ func TestMultiWriter(t *testing.T) {
 }
 
 func TestLocalReader(t *testing.T) {
-	dir := t.TempDir()
-	readerFactory := LocalReaderFactory{Folder: dir}
+	readerFactory := LocalReaderFactory{Folder: "not-exitent"}
 	ctx := context.Background()
 	_, err := readerFactory.MakeReadCloser(ctx, "my-bucket")
 	require.ErrorContains(t, err, "Could not read")
-
-	err = os.Mkdir(filepath.Join(dir, "my-bucket"), 0755)
-	require.NoError(t, err)
+	dir := t.TempDir()
+	readerFactory.Folder = dir
 
 	_, err = readerFactory.MakeReadCloser(ctx, "my-bucket")
 	require.ErrorContains(t, err, "no files")
 
-	err = os.WriteFile(filepath.Join(dir, "my-bucket", "data.bin"), []byte("content"), 0755)
+	err = os.WriteFile(filepath.Join(dir, "my-bucket-data.bin"), []byte("content"), 0755)
 	require.NoError(t, err)
 
 	// Also create a directory that appears to be later
-	err = os.Mkdir(filepath.Join(dir, "my-bucket", "edata"), 0755)
+	err = os.Mkdir(filepath.Join(dir, "my-bucket-edata"), 0755)
 	require.NoError(t, err)
 
 	reader, err := readerFactory.MakeReadCloser(ctx, "my-bucket")

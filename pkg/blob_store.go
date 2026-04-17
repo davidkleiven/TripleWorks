@@ -152,17 +152,17 @@ type LocalReaderFactory struct {
 }
 
 func (l *LocalReaderFactory) MakeReadCloser(ctx context.Context, bucket string) (ReaderAtCloser, error) {
-	dirPath := filepath.Join(l.Folder, bucket)
-	entries, err := os.ReadDir(dirPath)
+	entries, err := os.ReadDir(l.Folder)
 	if err != nil {
 		return nil, fmt.Errorf("Could not read directory: %w", err)
 	}
 	var names []string
 	for _, entry := range entries {
-		if entry.IsDir() {
+		name := entry.Name()
+		if entry.IsDir() || !strings.Contains(name, bucket) {
 			continue
 		}
-		names = append(names, entry.Name())
+		names = append(names, name)
 	}
 	if len(names) == 0 {
 		return nil, fmt.Errorf("no files in directory: %s", bucket)
@@ -170,5 +170,5 @@ func (l *LocalReaderFactory) MakeReadCloser(ctx context.Context, bucket string) 
 	sort.Strings(names)
 	filename := names[len(names)-1]
 	slog.Info("Found latest local file", "filename", filename)
-	return os.Open(filepath.Join(dirPath, filename))
+	return os.Open(filepath.Join(l.Folder, filename))
 }
