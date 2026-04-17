@@ -1,10 +1,13 @@
 package pkg
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"math/rand/v2"
+	"strings"
 
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/repository"
@@ -26,6 +29,36 @@ type PtdfMatrix struct {
 	Data  *mat.Dense
 	Lines map[string]int
 	Nodes map[string]int
+}
+
+func (p *PtdfMatrix) Describe(w io.Writer) {
+	var r, c int
+	if p.Data != nil {
+		r, c = p.Data.Dims()
+	}
+
+	maxNum := 3
+	var num int
+	nodeSamples := make([]string, 0, maxNum)
+	for k := range p.Nodes {
+		if num >= maxNum {
+			break
+		}
+		nodeSamples = append(nodeSamples, k)
+		num++
+	}
+
+	num = 0
+	lineSamples := make([]string, 0, maxNum)
+	for k := range p.Lines {
+		if num >= maxNum {
+			break
+		}
+		lineSamples = append(lineSamples, k)
+		num++
+	}
+
+	fmt.Fprintf(w, "Dimensions: (%d, %d). Nodes: %s. Lines: %s\n", r, c, strings.Join(nodeSamples, ", "), strings.Join(lineSamples, ", "))
 }
 
 func (p *PtdfMatrix) InvLineIndex() []string {
@@ -96,16 +129,22 @@ func NewPtdfMatrix(records []PtdfRecord) *PtdfMatrix {
 	if numRows > 0 && numCols > 0 {
 		matrix = mat.NewDense(numRows, numCols, nil)
 		for _, record := range records {
-			row := MustGet(lines, record.Line)
-			col := MustGet(buses, record.Node)
+			lineMrid := RemoveMetadataFromMrid(record.Line)
+			nodeMrid := RemoveMetadataFromMrid(record.Node)
+			row := MustGet(lines, lineMrid)
+			col := MustGet(buses, nodeMrid)
 			matrix.Set(row, col, record.Ptdf)
 		}
 	}
-	return &PtdfMatrix{
+	ptdf := PtdfMatrix{
 		Lines: lines,
 		Nodes: buses,
 		Data:  matrix,
 	}
+	var buf bytes.Buffer
+	ptdf.Describe(&buf)
+	slog.Info(buf.String())
+	return &ptdf
 }
 
 // MustCreateRandomPtdf is intended for testing purposes only.

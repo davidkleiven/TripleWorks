@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"bytes"
 	"testing"
 
 	"com.github/davidkleiven/tripleworks/models"
@@ -61,4 +62,10 @@ func TestRemoveMetadataFromMrid(t *testing.T) {
 
 	mridWithMeta := mrid + "_bus23"
 	require.Equal(t, mrid, RemoveMetadataFromMrid(mridWithMeta))
+}
+
+func TestNoPanicOnDescribeWithDefault(t *testing.T) {
+	var ptdf PtdfMatrix
+	var buf bytes.Buffer
+	require.NotPanics(t, func() { ptdf.Describe(&buf) })
 }
