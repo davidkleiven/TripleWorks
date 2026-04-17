@@ -3,7 +3,7 @@ var voltageLevels = [
   { min: 66, max: 132, color: "#4169E1", label: "66-132 kV" },
   { min: 132, max: 220, color: "#000000", label: "132-220 kV" },
   { min: 220, max: 300, color: "#9370DB", label: "220-300 kV" },
-  { min: 300, max: 380, color: "#D5B60A", label: "220-300 kV" },
+  { min: 300, max: 380, color: "#D5B60A", label: "300-380 kV" },
   { min: 380, max: Infinity, color: "#DC143C", label: "> 380 kV" },
 ];
 
@@ -16,10 +16,11 @@ function getVoltageLevelIndex(voltage) {
   return voltageLevels.length - 1;
 }
 
-function updateFlowValues(flowData, lineByMrid, map, flowLayers) {
+function updateFlowValues(flowData, lineByMrid, flowLayers) {
   for (var levelIndex in flowLayers) {
     flowLayers[levelIndex].clearLayers();
   }
+
   for (var mrid in flowData) {
     var value = flowData[mrid];
     if (!value) continue;
@@ -29,26 +30,27 @@ function updateFlowValues(flowData, lineByMrid, map, flowLayers) {
 
     var levelIndex = getVoltageLevelIndex(line.Voltage || 0);
 
-    var midLat = (line.LatFrom + line.LatTo) / 2;
-    var midLng = (line.LngFrom + line.LngTo) / 2;
+    var lineIndex = line.GroupIndex;
+    var totalLines = line.GroupSize;
+
+    var fraction = totalLines <= 1 ? 0.5 : (lineIndex + 1) / (totalLines + 1);
+    var lat = line.LatFrom + (line.LatTo - line.LatFrom) * fraction;
+    var lng = line.LngFrom + (line.LngTo - line.LngFrom) * fraction;
 
     var isPositive = value >= 0;
     var deltaLat = line.LatTo - line.LatFrom;
-    var deltaLng = line.LngTo - line.LngFrom;
-    var isVertical = Math.abs(deltaLat) > Math.abs(deltaLng);
-
-    var arrowSymbol;
-    if (isVertical) {
-      arrowSymbol = isPositive
-        ? deltaLat > 0
-          ? "↓"
-          : "↑"
-        : deltaLat > 0
-          ? "↑"
-          : "↓";
-    } else {
-      arrowSymbol = isPositive ? "→" : "←";
-    }
+    var arrowSymbol =
+      Math.abs(deltaLat) > Math.abs(line.LngTo - line.LngFrom)
+        ? isPositive
+          ? deltaLat > 0
+            ? "↓"
+            : "↑"
+          : deltaLat > 0
+            ? "↑"
+            : "↓"
+        : isPositive
+          ? "→"
+          : "←";
 
     var displayValue = Math.abs(parseFloat(value)).toFixed(1);
 
@@ -66,7 +68,7 @@ function updateFlowValues(flowData, lineByMrid, map, flowLayers) {
       iconAnchor: [25, 12],
     });
 
-    var marker = L.marker([midLat, midLng], { icon: label });
+    var marker = L.marker([lat, lng], { icon: label });
     flowLayers[levelIndex].addLayer(marker);
   }
 }
@@ -87,18 +89,8 @@ function initMap(substations, lines) {
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(map);
 
-  var voltageLevels = [
-    { min: 0, max: 66, color: "#808080", label: "< 66 kV" },
-    { min: 66, max: 132, color: "#4169E1", label: "66-132 kV" },
-    { min: 132, max: 220, color: "#000000", label: "132-220 kV" },
-    { min: 220, max: 300, color: "#9370DB", label: "220-300 kV" },
-    { min: 300, max: 380, color: "#D5B60A", label: "220-300 kV" },
-    { min: 380, max: Infinity, color: "#DC143C", label: "> 380 kV" },
-  ];
-
   var voltageControls = document.getElementById("voltage-controls");
   var lineLayers = {};
-  var lineVisibility = {};
 
   voltageLevels.forEach(function (level, index) {
     var group = document.createElement("div");
@@ -128,7 +120,6 @@ function initMap(substations, lines) {
     voltageControls.appendChild(group);
 
     lineLayers[index] = L.layerGroup().addTo(map);
-    lineVisibility[index] = true;
   });
 
   var flowLayers = {};
@@ -168,29 +159,20 @@ function initMap(substations, lines) {
 
   var totalLines = lines.length;
 
-  var linesByLevel = {};
-  voltageLevels.forEach(function (level, index) {
-    linesByLevel[index] = [];
-  });
-
+  var linesByLevel = Array.from({ length: voltageLevels.length }, () => []);
   lines.forEach(function (line) {
-    var voltage = line.Voltage || 0;
-    var levelIndex = getVoltageLevelIndex(voltage);
-    linesByLevel[levelIndex].push(line);
+    linesByLevel[getVoltageLevelIndex(line.Voltage || 0)].push(line);
   });
 
-  for (var i = 0; i < voltageLevels.length; i++) {
-    linesByLevel[i].forEach(function (line) {
-      var latlngs = [
-        [line.LatFrom, line.LngFrom],
-        [line.LatTo, line.LngTo],
-      ];
-
-      var polyline = L.polyline(latlngs, {
-        color: voltageLevels[i].color,
-        weight: 3,
-        opacity: 0.8,
-      }).bindPopup(
+  linesByLevel.forEach(function (levelLines, i) {
+    levelLines.forEach(function (line) {
+      var polyline = L.polyline(
+        [
+          [line.LatFrom, line.LngFrom],
+          [line.LatTo, line.LngTo],
+        ],
+        { color: voltageLevels[i].color, weight: 3, opacity: 0.8 },
+      ).bindPopup(
         "<strong>" +
           line.Name +
           "</strong><br>" +
@@ -198,10 +180,9 @@ function initMap(substations, lines) {
           " kV<br>" +
           line.Mrid,
       );
-
       lineLayers[i].addLayer(polyline);
     });
-  }
+  });
 
   var lineByMrid = {};
   lines.forEach(function (line) {
@@ -224,14 +205,13 @@ function initMap(substations, lines) {
         return response.json();
       })
       .then(function (flowData) {
-        updateFlowValues(flowData.flow, lineByMrid, map, flowLayers);
+        updateFlowValues(flowData.flow, lineByMrid, flowLayers);
       });
   });
 
   document.getElementById("line-count").textContent = totalLines;
 
   function toggleVoltageLevel(levelIndex, visible) {
-    lineVisibility[levelIndex] = visible;
     if (visible) {
       map.addLayer(lineLayers[levelIndex]);
       map.addLayer(flowLayers[levelIndex]);
@@ -239,10 +219,5 @@ function initMap(substations, lines) {
       map.removeLayer(lineLayers[levelIndex]);
       map.removeLayer(flowLayers[levelIndex]);
     }
-  }
-
-  function voltageColor(voltage) {
-    var levelIndex = getVoltageLevelIndex(voltage);
-    return voltageLevels[levelIndex].color;
   }
 }

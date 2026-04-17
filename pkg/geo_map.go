@@ -14,13 +14,15 @@ type SubstationMapData struct {
 }
 
 type LineMapData struct {
-	LatFrom float64
-	LatTo   float64
-	LngFrom float64
-	LngTo   float64
-	Mrid    string
-	Name    string
-	Voltage int
+	LatFrom    float64
+	LatTo      float64
+	LngFrom    float64
+	LngTo      float64
+	Mrid       string
+	Name       string
+	Voltage    int
+	GroupIndex int
+	GroupSize  int
 }
 
 func RenderMap(w io.Writer, substations iter.Seq[SubstationMapData], lines iter.Seq[LineMapData]) {

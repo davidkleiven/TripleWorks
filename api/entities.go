@@ -524,12 +524,15 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 
 	acLineFromToMap := make(map[uuid.UUID]FromToLoc)
 	ignoredLines := []string{}
+	var includedLines []models.ACLineSegment
+
 	for _, line := range acLines {
 		connectedTerminals, ok := tMap[line.Mrid]
 		if !ok || len(connectedTerminals) != 2 {
 			ignoredLines = append(ignoredLines, line.Name)
 			continue
 		}
+		includedLines = append(includedLines, line)
 
 		t1, t2 := connectedTerminals[0], connectedTerminals[1]
 		if t1.SequenceNumber == 2 {
@@ -542,6 +545,11 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 			Pt2: ptMap[subMap[vlMap[cn2.ConnectivityNodeContainerMrid].SubstationMrid].LocationMrid],
 		}
 	}
+
+	acLinePerStartEndPoint := pkg.GroupBy(includedLines, func(l models.ACLineSegment) string {
+		fromTo := pkg.MustGet(acLineFromToMap, l.Mrid)
+		return fromTo.EndpointKey()
+	})
 
 	skipped := 0
 	substationMapDataIter := func(yield func(v pkg.SubstationMapData) bool) {
@@ -567,17 +575,22 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 	slog.InfoContext(ctx, "Extracted substations", "num", len(substations), "modelId", modelId, "ignoredLines", ignoredLines, "numSkippedSubstations", skipped)
 
 	lineIter := func(yield func(v pkg.LineMapData) bool) {
-		for _, line := range acLines {
+		for _, line := range includedLines {
 			fromTo := acLineFromToMap[line.Mrid]
 			vl := bvMap[line.BaseVoltageMrid]
+			parallelLines := pkg.MustGet(acLinePerStartEndPoint, fromTo.EndpointKey())
+			groupIndex := pkg.IndexOfFunc(parallelLines, line.Mrid, func(l models.ACLineSegment) uuid.UUID { return l.Mrid })
+
 			data := pkg.LineMapData{
-				LatFrom: fromTo.Pt1.YPosition,
-				LatTo:   fromTo.Pt2.YPosition,
-				LngFrom: fromTo.Pt1.XPosition,
-				LngTo:   fromTo.Pt2.XPosition,
-				Mrid:    line.Mrid.String(),
-				Name:    line.Name,
-				Voltage: int(vl.NominalVoltage),
+				LatFrom:    fromTo.Pt1.YPosition,
+				LatTo:      fromTo.Pt2.YPosition,
+				LngFrom:    fromTo.Pt1.XPosition,
+				LngTo:      fromTo.Pt2.XPosition,
+				Mrid:       line.Mrid.String(),
+				Name:       line.Name,
+				Voltage:    int(vl.NominalVoltage),
+				GroupIndex: pkg.ClipLower(groupIndex, 0),
+				GroupSize:  pkg.ClipLower(len(parallelLines), 1),
 			}
 
 			if !yield(data) {
@@ -752,6 +765,14 @@ type TriggerEditComponentForm struct {
 type FromToLoc struct {
 	Pt1 models.PositionPoint
 	Pt2 models.PositionPoint
+}
+
+func (f *FromToLoc) EndpointKey() string {
+	s1, s2 := f.Pt1.LocationMrid.String(), f.Pt2.LocationMrid.String()
+	if s1 > s2 {
+		s1, s2 = s2, s1
+	}
+	return s1 + "|" + s2
 }
 
 func NewEntityStore(db *bun.DB, timeout time.Duration) *EntityStore {
