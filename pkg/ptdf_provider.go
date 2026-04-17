@@ -77,13 +77,15 @@ func NewPtdfMatrix(records []PtdfRecord) *PtdfMatrix {
 	nextLine := 0
 	nextBus := 0
 	for _, record := range records {
-		if _, ok := lines[record.Line]; !ok {
-			lines[record.Line] = nextLine
+		lineMrid := RemoveMetadataFromMrid(record.Line)
+		if _, ok := lines[lineMrid]; !ok {
+			lines[lineMrid] = nextLine
 			nextLine++
 		}
 
-		if _, ok := buses[record.Node]; !ok {
-			buses[record.Node] = nextBus
+		nodeMrid := RemoveMetadataFromMrid(record.Node)
+		if _, ok := buses[nodeMrid]; !ok {
+			buses[nodeMrid] = nextBus
 			nextBus++
 		}
 	}
@@ -144,4 +146,14 @@ func LoadParquetFromFactory(factory LatestReadCloserFactory, bucket string) []Pt
 		slog.Error("Could not load ptdf: %w", "error", err)
 	}
 	return ptdf
+}
+
+// FilterMrid removes extra information that might have been added to the id
+// The id itself should be the 36 first characters
+func RemoveMetadataFromMrid(mrid string) string {
+	if len(mrid) < 36 {
+		return mrid
+	}
+	return mrid[:36]
+
 }
