@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"mime/multipart"
 	"net/http"
 	"time"
 
@@ -35,13 +36,20 @@ func (rp *RecalcPtdf) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		connectionData      []repository.BusBreakerConnection
 		loadFlowServiceReq  *http.Request
 		loadFlowServiceResp *http.Response
-		serializedXiidm     bytes.Buffer
+		reqBody             bytes.Buffer
 		xiidmData           *pkg.XiidmResult
 		writer              io.WriteCloser
+		xiidmReqPartWriter  io.Writer
 	)
+	multipartWriter := multipart.NewWriter(&reqBody)
 
 	parquetName := ParquetName("hydopt_base")
 	failNo, err := pkg.ReturnOnFirstError(
+		func() error {
+			var ierr error
+			xiidmReqPartWriter, ierr = multipartWriter.CreateFormFile("file", "hydopt_base.xiidm")
+			return ierr
+		},
 		func() error {
 			var ierr error
 			connectionData, ierr = rp.Model.Fetch(ctx)
@@ -52,15 +60,19 @@ func (rp *RecalcPtdf) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return nil
 		},
 		func() error {
-			return xml.NewEncoder(&serializedXiidm).Encode(xiidmData.Network)
+			return xml.NewEncoder(xiidmReqPartWriter).Encode(xiidmData.Network)
+		},
+		func() error {
+			return multipartWriter.Close()
 		},
 		func() error {
 			var ierr error
-			loadFlowServiceReq, ierr = http.NewRequest("GET", rp.PtdfEndpoint, &serializedXiidm)
+			loadFlowServiceReq, ierr = http.NewRequest("POST", rp.PtdfEndpoint, &reqBody)
 			return ierr
 		},
 		func() error {
 			var ierr error
+			loadFlowServiceReq.Header.Set("Content-Type", multipartWriter.FormDataContentType())
 			loadFlowServiceResp, ierr = rp.Doer.Do(loadFlowServiceReq)
 			return ierr
 		},
