@@ -23,20 +23,29 @@ func TestInMemWriter(t *testing.T) {
 }
 
 func TestLocalFileWriter(t *testing.T) {
-	factory := LocalWriterFactory{}
 	dir := t.TempDir()
-	writer, err := factory.MakeWriteCloser(context.Background(), dir, "file.bin")
+	factory := LocalWriterFactory{Folder: dir}
+	writer, err := factory.MakeWriteCloser(context.Background(), "ptdfs", "date=now/file.bin")
 	require.NoError(t, err)
 	_, err = writer.Write([]byte("content"))
 	writer.Close()
 	require.NoError(t, err)
 
-	f, err := os.Open(filepath.Join(dir, "file.bin"))
+	f, err := os.Open(filepath.Join(dir, "ptdfs", "date=now/file.bin"))
 	defer f.Close()
 	require.NoError(t, err)
 	content, err := io.ReadAll(f)
 	require.NoError(t, err)
 	require.Equal(t, []byte("content"), content)
+}
+
+func TestGracefulErrorOnDirectoryFailure(t *testing.T) {
+	dir := t.TempDir()
+	factory := LocalWriterFactory{Folder: dir}
+	err := os.Chmod(dir, 0555)
+	require.NoError(t, err)
+	_, err = factory.MakeWriteCloser(context.Background(), "ptdfs", "date=now/file.bin")
+	require.ErrorContains(t, err, "necessary directories")
 }
 
 func TestMultiWriter(t *testing.T) {
