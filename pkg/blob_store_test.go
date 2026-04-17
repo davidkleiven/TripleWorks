@@ -31,21 +31,12 @@ func TestLocalFileWriter(t *testing.T) {
 	writer.Close()
 	require.NoError(t, err)
 
-	f, err := os.Open(filepath.Join(dir, "ptdfs", "date=now/file.bin"))
+	f, err := os.Open(filepath.Join(dir, "ptdfs-date=now-file.bin"))
 	defer f.Close()
 	require.NoError(t, err)
 	content, err := io.ReadAll(f)
 	require.NoError(t, err)
 	require.Equal(t, []byte("content"), content)
-}
-
-func TestGracefulErrorOnDirectoryFailure(t *testing.T) {
-	dir := t.TempDir()
-	factory := LocalWriterFactory{Folder: dir}
-	err := os.Chmod(dir, 0555)
-	require.NoError(t, err)
-	_, err = factory.MakeWriteCloser(context.Background(), "ptdfs", "date=now/file.bin")
-	require.ErrorContains(t, err, "necessary directories")
 }
 
 func TestMultiWriter(t *testing.T) {
@@ -91,4 +82,12 @@ func TestLocalReader(t *testing.T) {
 	content, err := io.ReadAll(file)
 	require.NoError(t, err)
 	require.Equal(t, []byte("content"), content)
+}
+
+func TestLocalFilename(t *testing.T) {
+	name := "year=2024/month=04/file.bin"
+	wf := LocalWriterFactory{}
+	result := wf.Filename("my-bucket", name)
+	want := "my-bucket-year=2024-month=04-file.bin"
+	require.Equal(t, want, result)
 }
