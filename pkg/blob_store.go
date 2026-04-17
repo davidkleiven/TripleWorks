@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"cloud.google.com/go/storage"
 )
@@ -36,13 +37,12 @@ type LocalWriterFactory struct {
 	Folder string
 }
 
+func (l *LocalWriterFactory) Filename(bucket, object string) string {
+	return strings.Join(append([]string{bucket}, strings.Split(object, "/")...), "-")
+}
+
 func (l *LocalWriterFactory) MakeWriteCloser(ctx context.Context, bucket, object string) (io.WriteCloser, error) {
-	filename := filepath.Join(l.Folder, bucket, object)
-	dir := filepath.Dir(filename)
-	err := os.MkdirAll(dir, 0755)
-	if err != nil {
-		return nil, fmt.Errorf("Could not create necessary directories (%s): %w", dir, err)
-	}
+	filename := filepath.Join(l.Folder, l.Filename(bucket, object))
 	f, err := os.Create(filename)
 	if err != nil {
 		return nil, fmt.Errorf("Could not create file %s: %w", filename, err)
