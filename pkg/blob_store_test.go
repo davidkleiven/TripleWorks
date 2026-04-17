@@ -78,6 +78,10 @@ func TestLocalReader(t *testing.T) {
 	err = os.WriteFile(filepath.Join(dir, "my-bucket", "data.bin"), []byte("content"), 0755)
 	require.NoError(t, err)
 
+	// Also create a directory that appears to be later
+	err = os.Mkdir(filepath.Join(dir, "my-bucket", "edata"), 0755)
+	require.NoError(t, err)
+
 	reader, err := readerFactory.MakeReadCloser(ctx, "my-bucket")
 	require.NoError(t, err)
 
@@ -87,5 +91,4 @@ func TestLocalReader(t *testing.T) {
 	content, err := io.ReadAll(file)
 	require.NoError(t, err)
 	require.Equal(t, []byte("content"), content)
-
 }
