@@ -7,6 +7,7 @@ import (
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/repository"
 	"github.com/google/uuid"
+	"github.com/parquet-go/parquet-go"
 	"github.com/stretchr/testify/require"
 )
 
@@ -68,4 +69,17 @@ func TestNoPanicOnDescribeWithDefault(t *testing.T) {
 	var ptdf PtdfMatrix
 	var buf bytes.Buffer
 	require.NotPanics(t, func() { ptdf.Describe(&buf) })
+}
+
+func TestWriteReadRoundTrip(t *testing.T) {
+	records := []PtdfRecord{{}}
+	var buf bytes.Buffer
+	writer := parquet.NewGenericWriter[PtdfRecord](&buf)
+	_, err := writer.Write(records)
+	writer.Close()
+	require.NoError(t, err)
+
+	result, err := LoadParquetPtdf(bytes.NewReader(buf.Bytes()))
+	require.NoError(t, err)
+	require.Equal(t, 1, len(result))
 }

@@ -167,8 +167,13 @@ func MustCreateRandomPtdf(lineRepo repository.Lister[models.ACLineSegment], subR
 
 func LoadParquetPtdf(r io.ReaderAt) ([]PtdfRecord, error) {
 	parquetReader := parquet.NewGenericReader[PtdfRecord](r)
-	var ptdfs []PtdfRecord
-	_, err := parquetReader.Read(ptdfs)
+	numRows := parquetReader.NumRows()
+	ptdfs := make([]PtdfRecord, numRows)
+	numRowsRead, err := parquetReader.Read(ptdfs)
+	slog.Info("Loading parquet file", "numRows", numRows, "numRowsRead", numRowsRead)
+	if err == io.EOF {
+		err = nil
+	}
 	return ptdfs, err
 }
 
