@@ -174,3 +174,17 @@ func TestAssertGreater(t *testing.T) {
 	require.Panics(t, func() { AssertGreater(2, 3) })
 	require.NotPanics(t, func() { AssertGreater(3, 2) })
 }
+
+func TestIndexOfFunc(t *testing.T) {
+	data := []int{1, 3, 5}
+	idx := IndexOfFunc(data, 3, func(v int) int { return v })
+	require.Equal(t, 1, idx)
+	idx = IndexOfFunc(data, 10, func(v int) int { return v })
+	require.Equal(t, -1, idx)
+	require.Equal(t, -1, idx)
+}
+
+func TestClipLower(t *testing.T) {
+	require.Equal(t, 1, ClipLower(1, 0))
+	require.Equal(t, 2, ClipLower(1, 2))
+}

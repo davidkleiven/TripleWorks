@@ -312,6 +312,15 @@ func IndirectDescendingSort[T cmp.Ordered](values []T) []int {
 	return indices
 }
 
+func IndexOfFunc[T any, K comparable](values []T, target K, keyFn func(T) K) int {
+	for i, v := range values {
+		if keyFn(v) == target {
+			return i
+		}
+	}
+	return -1
+}
+
 func NameSimilarity(a, b string) float64 {
 	b = Normalizename(b)
 	bTokens := Tokenize(b)
@@ -364,4 +373,11 @@ func SliceToAnySeq[T any](s []T) iter.Seq[any] {
 
 type Doer interface {
 	Do(req *http.Request) (*http.Response, error)
+}
+
+func ClipLower[K cmp.Ordered](v K, lower K) K {
+	if v < lower {
+		return lower
+	}
+	return v
 }
