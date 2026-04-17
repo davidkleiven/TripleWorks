@@ -85,11 +85,17 @@ func XiidmBusBreakerModel(data []repository.BusBreakerConnection) *XiidmResult {
 			dangling = append(dangling, mrid)
 			continue
 		}
-		v := con[0].NominalVoltage
-		r := con[0].R
-		x := con[0].X
-		sub1Mrid := con[0].SubstationMrid
-		sub2Mrid := con[1].SubstationMrid
+
+		con1, con2 := con[0], con[1]
+		if con1.SequenceNumber > con2.SequenceNumber {
+			con1, con2 = con2, con1
+		}
+
+		v := con1.NominalVoltage
+		r := con1.R
+		x := con1.X
+		sub1Mrid := con1.SubstationMrid
+		sub2Mrid := con2.SubstationMrid
 
 		node1 := MustGet(nodeNums, sub1Mrid)
 		node2 := MustGet(nodeNums, sub2Mrid)
@@ -106,7 +112,7 @@ func XiidmBusBreakerModel(data []repository.BusBreakerConnection) *XiidmResult {
 				Bus2Attr:            sub2Mrid.String() + "_bus",
 				VoltageLevelId1Attr: sub1.VoltageLevel[0].IdAttr,
 				VoltageLevelId2Attr: sub2.VoltageLevel[0].IdAttr,
-				Identifiable:        xiidm.Identifiable{IdAttr: mrid.String(), NameAttr: con[0].Name},
+				Identifiable:        xiidm.Identifiable{IdAttr: mrid.String(), NameAttr: con1.Name},
 			},
 		}
 		network.Line = append(network.Line, line)
