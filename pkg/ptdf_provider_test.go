@@ -5,6 +5,7 @@ import (
 
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/repository"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -51,4 +52,13 @@ func TestPtdfMatrix(t *testing.T) {
 	f2, ok := flow["L2"]
 	require.True(t, ok)
 	require.InDelta(t, 0.5, f2, 1e-6)
+}
+
+func TestRemoveMetadataFromMrid(t *testing.T) {
+	require.Equal(t, "a", RemoveMetadataFromMrid("a"))
+	mrid := uuid.New().String()
+	require.Equal(t, mrid, RemoveMetadataFromMrid(mrid))
+
+	mridWithMeta := mrid + "_bus23"
+	require.Equal(t, mrid, RemoveMetadataFromMrid(mridWithMeta))
 }
