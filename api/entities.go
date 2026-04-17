@@ -530,8 +530,13 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 			ignoredLines = append(ignoredLines, line.Name)
 			continue
 		}
-		cn1 := cnsMap[connectedTerminals[0].ConnectivityNodeMrid]
-		cn2 := cnsMap[connectedTerminals[1].ConnectivityNodeMrid]
+
+		t1, t2 := connectedTerminals[0], connectedTerminals[1]
+		if t1.SequenceNumber == 2 {
+			t1, t2 = t2, t1
+		}
+		cn1 := cnsMap[t1.ConnectivityNodeMrid]
+		cn2 := cnsMap[t2.ConnectivityNodeMrid]
 		acLineFromToMap[line.Mrid] = FromToLoc{
 			Pt1: ptMap[subMap[vlMap[cn1.ConnectivityNodeContainerMrid].SubstationMrid].LocationMrid],
 			Pt2: ptMap[subMap[vlMap[cn2.ConnectivityNodeContainerMrid].SubstationMrid].LocationMrid],
