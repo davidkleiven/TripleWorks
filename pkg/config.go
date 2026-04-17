@@ -56,6 +56,7 @@ type Config struct {
 	Timeout                         time.Duration `yaml:"timeout" env:"TRIPLEWORKS_TIMEOUT"`
 	WithTailscaleUserIdentification bool          `yaml:"withTailscaleUserIdentification" env:"WITH_TAILSCALE_USER_IDENTIFICATION"`
 	PtdfProvider                    string        `yaml:"ptdf_provider" env:"TRIPLEWORKS_PTDF_PROVIDER"`
+	StorePtdfsInGcs                 bool          `yaml:"store_ptdfs_in_gcs" env:"TRIPLEWORKS_STORE_PTDFS_IN_GCS"`
 	E2e                             bool          `yaml:"e2e" env:"TRIPLEWORKS_E2E"`
 }
 
@@ -94,7 +95,7 @@ func (c *Config) PtdfWriterFactory() *MultiWriterFactory {
 	if c.LocalPtdfFolder != "" {
 		factory.Factories = append(factory.Factories, &LocalWriterFactory{Folder: c.LocalPtdfFolder})
 	}
-	if c.PtdfBucket != "" {
+	if c.PtdfBucket != "" && c.StorePtdfsInGcs {
 		client := Must(storage.NewClient(context.Background()))
 		factory.Factories = append(factory.Factories, &GcsWriterFactory{Client: client})
 	}
