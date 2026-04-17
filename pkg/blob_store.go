@@ -159,6 +159,9 @@ func (l *LocalReaderFactory) MakeReadCloser(ctx context.Context, bucket string) 
 	}
 	var names []string
 	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
 		names = append(names, entry.Name())
 	}
 	if len(names) == 0 {
