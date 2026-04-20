@@ -11,6 +11,7 @@ import (
 	"iter"
 	"log/slog"
 	"net/http"
+	"reflect"
 	"regexp"
 	"slices"
 	"strconv"
@@ -216,7 +217,9 @@ func (e *EntityStore) GetResource(ctx context.Context, mrid string) (any, error)
 		return resource, fmt.Errorf("Could not find a form type for type %s", entity.EntityType)
 	}
 
-	err = e.db.NewSelect().Model(resource).Where("mrid = ?", mrid).OrderBy("commit_id", bun.OrderDesc).Limit(1).Scan(ctx)
+	bunName := e.db.Table(reflect.TypeOf(resource).Elem()).Name
+	table := fmt.Sprintf("v_%s_latest", bunName)
+	err = e.db.NewSelect().Table(table).Where("mrid = ?", mrid).Limit(1).Scan(ctx, resource)
 	if err != nil {
 		return resource, fmt.Errorf("Failed to collect data for editing resource: %w", err)
 	}

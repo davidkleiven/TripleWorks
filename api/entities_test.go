@@ -311,13 +311,18 @@ func TestDrawDiagram(t *testing.T) {
 
 func TestEditComponentForm(t *testing.T) {
 	store := setupStore(t)
+	ctx := context.Background()
+
+	var commit models.Commit
+	_, err := store.db.NewInsert().Model(&commit).Exec(ctx)
+	require.NoError(t, err)
 
 	entity := models.Entity{Mrid: uuid.New(), EntityType: pkg.StructName(models.Substation{})}
 	var substation models.Substation
 	substation.Mrid = entity.Mrid
+	substation.CommitId = int(commit.Id)
 
-	ctx := context.Background()
-	_, err := store.db.NewInsert().Model(&entity).Exec(ctx)
+	_, err = store.db.NewInsert().Model(&entity).Exec(ctx)
 	require.NoError(t, err)
 
 	_, err = store.db.NewInsert().Model(&substation).Exec(ctx)
