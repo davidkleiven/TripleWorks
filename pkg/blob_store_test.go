@@ -89,3 +89,38 @@ func TestLocalFilename(t *testing.T) {
 	want := "my-bucket-year=2024-month=04-file.bin"
 	require.Equal(t, want, result)
 }
+
+func TestDeleteEverythingButLast(t *testing.T) {
+	dir := t.TempDir()
+	name := "bucket-year=2024-month=04-file.bin"
+	wf := LocalReaderFactory{Folder: dir}
+	err := os.WriteFile(filepath.Join(dir, name), []byte("content"), 0755)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	_, err = wf.MakeReadCloser(ctx, "bucket")
+	require.NoError(t, err)
+
+	dirContent, err := os.ReadDir(dir)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(dirContent))
+
+	// Create a new file
+	name = "bucket-year=2025-month=04-file.bin"
+	err = os.WriteFile(filepath.Join(dir, name), []byte("newer content"), 0755)
+	require.NoError(t, err)
+
+	reader, err := wf.MakeReadCloser(ctx, "bucket")
+	require.NoError(t, err)
+
+	dirContent, err = os.ReadDir(dir)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(dirContent))
+
+	file, ok := reader.(*os.File)
+	require.True(t, ok)
+
+	content, err := io.ReadAll(file)
+	require.NoError(t, err)
+	require.Equal(t, []byte("newer content"), content)
+}
