@@ -39,18 +39,27 @@ function updateFlowValues(flowData, lineByMrid, flowLayers) {
 
     var isPositive = value >= 0;
     var deltaLat = line.LatTo - line.LatFrom;
-    var arrowSymbol =
-      Math.abs(deltaLat) > Math.abs(line.LngTo - line.LngFrom)
-        ? isPositive
-          ? deltaLat > 0
-            ? "↓"
-            : "↑"
-          : deltaLat > 0
-            ? "↑"
-            : "↓"
-        : isPositive
+    var deltaLng = line.LngTo - line.LngFrom;
+    var isVertical = Math.abs(deltaLat) > Math.abs(deltaLng);
+
+    var arrowSymbol;
+    if (isVertical) {
+      arrowSymbol = isPositive
+        ? deltaLat > 0
+          ? "↓"
+          : "↑"
+        : deltaLat > 0
+          ? "↑"
+          : "↓";
+    } else {
+      arrowSymbol = isPositive
+        ? deltaLng > 0
           ? "→"
-          : "←";
+          : "←"
+        : deltaLng > 0
+          ? "←"
+          : "→";
+    }
 
     var displayValue = Math.abs(parseFloat(value)).toFixed(1);
 
@@ -164,15 +173,17 @@ function initMap(substations, lines) {
     linesByLevel[getVoltageLevelIndex(line.Voltage || 0)].push(line);
   });
 
-  linesByLevel.forEach(function (levelLines, i) {
-    levelLines.forEach(function (line) {
-      var polyline = L.polyline(
-        [
-          [line.LatFrom, line.LngFrom],
-          [line.LatTo, line.LngTo],
-        ],
-        { color: voltageLevels[i].color, weight: 3, opacity: 0.8 },
-      ).bindPopup(
+  for (var i = 0; i < voltageLevels.length; i++) {
+    linesByLevel[i].forEach(function (line) {
+      var latlngs = [
+        [line.LatFrom, line.LngFrom],
+        [line.LatTo, line.LngTo],
+      ];
+      var polyline = L.polyline(latlngs, {
+        color: voltageLevels[i].color,
+        weight: 3,
+        opacity: 0.8,
+      }).bindPopup(
         "<strong>" +
           line.Name +
           "</strong><br>" +
@@ -182,7 +193,7 @@ function initMap(substations, lines) {
       );
       lineLayers[i].addLayer(polyline);
     });
-  });
+  }
 
   var lineByMrid = {};
   lines.forEach(function (line) {
