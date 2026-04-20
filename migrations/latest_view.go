@@ -19,7 +19,7 @@ FROM (
     JOIN commits c 
         ON t.commit_id = c.id
 ) sub
-WHERE sub.row_num = 1;
+WHERE sub.row_num = 1 AND NOT sub.deleted;
 `
 
 func MustGetViewSql(name string) string {
