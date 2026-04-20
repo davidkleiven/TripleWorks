@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"fmt"
 	"iter"
+	"log/slog"
 	"math"
 	"net/http"
 	"reflect"
@@ -380,4 +381,10 @@ func ClipLower[K cmp.Ordered](v K, lower K) K {
 		return lower
 	}
 	return v
+}
+
+func LogIfError(msg string, err error) {
+	if err != nil {
+		slog.Error(msg, "error", err)
+	}
 }

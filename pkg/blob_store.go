@@ -168,6 +168,13 @@ func (l *LocalReaderFactory) MakeReadCloser(ctx context.Context, bucket string) 
 		return nil, fmt.Errorf("no files in directory: %s", bucket)
 	}
 	sort.Strings(names)
+	// Delete the old files
+	var removeErrs []error
+	for _, name := range names[:len(names)-1] {
+		err := os.Remove(filepath.Join(l.Folder, name))
+		removeErrs = append(removeErrs, err)
+	}
+	LogIfError("Failed to remove files", errors.Join(removeErrs...))
 	filename := names[len(names)-1]
 	slog.Info("Found latest local file", "filename", filename)
 	return os.Open(filepath.Join(l.Folder, filename))
