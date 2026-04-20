@@ -40,6 +40,13 @@ jobs:
         | grep -v '^migrations/migration_test.go' \
         && echo "❌ Existing migration modified or deleted" && exit 1 || true
 
+  check-sql:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: quarylabs/install-sqruff-cli-action@main
+      - run: sqruff lint .
+
   check-typos:
     runs-on: ubuntu-latest
     steps:
