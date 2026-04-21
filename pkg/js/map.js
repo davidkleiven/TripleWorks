@@ -54,11 +54,11 @@ function updateFlowValues(flowData, lineByMrid, flowLayers) {
     } else {
       arrowSymbol = isPositive
         ? deltaLng > 0
-          ? "→"
-          : "←"
-        : deltaLng > 0
           ? "←"
-          : "→";
+          : "→"
+        : deltaLng > 0
+          ? "→"
+          : "←";
     }
 
     var displayValue = Math.abs(parseFloat(value)).toFixed(1);
