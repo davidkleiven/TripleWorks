@@ -13,6 +13,7 @@ type tailscaleUser string
 
 const tailscaleUserKey tailscaleUser = "tailscaleUser"
 const defaultUser string = "Unknown"
+const userEmail string = "userEmail"
 
 type UserIdentifier interface {
 	WhoIs(ctx context.Context, addr string) (string, error)
@@ -49,6 +50,10 @@ func (t *UserIdentificationMiddleware) Apply(h http.Handler) http.Handler {
 }
 
 func UserFromCtx(ctx context.Context) string {
+	userEmail, ok := ctx.Value(userEmail).(string)
+	if ok {
+		return userEmail
+	}
 	value, ok := ctx.Value(tailscaleUserKey).(string)
 	if !ok {
 		return defaultUser

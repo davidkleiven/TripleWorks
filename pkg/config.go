@@ -58,6 +58,11 @@ type Config struct {
 	PtdfProvider                    string        `yaml:"ptdf_provider" env:"TRIPLEWORKS_PTDF_PROVIDER"`
 	StorePtdfsInGcs                 bool          `yaml:"store_ptdfs_in_gcs" env:"TRIPLEWORKS_STORE_PTDFS_IN_GCS"`
 	E2e                             bool          `yaml:"e2e" env:"TRIPLEWORKS_E2E"`
+	WithGoogleAuth                  bool          `yaml:"with_google_auth" env:"TRIPLEWORKS_WITH_GOOGLE_AUTH"`
+	GoogleClientId                  string        `yaml:"google_client_id" env:"TRIPLEWORKS_GOOGLE_CLIENT_ID"`
+	GoogleClientSecret              string        `yaml:"google_client_secret" env:"TRIPLEWORKS_GOOGLE_CLIENT_SECRET"`
+	SessionSecret                   string        `yaml:"google_session_secret" env:"TRIPLEWORKS_SESSION_SECRET"`
+	AuthCallback                    string        `yaml:"auth_callback" env:"TRIPLEWORKS_AUTH_CALLBACK"`
 }
 
 func (c *Config) DatabaseConnection() *bun.DB {
