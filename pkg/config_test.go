@@ -74,7 +74,7 @@ func TestLoadConfigFromFile(t *testing.T) {
 }
 
 func TestPgEnv(t *testing.T) {
-	defaultConfig := NewDefaultConfig()
+	defaultConfig := NewEnvParsedConfig()
 	t.Run("default on non existent file", func(t *testing.T) {
 		config := PgEnv(&FsOpener{})
 		require.Equal(t, config, defaultConfig)

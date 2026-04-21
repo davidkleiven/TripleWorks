@@ -10,6 +10,7 @@ import (
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/pkg"
 	"com.github/davidkleiven/tripleworks/repository"
+	"github.com/markbates/goth/gothic"
 	"github.com/uptrace/bun"
 )
 
@@ -64,11 +65,24 @@ func Setup(mux *http.ServeMux, config *pkg.Config) func() error {
 	validate := NewBunValidationEndpoint(db, timeout)
 	xiidmEndpoint := XiidmExport{BusBreakerRepo: &repository.BunBusBreakerRepo{Db: db}, Timeout: timeout}
 	userIdentifier := NoopMiddleware
+	auth := Auth{
+		ClientId:      config.GoogleClientId,
+		ClientSecret:  config.GoogleClientSecret,
+		Callback:      config.AuthCallback,
+		SessionSecret: config.SessionSecret,
+	}
+
 	if config.WithTailscaleUserIdentification {
+		slog.Info("Adding tailwind authentication middleware")
 		tailscaleMiddleware := UserIdentificationMiddleware{
 			Identifier: &TailscaleUserIdentifier{},
 		}
 		userIdentifier = tailscaleMiddleware.Apply
+	} else if config.WithGoogleAuth {
+		slog.Info("Adding google auth middleware")
+		auth.EnsureInitialized()
+		auth.Setup()
+		userIdentifier = GetUserMiddleware
 	}
 
 	modelsEndpoint := ModelsEndpoint{
@@ -123,7 +137,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) func() error {
 	}
 	go flow.UpdatePtdf(ptdfChan)
 
-	mux.HandleFunc("/", RootHandler)
+	mux.Handle("/", userIdentifier(http.HandlerFunc(RootHandler)))
 	mux.HandleFunc("/cim-types", CimTypes)
 	mux.HandleFunc("/entity-form", EntityForm)
 	mux.HandleFunc("GET /entity-form/{mrid}", entityHandler.EditComponentForm)
@@ -157,6 +171,8 @@ func Setup(mux *http.ServeMux, config *pkg.Config) func() error {
 	mux.Handle("POST /production", &actionForm)
 	mux.Handle("POST /flow", &flow)
 	mux.Handle("/js/", pkg.JsServer())
+	mux.HandleFunc("/auth/{provider}", HandleSignIn)
+	mux.HandleFunc("/auth/{provider}/callback", MakeHandleAuthCallback(gothic.CompleteUserAuth))
 
 	// Trigger the ptdf updater on startup
 	return func() error {
