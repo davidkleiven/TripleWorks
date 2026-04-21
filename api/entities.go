@@ -745,13 +745,19 @@ func (e *EntityStore) Connection(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
 	defer cancel()
 
-	data, err := pkg.FetchConnectionData(ctx, e.db, mrid)
+	query := repository.MustGetQuery("connection.sql")
+
+	var vertices []ConnectionVertex
+	err := e.db.NewRaw(query, mrid).Scan(ctx, &vertices)
 	if err != nil {
 		slog.ErrorContext(ctx, "Failed to find connection", "error", err)
 		http.Error(w, "Failed to find connection: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	con := pkg.FindConnection(&data)
+	con := Connection{
+		Vertices: vertices,
+		Mrid:     mrid,
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(con)
 }
@@ -861,4 +867,21 @@ func writeNTriplesCallback(w io.Writer) func(item any) error {
 		pkg.ExportItem(w, mridGetter)
 		return nil
 	}
+}
+
+type ConnectionVertex struct {
+	TerminalMrid     uuid.UUID `json:"terminal_mrid" bun:"terminal_mrid"`
+	TerminalName     string    `json:"terminal_name" bun:"terminal_name"`
+	TerminalSeqNo    int       `json:"terminal_sequence_number" bun:"terminal_sequence_number"`
+	ConNodeMrid      uuid.UUID `json:"connectivity_node_mrid,omitempty" bun:"connectivity_node_mrid"`
+	ConNodeName      string    `json:"connectivity_node_name,omitempty" bun:"connectivity_node_name"`
+	VoltageLevelMrid uuid.UUID `json:"voltage_level_mrid,omitempty" bun:"voltage_level_mrid"`
+	VoltageLevelName string    `json:"voltage_level_name,omitempty" bun:"voltage_level_name"`
+	SubstationMrid   uuid.UUID `json:"substation_mrid,omitempty" bun:"substation_mrid"`
+	SubstationName   string    `json:"substation_name,omitempty" bun:"substation_name"`
+}
+
+type Connection struct {
+	Vertices []ConnectionVertex `json:"vertices"`
+	Mrid     string             `json:"mrid"`
 }

@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -878,17 +879,63 @@ func TestApplyJsonPatchEndpoint(t *testing.T) {
 
 func TestConnection(t *testing.T) {
 	store := setupStore(t)
+
+	var (
+		commit models.Commit
+		line   models.ACLineSegment
+		t1     models.Terminal
+		t2     models.Terminal
+		c1     models.ConnectivityNode
+		c2     models.ConnectivityNode
+		v1     models.VoltageLevel
+		v2     models.VoltageLevel
+		s1     models.Substation
+		s2     models.Substation
+	)
+
+	line.Mrid = uuid.New()
+	s1.Mrid = uuid.New()
+	s2.Mrid = uuid.New()
+
+	v1.Mrid = uuid.New()
+	v1.SubstationMrid = s1.Mrid
+	v2.Mrid = uuid.New()
+	v2.SubstationMrid = s1.Mrid
+
+	c1.Mrid = uuid.New()
+	c1.ConnectivityNodeContainerMrid = v1.Mrid
+
+	c2.Mrid = uuid.New()
+	c2.ConnectivityNodeContainerMrid = v2.Mrid
+
+	t1.Mrid = uuid.New()
+	t1.ConductingEquipmentMrid = line.Mrid
+	t1.ConnectivityNodeMrid = c1.Mrid
+
+	t2.Mrid = uuid.New()
+	t2.ConductingEquipmentMrid = line.Mrid
+	t2.ConnectivityNodeMrid = c2.Mrid
+
+	items := []any{&line, &s1, &s2, &v1, &v2, &c1, &c2, &t1, &t2}
+
+	ctx := context.Background()
+	err := pkg.InsertAll(ctx, store.db, commit, slices.Values(items), pkg.NoOpOnInsert)
+	require.NoError(t, err)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/connections/{mrid}", store.Connection)
-	t.Run("no data", func(t *testing.T) {
+	t.Run("valid connection", func(t *testing.T) {
 		rec := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/connections/0000-0000", nil)
+		req := httptest.NewRequest("GET", "/connections/"+line.Mrid.String(), nil)
 		mux.ServeHTTP(rec, req)
 		require.Equal(t, http.StatusOK, rec.Code)
 
-		var con pkg.Connection
+		var con Connection
 		err := json.NewDecoder(rec.Body).Decode(&con)
 		require.NoError(t, err)
+
+		require.Equal(t, con.Mrid, line.Mrid.String())
+		require.Equal(t, 2, len(con.Vertices))
 	})
 
 	store.db = pkg.NewTestConfig(pkg.WithDbName(t.Name() + "empty")).DatabaseConnection()
