@@ -67,9 +67,9 @@ func Setup(mux *http.ServeMux, config *pkg.Config) func() error {
 	userIdentifier := NoopMiddleware
 	auth := Auth{
 		ClientId:      config.GoogleClientId,
-		ClientSecret:  config.GoogleClientSecret,
+		ClientSecret:  config.GoogleClientSecret.Secret(),
 		Callback:      config.AuthCallback,
-		SessionSecret: config.SessionSecret,
+		SessionSecret: config.SessionSecret.Secret(),
 	}
 
 	if config.WithTailscaleUserIdentification {
