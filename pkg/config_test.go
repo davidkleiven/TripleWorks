@@ -39,7 +39,7 @@ func TestGetConfig(t *testing.T) {
 	require.Contains(t, test.DbUrl, "memory")
 
 	defaultConfig := GetConfig("")
-	require.Equal(t, defaultConfig.DbUrl, "tripleworks.db")
+	require.Equal(t, defaultConfig.DbUrl.Secret(), "tripleworks.db")
 }
 
 func TestLoadLocal(t *testing.T) {
@@ -70,7 +70,7 @@ func TestLoadConfigFromFile(t *testing.T) {
 	err := os.WriteFile(file, []byte("dbUrl: my-database"), 0644)
 	require.NoError(t, err)
 	loadedConfig := GetConfig(file)
-	require.Equal(t, "my-database", loadedConfig.DbUrl)
+	require.Equal(t, "my-database", loadedConfig.DbUrl.Secret())
 }
 
 func TestPgEnv(t *testing.T) {
@@ -98,7 +98,7 @@ func TestPgEnv(t *testing.T) {
 		err := os.WriteFile(tmpFile, []byte("top-secret-password"), 0644)
 		require.NoError(t, err)
 		config := GetConfig("pg_env")
-		require.Equal(t, "postgres://user:top-secret-password@my-host:1234/mydatabase?sslmode=disable", config.DbUrl)
+		require.Equal(t, SecretString("postgres://user:top-secret-password@my-host:1234/mydatabase?sslmode=disable"), config.DbUrl)
 	})
 }
 
@@ -136,7 +136,18 @@ func TestNewEnvParseConfig(t *testing.T) {
 func TestSafeString(t *testing.T) {
 	config := NewTestConfig()
 	strRep := config.SafeString()
-	require.Contains(t, strRep, "port=36000")
+	require.Contains(t, strRep, "Port:36000")
+	require.Contains(t, strRep, "fi****")
+}
+
+func TestSecretString(t *testing.T) {
+	short := SecretString("aa")
+	require.Equal(t, short.Secret(), "aa")
+	require.Equal(t, short.String(), "aa")
+
+	long := SecretString("very-secret")
+	require.Equal(t, "ve*****************", long.String())
+
 }
 
 func TestPtdfWriters(t *testing.T) {

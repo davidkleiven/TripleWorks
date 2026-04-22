@@ -8,7 +8,6 @@ import (
 	"io"
 	"log/slog"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -47,8 +46,21 @@ func ConfigFromExternalFile(name string) *Config {
 	return config
 }
 
+type SecretString string
+
+func (s SecretString) String() string {
+	if len(s) > 2 {
+		return string(s[:2]) + "*****************"
+	}
+	return string(s)
+}
+
+func (s SecretString) Secret() string {
+	return string(s)
+}
+
 type Config struct {
-	DbUrl                           string        `yaml:"dbUrl"`
+	DbUrl                           SecretString  `yaml:"dbUrl"`
 	LoadflowServiceEndpoint         string        `yaml:"load_flow_service" env:"TRIPLEWORKS_LOAD_FLOW_SERVICE"`
 	LocalPtdfFolder                 string        `yaml:"local_parquest_folder" env:"TRIPLEWORKS_LOCAL_PTDF_FOLDER"`
 	PtdfBucket                      string        `yaml:"parquet_bucket" env:"TRIPLEWORKS_PTDF_BUCKET"`
@@ -60,39 +72,26 @@ type Config struct {
 	E2e                             bool          `yaml:"e2e" env:"TRIPLEWORKS_E2E"`
 	WithGoogleAuth                  bool          `yaml:"with_google_auth" env:"TRIPLEWORKS_WITH_GOOGLE_AUTH"`
 	GoogleClientId                  string        `yaml:"google_client_id" env:"TRIPLEWORKS_GOOGLE_CLIENT_ID"`
-	GoogleClientSecret              string        `yaml:"google_client_secret" env:"TRIPLEWORKS_GOOGLE_CLIENT_SECRET"`
-	SessionSecret                   string        `yaml:"google_session_secret" env:"TRIPLEWORKS_SESSION_SECRET"`
+	GoogleClientSecret              SecretString  `yaml:"google_client_secret" env:"TRIPLEWORKS_GOOGLE_CLIENT_SECRET"`
+	SessionSecret                   SecretString  `yaml:"google_session_secret" env:"TRIPLEWORKS_SESSION_SECRET"`
 	AuthCallback                    string        `yaml:"auth_callback" env:"TRIPLEWORKS_AUTH_CALLBACK"`
 }
 
 func (c *Config) DatabaseConnection() *bun.DB {
-	if strings.Contains(c.DbUrl, "postgres") {
+	if strings.Contains(c.DbUrl.Secret(), "postgres") {
 		slog.Info("Connecting to postgres database")
-		sqldb := Must(sql.Open("pgx", c.DbUrl))
+		sqldb := Must(sql.Open("pgx", c.DbUrl.Secret()))
 		return bun.NewDB(sqldb, pgdialect.New(), bun.WithDiscardUnknownColumns())
 	}
 
 	slog.Info("Connecting to sqlite database", "url", c.DbUrl)
-	sqldb := Must(sql.Open("sqlite3", c.DbUrl))
+	sqldb := Must(sql.Open("sqlite3", c.DbUrl.Secret()))
 	return bun.NewDB(sqldb, sqlitedialect.New(), bun.WithDiscardUnknownColumns())
 }
 
 // SafeString returns a loggable (e.g. no secrets) string representation of the config object
 func (c *Config) SafeString() string {
-	var builder strings.Builder
-	builder.WriteString("port=")
-	builder.WriteString(strconv.Itoa(c.Port))
-	builder.WriteString(", timeout=")
-	builder.WriteString(c.Timeout.String())
-	builder.WriteString(", withTailscaleUserIdentification=")
-	builder.WriteString(strconv.FormatBool(c.WithTailscaleUserIdentification))
-	builder.WriteString("ptdfBucket=")
-	builder.WriteString(c.PtdfBucket)
-	builder.WriteString("localPtdfFolder=")
-	builder.WriteString(c.LocalPtdfFolder)
-	builder.WriteString("loadflowServiceEndpoint=")
-	builder.WriteString(c.LoadflowServiceEndpoint)
-	return builder.String()
+	return fmt.Sprintf("%+v", c)
 }
 
 func (c *Config) PtdfWriterFactory() *MultiWriterFactory {
@@ -137,7 +136,7 @@ func NewEnvParsedConfig() *Config {
 
 func WithDbName(name string) func(c *Config) {
 	return func(c *Config) {
-		c.DbUrl = strings.ReplaceAll(c.DbUrl, "memdb", name)
+		c.DbUrl = SecretString(strings.ReplaceAll(c.DbUrl.Secret(), "memdb", name))
 	}
 }
 
@@ -180,7 +179,7 @@ func PgEnv(opener Opener) *Config {
 	}
 	password := strings.TrimSpace(string(passwordBytes))
 	slog.Info("Loaded postgres config from env", "user", user, "port", port, "host", host, "db", db, "password", loggablePassword(password))
-	config.DbUrl = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, db)
+	config.DbUrl = SecretString(fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, db))
 	return config
 }
 
