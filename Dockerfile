@@ -15,6 +15,7 @@ RUN make build
 FROM scratch
 
 COPY --from=builder /app/tripleworks /tripleworks
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 CMD ["/tripleworks"]
 
