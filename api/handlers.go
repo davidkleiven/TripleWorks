@@ -173,6 +173,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) func() error {
 	mux.Handle("/js/", pkg.JsServer())
 	mux.HandleFunc("/auth/{provider}", HandleSignIn)
 	mux.HandleFunc("/auth/{provider}/callback", MakeHandleAuthCallback(gothic.CompleteUserAuth))
+	mux.Handle("/patch-form", userIdentifier(http.HandlerFunc(PatchForm)))
 
 	// Trigger the ptdf updater on startup
 	return func() error {

@@ -36,3 +36,4 @@ pkg/testdata/*
 .semrel/*
 node_modules/*
 *.db
+cypress/screenshots/*

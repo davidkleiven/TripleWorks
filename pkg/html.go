@@ -23,3 +23,8 @@ func toJSON(v any) template.JS {
 func Map() *template.Template {
 	return template.Must(template.New("map.html").Funcs(template.FuncMap{"toJSON": toJSON}).ParseFS(htmlPages, "html/map.html"))
 }
+
+func PatchForm(w io.Writer) {
+	reader := Must(htmlPages.Open("html/patch_form.html"))
+	io.Copy(w, reader)
+}
