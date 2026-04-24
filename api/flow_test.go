@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"com.github/davidkleiven/tripleworks/pkg"
+	"com.github/davidkleiven/tripleworks/repository"
 	"github.com/stretchr/testify/require"
 )
 
@@ -111,4 +113,40 @@ func TestReceiveNewPtdfOnChannel(t *testing.T) {
 	require.True(t, ok)
 	_, ok = flow.Ptdf.Lines["B"]
 	require.True(t, ok)
+}
+
+func TestCrossBorder(t *testing.T) {
+	records := []pkg.PtdfRecord{{Node: "A", Line: "L1"}}
+	substationLister := repository.InMemLister[SubstationBidzone]{
+		Items: []SubstationBidzone{{Mrid: "A"}},
+	}
+
+	crossRegionLineLister := repository.InMemLister[CrossRegionLine]{
+		Items: []CrossRegionLine{{LineMrid: "L1"}},
+	}
+
+	flow := FlowEndpoint{
+		Ptdf: pkg.NewPtdfMatrix(records),
+		Timeout: time.Second,
+		SubstationBidzoneLister: &substationLister,
+		CrossRegionLineLister: &crossRegionLineLister,
+	}
+
+	t.Run("success", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/cross-region", nil)
+		flow.CrossRegionPtdf(rec, req)
+		require.Equal(t, rec.Code, http.StatusOK)
+	})
+
+	t.Run("read failure", func(t *testing.T) {
+		defer func() {
+			substationLister.Err = nil
+		}()
+		substationLister.Err = errors.New("something went wrong")
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/cross-region", nil)
+		flow.CrossRegionPtdf(rec, req)
+		require.Equal(t, rec.Code, http.StatusInternalServerError)	
+	})
 }

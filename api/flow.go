@@ -2,7 +2,9 @@ package api
 
 import (
 	"cmp"
+	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"math"
 	"net/http"
@@ -12,17 +14,47 @@ import (
 	"time"
 
 	"com.github/davidkleiven/tripleworks/pkg"
+	"com.github/davidkleiven/tripleworks/repository"
 )
+
+type CrossRegionLine struct {
+	LineMrid    string `bun:"line_mrid"`
+	LineName    string `bun:"line_name"`
+	FromBidzone string `bun:"from_bidzone"`
+	ToBidzone   string `bun:"to_bidzone"`
+}
+
+type SubstationBidzone struct {
+	Mrid    string `bun:"mrid"`
+	Name    string `bun:"name"`
+	Bidzone string `bun:"bidzone"`
+}
+
+type CrossBorderPtdf struct {
+	Mrid           string  `json:"mrid"`
+	Name           string  `json:"name"`
+	SubstationMrid string  `json:"substation_mrid"`
+	SubstationName string  `json:"substation_name"`
+	FromBidzone    string  `json:"from_bidzone"`
+	ToBidzone      string  `json:"to_bidzone"`
+	Ptdf           float64 `json:"ptdf"`
+}
+
+type CrossBorderPtdfResp struct {
+	Items []CrossBorderPtdf `json:"items"`
+}
 
 type FlowResponse struct {
 	Flow map[string]float64 `json:"flow"`
 }
 
 type FlowEndpoint struct {
-	PtdfMutex   sync.RWMutex
-	Ptdf        *pkg.PtdfMatrix
-	MaxNumFlows int
-	Timeout     time.Duration
+	PtdfMutex               sync.RWMutex
+	Ptdf                    *pkg.PtdfMatrix
+	MaxNumFlows             int
+	Timeout                 time.Duration
+	CrossRegionLineLister   repository.Lister[CrossRegionLine]
+	SubstationBidzoneLister repository.Lister[SubstationBidzone]
 }
 
 func (f *FlowEndpoint) UpdatePtdf(newPtdfs chan []pkg.PtdfRecord) {
@@ -71,6 +103,54 @@ func (f *FlowEndpoint) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	resp := FlowResponse{Flow: flow}
 	json.NewEncoder(w).Encode(resp)
+}
+
+func (f *FlowEndpoint) CrossRegionPtdf(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), f.Timeout)
+	defer cancel()
+
+	connections, errCon := f.CrossRegionLineLister.List(ctx)
+	substations, errSub := f.SubstationBidzoneLister.List(ctx)
+
+	if err := errors.Join(errCon, errSub); err != nil {
+		http.Error(w, "Could not fetch data: "+err.Error(), http.StatusInternalServerError)
+		slog.ErrorContext(ctx, "Could fetch connections or substations", "error", err)
+		return
+	}
+
+	conMrids := make([]string, len(connections))
+	for i, con := range connections {
+		conMrids[i] = con.LineMrid
+	}
+
+	substationToBidzoneMap := make(map[string]*SubstationBidzone)
+	for _, s := range substations {
+		substationToBidzoneMap[s.Mrid] = &s
+	}
+
+	consMap := make(map[string]*CrossRegionLine)
+	for _, c := range connections {
+		consMap[c.LineMrid] = &c
+	}
+
+	ptdfRecords := f.Ptdf.FilterLines(conMrids)
+	var result []CrossBorderPtdf
+	for record := range ptdfRecords {
+		s := pkg.MustGet(substationToBidzoneMap, record.Node)
+		c := pkg.MustGet(consMap, record.Line)
+		result = append(result, CrossBorderPtdf{
+			Mrid:           record.Line,
+			Name:           c.LineName,
+			SubstationMrid: record.Node,
+			SubstationName: s.Name,
+			FromBidzone:    c.FromBidzone,
+			ToBidzone:      c.ToBidzone,
+			Ptdf:           record.Ptdf,
+		})
+	}
+
+	respBody := CrossBorderPtdfResp{Items: result}
+	json.NewEncoder(w).Encode(respBody)
 }
 
 func NLargest(flow map[string]float64, n int) map[string]float64 {

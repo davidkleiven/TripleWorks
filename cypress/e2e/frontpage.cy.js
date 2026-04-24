@@ -24,4 +24,10 @@ describe("Load front page", () => {
       expect(resp.body.length).to.be.greaterThan(10);
     });
   });
+
+  it("can retrieve crpss border ptdfs", () => {
+    cy.request("/cross-border-ptdfs").then((resp) => {
+      expect(resp.status).to.equal(200);
+    });
+  });
 });

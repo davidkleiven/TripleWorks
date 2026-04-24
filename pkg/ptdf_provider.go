@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"iter"
 	"log/slog"
 	"math/rand/v2"
 	"strings"
@@ -102,6 +103,27 @@ func (p *PtdfMatrix) Flow(nodes map[string]float64) map[string]float64 {
 		result[invLineMap[i]] = flow
 	}
 	return result
+}
+
+func (p *PtdfMatrix) FilterLines(lineMrids []string) iter.Seq[PtdfRecord] {
+	uniqueLineMrids := make(map[string]struct{})
+	for _, mrid := range lineMrids {
+		uniqueLineMrids[mrid] = struct{}{}
+	}
+
+	return func(yield func(p PtdfRecord) bool) {
+		for lineMrid, i := range p.Lines {
+			if _, ok := uniqueLineMrids[lineMrid]; !ok {
+				continue
+			}
+			for nodeMrid, j := range p.Nodes {
+				result := PtdfRecord{Line: lineMrid, Node: nodeMrid, Ptdf: p.Data.At(i, j)}
+				if !yield(result) {
+					return
+				}
+			}
+		}
+	}
 }
 
 func NewPtdfMatrix(records []PtdfRecord) *PtdfMatrix {
