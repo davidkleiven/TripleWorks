@@ -131,9 +131,11 @@ func Setup(mux *http.ServeMux, config *pkg.Config) func() error {
 		ptdfs = pkg.LoadParquetFromFactory(config.PtdfReaderFactory(), config.PtdfBucket)
 	}
 	flow := FlowEndpoint{
-		Ptdf:        pkg.NewPtdfMatrix(ptdfs),
-		MaxNumFlows: 100,
-		Timeout:     timeout,
+		Ptdf:                    pkg.NewPtdfMatrix(ptdfs),
+		MaxNumFlows:             100,
+		Timeout:                 timeout,
+		CrossRegionLineLister:   &repository.BunReadRepository[CrossRegionLine]{Db: db, UseLatestView: true},
+		SubstationBidzoneLister: &repository.BunReadRepository[SubstationBidzone]{Db: db, UseLatestView: true},
 	}
 	go flow.UpdatePtdf(ptdfChan)
 
@@ -170,6 +172,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) func() error {
 	mux.Handle("POST /ptdf/recalculate", &ptdfRecalc)
 	mux.Handle("POST /production", &actionForm)
 	mux.Handle("POST /flow", &flow)
+	mux.HandleFunc("/cross-region-ptdf", flow.CrossRegionPtdf)
 	mux.Handle("/js/", pkg.JsServer())
 	mux.HandleFunc("/auth/{provider}", HandleSignIn)
 	mux.HandleFunc("/auth/{provider}/callback", MakeHandleAuthCallback(gothic.CompleteUserAuth))

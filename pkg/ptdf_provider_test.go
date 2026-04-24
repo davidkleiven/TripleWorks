@@ -2,6 +2,8 @@ package pkg
 
 import (
 	"bytes"
+	"cmp"
+	"slices"
 	"testing"
 
 	"com.github/davidkleiven/tripleworks/models"
@@ -82,4 +84,31 @@ func TestWriteReadRoundTrip(t *testing.T) {
 	result, err := LoadParquetPtdf(bytes.NewReader(buf.Bytes()))
 	require.NoError(t, err)
 	require.Equal(t, 1, len(result))
+}
+
+func TestFilterLines(t *testing.T) {
+	records := []PtdfRecord{
+		{
+			Node:"A",
+			Line: "L1",
+			Ptdf: 1.0,
+		},
+		{
+			Node:"B",
+			Line: "L2",
+			Ptdf: 0.5,
+		},
+		{
+			Node:"B",
+			Line: "L1",
+			Ptdf: 0.6,
+		},
+	}
+
+	ptdf := NewPtdfMatrix(records)
+	mrids := []string{"L1"}
+	result := slices.Collect(ptdf.FilterLines(mrids))
+	want := []PtdfRecord{records[0], records[2]}
+	slices.SortFunc(result, func(a, b PtdfRecord) int {return cmp.Compare(a.Node, b.Node)})
+	require.Equal(t, want, result)
 }

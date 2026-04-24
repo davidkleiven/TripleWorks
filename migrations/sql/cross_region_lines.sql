@@ -22,4 +22,3 @@ FROM (
 ) AS lines
 GROUP BY line_mrid, line_name
 HAVING COUNT(DISTINCT bidzone) = 2;
-
