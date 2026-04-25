@@ -10,7 +10,7 @@ require (
 	github.com/go-faker/faker/v4 v4.7.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/sessions v1.1.1
-	github.com/jackc/pgx/v5 v5.9.1
+	github.com/jackc/pgx/v5 v5.9.2
 	github.com/markbates/goth v1.82.0
 	github.com/mattn/go-sqlite3 v1.14.42
 	github.com/parquet-go/parquet-go v0.29.0
