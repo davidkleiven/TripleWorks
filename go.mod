@@ -9,7 +9,7 @@ require (
 	github.com/fsouza/fake-gcs-server v1.54.0
 	github.com/go-faker/faker/v4 v4.7.0
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/sessions v1.1.1
+	github.com/gorilla/sessions v1.4.0
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/markbates/goth v1.82.0
 	github.com/mattn/go-sqlite3 v1.14.42
@@ -65,7 +65,6 @@ require (
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.14 // indirect
 	github.com/googleapis/gax-go/v2 v2.21.0 // indirect
-	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
