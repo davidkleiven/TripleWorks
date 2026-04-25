@@ -20,7 +20,7 @@ require (
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.18
 	golang.org/x/sync v0.20.0
 	gonum.org/v1/gonum v0.17.0
-	gonum.org/v1/plot v0.16.0
+	gonum.org/v1/plot v0.17.0
 	gopkg.in/yaml.v3 v3.0.1
 	tailscale.com v1.96.5
 )
