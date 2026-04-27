@@ -3,5 +3,5 @@ package pkg
 const (
 	ContentTypeJSON = "application/json"
 	ContentTypeHTML = "text/html"
-	ContentType     = "ContentType"
+	ContentType     = "Content-Type"
 )
