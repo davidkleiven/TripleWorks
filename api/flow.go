@@ -150,6 +150,7 @@ func (f *FlowEndpoint) CrossRegionPtdf(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respBody := CrossBorderPtdfResp{Items: result}
+	w.Header().Set(pkg.ContentType, pkg.ContentTypeJSON)
 	json.NewEncoder(w).Encode(respBody)
 }
 
