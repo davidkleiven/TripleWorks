@@ -4,7 +4,7 @@ go 1.26.2
 
 require (
 	cloud.google.com/go/storage v1.62.1
-	github.com/a-h/templ v0.3.1001
+	github.com/a-h/templ v0.3.1020
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/fsouza/fake-gcs-server v1.54.0
 	github.com/go-faker/faker/v4 v4.7.0
