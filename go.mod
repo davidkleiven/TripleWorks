@@ -22,7 +22,7 @@ require (
 	gonum.org/v1/gonum v0.17.0
 	gonum.org/v1/plot v0.17.0
 	gopkg.in/yaml.v3 v3.0.1
-	tailscale.com v1.98.3
+	tailscale.com v1.98.5
 )
 
 require (
