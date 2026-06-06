@@ -3,7 +3,7 @@ module com.github/davidkleiven/tripleworks
 go 1.26.4
 
 require (
-	cloud.google.com/go/storage v1.62.2
+	cloud.google.com/go/storage v1.62.3
 	github.com/a-h/templ v0.3.1020
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/fsouza/fake-gcs-server v1.54.0
