@@ -946,3 +946,8 @@ func TestConnection(t *testing.T) {
 		require.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
 }
+
+func TestIntOrDefault(t *testing.T) {
+	require.Equal(t, intOrDefault("", 1), 1)
+	require.Equal(t, intOrDefault("20", 1), 20)
+}
