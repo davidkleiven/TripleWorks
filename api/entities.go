@@ -292,6 +292,7 @@ func (e *EntityStore) SimpleUpload(w http.ResponseWriter, r *http.Request) {
 	hundredMb := int64(100 << 20)
 	kind := r.PathValue("kind")
 	doCommit := r.URL.Query().Get("commit")
+	modelId := intOrDefault(r.URL.Query().Get("model-id"), 0)
 
 	r.Body = http.MaxBytesReader(w, r.Body, hundredMb)
 	defer r.Body.Close()
@@ -306,7 +307,6 @@ func (e *EntityStore) SimpleUpload(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
 	defer cancel()
 
-	modelId := 0
 	existing, err := pkg.ExistingMrids(ctx, e.db, modelId)
 	if err != nil {
 		slog.ErrorContext(ctx, "Could not get existing mrids", "error", err)
@@ -867,6 +867,14 @@ func writeNTriplesCallback(w io.Writer) func(item any) error {
 		pkg.ExportItem(w, mridGetter)
 		return nil
 	}
+}
+
+func intOrDefault(v string, defaultValue int) int {
+	integer, err := strconv.Atoi(v)
+	if err != nil {
+		return defaultValue
+	}
+	return integer
 }
 
 type ConnectionVertex struct {
