@@ -12,7 +12,7 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/markbates/goth v1.82.0
-	github.com/mattn/go-sqlite3 v1.14.45
+	github.com/mattn/go-sqlite3 v1.14.46
 	github.com/parquet-go/parquet-go v0.30.1
 	github.com/stretchr/testify v1.11.1
 	github.com/uptrace/bun v1.2.18
