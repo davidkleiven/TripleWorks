@@ -18,7 +18,7 @@ require (
 	github.com/uptrace/bun v1.2.18
 	github.com/uptrace/bun/dialect/pgdialect v1.2.18
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.18
-	golang.org/x/sync v0.21.0
+	golang.org/x/sync v0.22.0
 	gonum.org/v1/gonum v0.17.0
 	gonum.org/v1/plot v0.17.0
 	gopkg.in/yaml.v3 v3.0.1
