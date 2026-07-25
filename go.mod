@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/storage v1.63.1
 	github.com/a-h/templ v0.3.1020
 	github.com/caarlos0/env v3.5.0+incompatible
-	github.com/fsouza/fake-gcs-server v1.55.0
+	github.com/fsouza/fake-gcs-server v1.55.1
 	github.com/go-faker/faker/v4 v4.9.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/sessions v1.4.0

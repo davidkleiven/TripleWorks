@@ -103,8 +103,8 @@ github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2
 github.com/felixge/httpsnoop v1.0.4/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=
 github.com/frankban/quicktest v1.14.6/go.mod h1:4ptaffx2x8+WTWXmUCuVU6aPUX1/Mz7zb5vbUoiM6w0=
-github.com/fsouza/fake-gcs-server v1.55.0 h1:3lawEZZfhFotaDh+UVi+xgl0n/wiNQh/dEF5hNJEJ5U=
-github.com/fsouza/fake-gcs-server v1.55.0/go.mod h1:5XZDg/ZKtY/ciEwJcFRaVz/YQ0FqffGAVTXyyaZZAuA=
+github.com/fsouza/fake-gcs-server v1.55.1 h1:8IsUkVFYQnS/QLyci2ORdpn7pkmqs+6hnJ8w51bN7Gg=
+github.com/fsouza/fake-gcs-server v1.55.1/go.mod h1:5XZDg/ZKtY/ciEwJcFRaVz/YQ0FqffGAVTXyyaZZAuA=
 github.com/fxamacker/cbor/v2 v2.9.0 h1:NpKPmjDBgUfBms6tr6JZkTHtfFGcMKsw3eGcmD/sapM=
 github.com/fxamacker/cbor/v2 v2.9.0/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/gaissmai/bart v0.26.1 h1:+w4rnLGNlA2GDVn382Tfe3jOsK5vOr5n4KmigJ9lbTo=
