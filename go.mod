@@ -1,6 +1,6 @@
 module com.github/davidkleiven/tripleworks
 
-go 1.26.5
+go 1.26.6
 
 require (
 	cloud.google.com/go/storage v1.65.0
@@ -22,7 +22,7 @@ require (
 	gonum.org/v1/gonum v0.17.0
 	gonum.org/v1/plot v0.17.0
 	gopkg.in/yaml.v3 v3.0.1
-	tailscale.com v1.102.2
+	tailscale.com v1.102.3
 )
 
 require (
