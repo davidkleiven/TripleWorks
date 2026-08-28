@@ -499,7 +499,7 @@ func TestUserTable(t *testing.T) {
 	_, err := RunUp(ctx, db)
 	require.NoError(t, err)
 
-	user := models.User{Email: "john@example.com"}
+	user := models.User{Email: "john@example.com", Role: models.RoleAdmin}
 	_, err = db.NewInsert().Model(&user).Exec(ctx)
 	require.NoError(t, err)
 
@@ -508,4 +508,18 @@ func TestUserTable(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, allUsers, 1)
 	require.Equal(t, user.Email, allUsers[0].Email)
+	require.Equal(t, models.RoleAdmin, allUsers[0].Role)
+}
+
+func TestUserEmailUnique(t *testing.T) {
+	db := setupSqliteTestDb(t)
+	ctx := context.Background()
+	_, err := RunUp(ctx, db)
+	require.NoError(t, err)
+
+	_, err = db.NewInsert().Model(&models.User{Email: "dup@example.com"}).Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = db.NewInsert().Model(&models.User{Email: "dup@example.com"}).Exec(ctx)
+	require.Error(t, err)
 }

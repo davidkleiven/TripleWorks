@@ -14,6 +14,7 @@ func addUserTable(ctx context.Context, db *bun.DB) error {
 	model := struct {
 		Id    int    `bun:"id,pk,autoincrement"`
 		Email string `bun:"email,unique,notnull"`
+		Role  string `bun:"role,default:'user'"`
 	}{}
 	_, err := db.NewCreateTable().Model(&model).ModelTableExpr("users").IfNotExists().Exec(ctx)
 	return err
