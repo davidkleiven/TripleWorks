@@ -492,3 +492,20 @@ func TestLatestSubstationView(t *testing.T) {
 	require.Equal(t, 1, len(latestSubstations))
 	require.Equal(t, "Substation B", latestSubstations[0].Name)
 }
+
+func TestUserTable(t *testing.T) {
+	db := setupSqliteTestDb(t)
+	ctx := context.Background()
+	_, err := RunUp(ctx, db)
+	require.NoError(t, err)
+
+	user := models.User{Email: "john@example.com"}
+	_, err = db.NewInsert().Model(&user).Exec(ctx)
+	require.NoError(t, err)
+
+	var allUsers []models.User
+	err = db.NewSelect().Model(&allUsers).Scan(ctx)
+	require.NoError(t, err)
+	require.Len(t, allUsers, 1)
+	require.Equal(t, user.Email, allUsers[0].Email)
+}
