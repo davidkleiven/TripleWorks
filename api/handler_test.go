@@ -21,12 +21,12 @@ func TestRootHandler(t *testing.T) {
 func TestSetup(t *testing.T) {
 	mux := http.NewServeMux()
 	config := pkg.NewTestConfig()
-	cleanup := Setup(mux, config)
+	handler, cleanup := Setup(mux, config)
 	defer cleanup()
 
 	req := httptest.NewRequest("GET", "/", nil)
 	rec := httptest.NewRecorder()
-	mux.ServeHTTP(rec, req)
+	handler.ServeHTTP(rec, req)
 	assert.Equal(t, rec.Code, http.StatusOK)
 }
 

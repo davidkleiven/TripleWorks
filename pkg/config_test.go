@@ -114,7 +114,7 @@ func TestLoggablePassword(t *testing.T) {
 }
 
 func TestNewEnvParseConfig(t *testing.T) {
-	key := "WITH_TAILSCALE_USER_IDENTIFICATION"
+	key := "TRIPLEWORKS_WITH_GOOGLE_AUTH"
 	orig, ok := os.LookupEnv(key)
 	defer func() {
 		if !ok {
@@ -126,11 +126,11 @@ func TestNewEnvParseConfig(t *testing.T) {
 
 	os.Setenv(key, "1")
 	config := NewEnvParsedConfig()
-	require.True(t, config.WithTailscaleUserIdentification)
+	require.True(t, config.WithGoogleAuth)
 
 	os.Setenv(key, "0")
 	config = NewEnvParsedConfig()
-	require.False(t, config.WithTailscaleUserIdentification)
+	require.False(t, config.WithGoogleAuth)
 }
 
 func TestSafeString(t *testing.T) {
