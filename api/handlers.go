@@ -34,7 +34,7 @@ func EntityForm(w http.ResponseWriter, r *http.Request) {
 	pkg.FormInputFields(w, item)
 }
 
-func Setup(mux *http.ServeMux, config *pkg.Config) func() error {
+func Setup(mux *http.ServeMux, config *pkg.Config) (http.Handler, func() error) {
 	db := config.DatabaseConnection()
 	timeout := 10 * time.Minute
 	mustPerformMigrations(db, timeout)
@@ -64,25 +64,22 @@ func Setup(mux *http.ServeMux, config *pkg.Config) func() error {
 	commit := CommitEndpoint{Db: &repository.BunInserter{Db: db}, timeout: timeout}
 	validate := NewBunValidationEndpoint(db, timeout)
 	xiidmEndpoint := XiidmExport{BusBreakerRepo: &repository.BunBusBreakerRepo{Db: db}, Timeout: timeout}
+	userStore := &repository.BunUserRepository{Db: db}
 	userIdentifier := NoopMiddleware
 	auth := Auth{
 		ClientId:      config.GoogleClientId,
 		ClientSecret:  config.GoogleClientSecret.Secret(),
 		Callback:      config.AuthCallback,
 		SessionSecret: config.SessionSecret.Secret(),
+		JwtSecret:     []byte(config.SessionSecret.Secret()),
+		JwtTtl:        24 * time.Hour,
 	}
 
-	if config.WithTailscaleUserIdentification {
-		slog.Info("Adding tailwind authentication middleware")
-		tailscaleMiddleware := UserIdentificationMiddleware{
-			Identifier: &TailscaleUserIdentifier{},
-		}
-		userIdentifier = tailscaleMiddleware.Apply
-	} else if config.WithGoogleAuth {
+	if config.WithGoogleAuth {
 		slog.Info("Adding google auth middleware")
 		auth.EnsureInitialized()
 		auth.Setup()
-		userIdentifier = GetUserMiddleware
+		userIdentifier = RequireAuth(auth.JwtSecret)
 	}
 
 	modelsEndpoint := ModelsEndpoint{
@@ -139,7 +136,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) func() error {
 	}
 	go flow.UpdatePtdf(ptdfChan)
 
-	mux.Handle("/", userIdentifier(http.HandlerFunc(RootHandler)))
+	mux.Handle("/", http.HandlerFunc(RootHandler))
 	mux.HandleFunc("/cim-types", CimTypes)
 	mux.HandleFunc("/entity-form", EntityForm)
 	mux.HandleFunc("GET /entity-form/{mrid}", entityHandler.EditComponentForm)
@@ -149,7 +146,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) func() error {
 	mux.HandleFunc("/entities", entityHandler.GetEntityForKind)
 	mux.HandleFunc("/enum", entityHandler.GetEnumOptions)
 	mux.HandleFunc("/entity-list", entityHandler.EntityList)
-	mux.Handle("POST /commit", userIdentifier(&commit))
+	mux.Handle("POST /commit", &commit)
 	mux.HandleFunc("DELETE /commit/{id}", entityHandler.DeleteCommit)
 	mux.HandleFunc("POST /autofill", AutofillHandler)
 	mux.HandleFunc("GET /substations/{mrid}/diagram", entityHandler.SubstationDiagram)
@@ -158,8 +155,8 @@ func Setup(mux *http.ServeMux, config *pkg.Config) func() error {
 	mux.HandleFunc("/upload/{kind}", entityHandler.SimpleUpload)
 	mux.HandleFunc("GET /commits", entityHandler.Commits)
 	mux.HandleFunc("/map", entityHandler.Map)
-	mux.Handle("POST /connect-dangling", userIdentifier(http.HandlerFunc(entityHandler.ConnectDanglingLines)))
-	mux.Handle("PATCH /resource", userIdentifier(http.HandlerFunc(entityHandler.ApplyJsonPatch)))
+	mux.Handle("POST /connect-dangling", http.HandlerFunc(entityHandler.ConnectDanglingLines))
+	mux.Handle("PATCH /resource", http.HandlerFunc(entityHandler.ApplyJsonPatch))
 	mux.HandleFunc("/connection/{mrid}", entityHandler.Connection)
 	mux.Handle("PUT /validate", validate)
 	mux.Handle("/models", &modelsEndpoint)
@@ -175,11 +172,11 @@ func Setup(mux *http.ServeMux, config *pkg.Config) func() error {
 	mux.HandleFunc("/cross-region-ptdf", flow.CrossRegionPtdf)
 	mux.Handle("/js/", pkg.JsServer())
 	mux.HandleFunc("/auth/{provider}", HandleSignIn)
-	mux.HandleFunc("/auth/{provider}/callback", MakeHandleAuthCallback(gothic.CompleteUserAuth))
-	mux.Handle("/patch-form", userIdentifier(http.HandlerFunc(PatchForm)))
+	mux.HandleFunc("/auth/{provider}/callback", MakeHandleAuthCallback(gothic.CompleteUserAuth, userStore, auth.JwtSecret, auth.JwtTtl))
+	mux.Handle("/patch-form", http.HandlerFunc(PatchForm))
 
 	// Trigger the ptdf updater on startup
-	return func() error {
+	return userIdentifier(mux), func() error {
 		close(ptdfChan)
 		return nil
 	}

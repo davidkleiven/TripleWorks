@@ -26,10 +26,10 @@ func main() {
 	slog.Info("Loaded config", "config", config.SafeString())
 
 	mux := http.NewServeMux()
-	cleanup := api.Setup(mux, config)
+	handler, cleanup := api.Setup(mux, config)
 
 	slog.Info("Starting server", "port", config.Port)
-	server := &http.Server{Addr: fmt.Sprintf(":%d", config.Port), Handler: api.LogRequest(mux)}
+	server := &http.Server{Addr: fmt.Sprintf(":%d", config.Port), Handler: api.LogRequest(handler)}
 
 	go func() {
 		server.ListenAndServe()

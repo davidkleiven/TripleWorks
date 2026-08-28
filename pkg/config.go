@@ -60,21 +60,20 @@ func (s SecretString) Secret() string {
 }
 
 type Config struct {
-	DbUrl                           SecretString  `yaml:"dbUrl"`
-	LoadflowServiceEndpoint         string        `yaml:"load_flow_service" env:"TRIPLEWORKS_LOAD_FLOW_SERVICE"`
-	LocalPtdfFolder                 string        `yaml:"local_parquest_folder" env:"TRIPLEWORKS_LOCAL_PTDF_FOLDER"`
-	PtdfBucket                      string        `yaml:"parquet_bucket" env:"TRIPLEWORKS_PTDF_BUCKET"`
-	Port                            int           `yaml:"port" env:"TRIPLEWORKS_PORT"`
-	Timeout                         time.Duration `yaml:"timeout" env:"TRIPLEWORKS_TIMEOUT"`
-	WithTailscaleUserIdentification bool          `yaml:"withTailscaleUserIdentification" env:"WITH_TAILSCALE_USER_IDENTIFICATION"`
-	PtdfProvider                    string        `yaml:"ptdf_provider" env:"TRIPLEWORKS_PTDF_PROVIDER"`
-	StorePtdfsInGcs                 bool          `yaml:"store_ptdfs_in_gcs" env:"TRIPLEWORKS_STORE_PTDFS_IN_GCS"`
-	E2e                             bool          `yaml:"e2e" env:"TRIPLEWORKS_E2E"`
-	WithGoogleAuth                  bool          `yaml:"with_google_auth" env:"TRIPLEWORKS_WITH_GOOGLE_AUTH"`
-	GoogleClientId                  string        `yaml:"google_client_id" env:"TRIPLEWORKS_GOOGLE_CLIENT_ID"`
-	GoogleClientSecret              SecretString  `yaml:"google_client_secret" env:"TRIPLEWORKS_GOOGLE_CLIENT_SECRET"`
-	SessionSecret                   SecretString  `yaml:"google_session_secret" env:"TRIPLEWORKS_SESSION_SECRET"`
-	AuthCallback                    string        `yaml:"auth_callback" env:"TRIPLEWORKS_AUTH_CALLBACK"`
+	DbUrl                   SecretString  `yaml:"dbUrl"`
+	LoadflowServiceEndpoint string        `yaml:"load_flow_service" env:"TRIPLEWORKS_LOAD_FLOW_SERVICE"`
+	LocalPtdfFolder         string        `yaml:"local_parquest_folder" env:"TRIPLEWORKS_LOCAL_PTDF_FOLDER"`
+	PtdfBucket              string        `yaml:"parquet_bucket" env:"TRIPLEWORKS_PTDF_BUCKET"`
+	Port                    int           `yaml:"port" env:"TRIPLEWORKS_PORT"`
+	Timeout                 time.Duration `yaml:"timeout" env:"TRIPLEWORKS_TIMEOUT"`
+	PtdfProvider            string        `yaml:"ptdf_provider" env:"TRIPLEWORKS_PTDF_PROVIDER"`
+	StorePtdfsInGcs         bool          `yaml:"store_ptdfs_in_gcs" env:"TRIPLEWORKS_STORE_PTDFS_IN_GCS"`
+	E2e                     bool          `yaml:"e2e" env:"TRIPLEWORKS_E2E"`
+	WithGoogleAuth          bool          `yaml:"with_google_auth" env:"TRIPLEWORKS_WITH_GOOGLE_AUTH"`
+	GoogleClientId          string        `yaml:"google_client_id" env:"TRIPLEWORKS_GOOGLE_CLIENT_ID"`
+	GoogleClientSecret      SecretString  `yaml:"google_client_secret" env:"TRIPLEWORKS_GOOGLE_CLIENT_SECRET"`
+	SessionSecret           SecretString  `yaml:"google_session_secret" env:"TRIPLEWORKS_SESSION_SECRET"`
+	AuthCallback            string        `yaml:"auth_callback" env:"TRIPLEWORKS_AUTH_CALLBACK"`
 }
 
 func (c *Config) DatabaseConnection() *bun.DB {
