@@ -14,6 +14,12 @@ import (
 	"com.github/davidkleiven/tripleworks/models"
 )
 
+func Assert(ok bool, msg string) {
+	if !ok {
+		panic(msg)
+	}
+}
+
 func Must[T any](v T, err error) T {
 	if err != nil {
 		panic(err)

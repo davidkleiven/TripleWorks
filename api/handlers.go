@@ -106,6 +106,11 @@ func Setup(mux *http.ServeMux, config *pkg.Config) (http.Handler, func() error) 
 		Timeout:          timeout,
 	}
 
+	lineReconnector := LineReconnector{
+		db:      db,
+		Timeout: timeout,
+	}
+
 	actionForm := ActionFormEndpoint{Timeout: timeout}
 
 	ptdfChan := make(chan []pkg.PtdfRecord)
@@ -163,6 +168,7 @@ func Setup(mux *http.ServeMux, config *pkg.Config) (http.Handler, func() error) 
 
 	// Substation connection workkbench
 	mux.Handle("POST /connect/{mrid}", &substationConnector)
+	mux.Handle("POST /move/{mrid}", &lineReconnector)
 	mux.Handle("GET /substation-connector/{mrid}", &substationWorkbench)
 	mux.Handle("/substation-list", &querySub)
 	mux.HandleFunc("/substation-selection", SetSelectedSubstation)

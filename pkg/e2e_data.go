@@ -11,11 +11,20 @@ import (
 	"github.com/google/uuid"
 )
 
-func IdentifiedLine(mrid uuid.UUID, name string) *models.ACLineSegment {
+func IdentifiedLine(mrid uuid.UUID, name string, opts ...func(l *models.ACLineSegment)) *models.ACLineSegment {
 	var line models.ACLineSegment
 	line.Mrid = mrid
 	line.Name = name
+	for _, opt := range opts {
+		opt(&line)
+	}
 	return &line
+}
+
+func WithLineBaseVoltage(bvMrid uuid.UUID) func(l *models.ACLineSegment) {
+	return func(l *models.ACLineSegment) {
+		l.BaseVoltageMrid = bvMrid
+	}
 }
 
 func IdentifiedSubstation(mrid uuid.UUID, name string, opts ...func(s *models.Substation)) *models.Substation {
@@ -129,7 +138,6 @@ func MakeE2eData() *E2EData {
 
 	lineMrid := uuid.MustParse("4e832836-ef53-458e-9711-903982551fcf")
 	bvCMrid := uuid.MustParse("5c9ae4b1-3c5d-4b7a-8f2e-1d6c3a9b4e8f")
-	bvDMrid := uuid.MustParse("6d7bf5c2-4d6e-5c8b-9a3f-2e7d4b0c5f9a")
 	locCMrid := uuid.MustParse("7e8cf6d3-5e7f-6d9c-1b4a-3f8e5c1d6a0b")
 	locDMrid := uuid.MustParse("8f9da7e4-6f8a-7e1d-2c5b-4a9f6d2e7b1c")
 	coordMrid := uuid.MustParse("9a1eb8f5-7b9c-8f2e-3d6c-5b0c7e3f8c2d")
@@ -140,19 +148,18 @@ func MakeE2eData() *E2EData {
 
 	concreteKinds := []models.MridGetter{
 		// e2e test where Sub A is connected to Sub B
-		IdentifiedLine(uuid.MustParse("ce8e57c7-8f6c-42c3-8b8e-e06aa39f0da3"), "Unconnected line"),
+		IdentifiedLine(uuid.MustParse("ce8e57c7-8f6c-42c3-8b8e-e06aa39f0da3"), "Unconnected line", WithLineBaseVoltage(bvCMrid)),
 		IdentifiedSubstation(uuid.MustParse("fed4f58f-199c-43c7-95f1-b353f55ae12c"), "Substation A"),
 		IdentifiedSubstation(uuid.MustParse("8fbd0382-e14c-491b-b4d1-7b2b13be27fb"), "Substation B"),
 
 		// Data for map test
 		IdentifiedBaseVoltage(bvCMrid, "BaseVoltage 138kV", 138000),
-		IdentifiedBaseVoltage(bvDMrid, "BaseVoltage 138kV", 138000),
 		IdentifiedLocation(locCMrid, "Location Sub C", coordMrid),
 		IdentifiedLocation(locDMrid, "Location Sub D", coordMrid),
 		IdentifiedSubstation(subCMrid, "Substation C", WithLocation(locCMrid)),
 		IdentifiedSubstation(subDMrid, "Substation D", WithLocation(locDMrid)),
 		IdentifiedVoltageLevel(vlcMrid, "Vl sub C", WithSubstation(subCMrid), WithBaseVoltage(bvCMrid)),
-		IdentifiedVoltageLevel(vldMrid, "Vl sub D", WithSubstation(subDMrid), WithBaseVoltage(bvDMrid)),
+		IdentifiedVoltageLevel(vldMrid, "Vl sub D", WithSubstation(subDMrid), WithBaseVoltage(bvCMrid)),
 		IdentifiedConnectivityNode(cnCMrid, "Node C", vlcMrid),
 		IdentifiedConnectivityNode(cnDMrid, "Node D", vldMrid),
 		IdentifiedLine(lineMrid, "Connected line"),
