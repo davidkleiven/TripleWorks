@@ -606,7 +606,7 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 
 func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Request) {
 	doCommit := r.URL.Query().Get("commit")
-	triggeredFromHtmx := r.Header.Get(HxTrigger) != ""
+	triggeredFromHtmx := r.Header.Get(HxRequest) != ""
 	modelId := intOrDefault(r.URL.Query().Get("model-id"), 0)
 	slog.Info("Connecting dangling lines", "modelId", modelId)
 	var (

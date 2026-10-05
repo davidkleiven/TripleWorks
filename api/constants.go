@@ -1,5 +1,6 @@
 package api
 
 const (
-	HxTrigger = "HX-Trigger"
+	HxTrigger = "Hx-Trigger"
+	HxRequest = "Hx-Request"
 )
