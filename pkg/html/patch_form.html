@@ -42,9 +42,19 @@
               class="btn btn-success"
               hx-post="/connect-dangling"
               hx-target="#dangling-result"
+              hx-include="#commit-checkbox"
             >
               Connect Dangling
             </button>
+            <label>
+              <input
+                id="commit-checkbox"
+                type="checkbox"
+                name="commit"
+                value="true"
+              />
+              Commit
+            </label>
             <span class="text-muted">Connects dangling lines by name</span>
           </div>
           <div id="dangling-result" class="text-muted small mt-2">Idle</div>
