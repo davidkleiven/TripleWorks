@@ -606,6 +606,9 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 
 func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Request) {
 	doCommit := r.URL.Query().Get("commit")
+	triggeredFromHtmx := r.Header.Get(HxTrigger) != ""
+	modelId := intOrDefault(r.URL.Query().Get("model-id"), 0)
+	slog.Info("Connecting dangling lines", "modelId", modelId)
 	var (
 		substations []models.Substation
 		lines       []models.ACLineSegment
@@ -692,7 +695,19 @@ func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/n-triples")
+	var (
+		counter CallCount
+		cb      func(any) error
+	)
+
+	if triggeredFromHtmx {
+		w.Header().Set("Content-Type", "text/html")
+		cb = counter.Count
+	} else {
+		w.Header().Set("Content-Type", "application/n-triples")
+		cb = writeNTriplesCallback(w)
+	}
+
 	allItems := pkg.Chain(results...)
 	if doCommit == "true" {
 		lineName := ""
@@ -704,7 +719,7 @@ func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Reques
 			Message: msg,
 			Author:  UserFromCtx(r.Context()),
 		}
-		err := pkg.InsertAll(ctx, e.db, commit, allItems, writeNTriplesCallback(w))
+		err := pkg.InsertAll(ctx, e.db, commit, allItems, cb)
 		if err != nil {
 			slog.ErrorContext(ctx, "Could not insert items", "error", err)
 			http.Error(w, "Could not insert items", http.StatusInternalServerError)
@@ -716,7 +731,9 @@ func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Reques
 			writer(item)
 		}
 	}
-
+	if triggeredFromHtmx {
+		fmt.Fprintf(w, "Inserted %d items", counter.Num)
+	}
 }
 
 func (e *EntityStore) ApplyJsonPatch(w http.ResponseWriter, r *http.Request) {
@@ -867,6 +884,15 @@ func writeNTriplesCallback(w io.Writer) func(item any) error {
 		pkg.ExportItem(w, mridGetter)
 		return nil
 	}
+}
+
+type CallCount struct {
+	Num int
+}
+
+func (c *CallCount) Count(_ any) error {
+	c.Num++
+	return nil
 }
 
 func intOrDefault(v string, defaultValue int) int {
