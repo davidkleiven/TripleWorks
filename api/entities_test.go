@@ -690,7 +690,7 @@ func TestConnectDanglingLines(t *testing.T) {
 
 	t.Run("success htmx triggered", func(t *testing.T) {
 		req := httptest.NewRequest("POST", "/connect-dangling", nil)
-		req.Header.Set(HxTrigger, "div-id")
+		req.Header.Set(HxRequest, "1")
 		rec := httptest.NewRecorder()
 		store.ConnectDanglingLines(rec, req)
 		require.Equal(t, rec.Code, http.StatusOK)
