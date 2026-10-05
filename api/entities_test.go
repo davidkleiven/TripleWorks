@@ -688,6 +688,16 @@ func TestConnectDanglingLines(t *testing.T) {
 		require.Equal(t, 2, len(conNodeContainers), "Should be only one connectivity node container")
 	})
 
+	t.Run("success htmx triggered", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/connect-dangling", nil)
+		req.Header.Set(HxTrigger, "div-id")
+		rec := httptest.NewRecorder()
+		store.ConnectDanglingLines(rec, req)
+		require.Equal(t, rec.Code, http.StatusOK)
+		require.Equal(t, rec.Header().Get("Content-Type"), "text/html")
+		require.Contains(t, rec.Body.String(), "Inserted")
+	})
+
 	t.Run("timeout", func(t *testing.T) {
 		originalTimeout := store.timeout
 		store.timeout = time.Nanosecond
