@@ -278,6 +278,21 @@ func TestMoveLine(t *testing.T) {
 		require.Equal(t, seededConNodes+1, countRows(t, store, "connectivity_nodes"))
 	})
 
+	t.Run("keeps the node already in a selected substation", func(t *testing.T) {
+		store := setupStore(t)
+		fx := seedMoveFixture(t, store)
+
+		// Line is at a-b. Selecting a and c must move the b node to c, not
+		// the a node to c (which would leave the line at c-b)
+		move(t, reconnect(store), fx.Line, fx.Substations["a"].String(), fx.Substations["c"].String())
+
+		require.ElementsMatch(t,
+			[]uuid.UUID{fx.Substations["a"], fx.Substations["c"]},
+			lineSubstations(t, store, fx.Line),
+		)
+		require.Equal(t, seededConNodes+1, countRows(t, store, "connectivity_nodes"))
+	})
+
 	t.Run("no inserts when moving to the current substations", func(t *testing.T) {
 		store := setupStore(t)
 		fx := seedMoveFixture(t, store)
