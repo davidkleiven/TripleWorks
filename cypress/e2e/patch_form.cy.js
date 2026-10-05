@@ -20,6 +20,7 @@ describe("can apply json patch", () => {
     cy.wait("@resource").then((inter) => {
       expect(inter.response.statusCode).to.equal(200);
       expect(inter.response.headers["content-type"]).to.equal("text/html");
+      expect(inter.response.body).to.contain("Inserted");
     });
   });
 });
