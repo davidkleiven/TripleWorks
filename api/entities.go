@@ -605,7 +605,6 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Request) {
-	doCommit := r.URL.Query().Get("commit")
 	triggeredFromHtmx := r.Header.Get(HxRequest) != ""
 	modelId := intOrDefault(r.URL.Query().Get("model-id"), 0)
 	slog.Info("Connecting dangling lines", "modelId", modelId)
@@ -614,12 +613,20 @@ func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Reques
 		lines       []models.ACLineSegment
 		terminals   []models.Terminal
 		vls         []models.VoltageLevel
+		doCommit    string
 	)
 
 	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
 	defer cancel()
 
 	failNo, err := pkg.ReturnOnFirstError(
+		func() error {
+			return r.ParseForm()
+		},
+		func() error {
+			doCommit = r.FormValue("commit")
+			return nil
+		},
 		func() error {
 			return e.db.NewSelect().Model(&substations).Scan(ctx)
 		},
