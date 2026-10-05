@@ -606,14 +606,13 @@ func (e *EntityStore) Map(w http.ResponseWriter, r *http.Request) {
 
 func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Request) {
 	triggeredFromHtmx := r.Header.Get(HxRequest) != ""
-	modelId := intOrDefault(r.URL.Query().Get("model-id"), 0)
-	slog.Info("Connecting dangling lines", "modelId", modelId)
 	var (
 		substations []models.Substation
 		lines       []models.ACLineSegment
 		terminals   []models.Terminal
 		vls         []models.VoltageLevel
 		doCommit    string
+		modelId     int
 	)
 
 	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
@@ -628,16 +627,41 @@ func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Reques
 			return nil
 		},
 		func() error {
-			return e.db.NewSelect().Model(&substations).Scan(ctx)
+			modelIdParam := r.FormValue("modelId")
+			modelId = intOrDefault(modelIdParam, 1)
+			return nil
 		},
 		func() error {
-			return e.db.NewSelect().Model(&lines).Scan(ctx)
+			return e.db.NewSelect().
+				Model(&substations).
+				ColumnExpr("substation.*").
+				Join("INNER JOIN entities ON entities.mrid = substation.mrid").
+				Where("entities.model_id = ?", modelId).
+				Scan(ctx)
 		},
 		func() error {
-			return e.db.NewSelect().Model(&terminals).Scan(ctx)
+			return e.db.NewSelect().
+				Model(&lines).
+				ColumnExpr("ac_line_segment.*").
+				Join("INNER JOIN entities ON entities.mrid = ac_line_segment.mrid").
+				Where("entities.model_id = ?", modelId).
+				Scan(ctx)
 		},
 		func() error {
-			return e.db.NewSelect().Model(&vls).Scan(ctx)
+			return e.db.NewSelect().
+				Model(&terminals).
+				ColumnExpr("terminal.*").
+				Join("INNER JOIN entities ON entities.mrid = terminal.mrid").
+				Where("entities.model_id = ?", modelId).
+				Scan(ctx)
+		},
+		func() error {
+			return e.db.NewSelect().
+				Model(&vls).
+				ColumnExpr("voltage_level.*").
+				Join("INNER JOIN entities ON entities.mrid = voltage_level.mrid").
+				Where("entities.model_id = ?", modelId).
+				Scan(ctx)
 		},
 	)
 
@@ -698,7 +722,7 @@ func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Reques
 			if result.VoltageLevel != nil {
 				vlsPerSubstation[sub.Mrid] = append(vlsPerSubstation[sub.Mrid], *result.VoltageLevel)
 			}
-			results = append(results, result.All(0))
+			results = append(results, result.All(modelId))
 		}
 	}
 
@@ -733,9 +757,8 @@ func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Reques
 			return
 		}
 	} else {
-		writer := writeNTriplesCallback(w)
 		for item := range allItems {
-			writer(item)
+			cb(item)
 		}
 	}
 	if triggeredFromHtmx {
