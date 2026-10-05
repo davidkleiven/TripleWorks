@@ -15,9 +15,11 @@ describe("can apply json patch", () => {
 
   it("triggers connect-dangling lines on click", () => {
     cy.visit("/patch-form");
+    cy.get("#model-selection").should("exist");
     cy.intercept("POST", "/connect-dangling").as("resource");
     cy.get("#connect-dangling-lines-btn").click();
     cy.wait("@resource").then((inter) => {
+      expect(inter.request.body).to.contain("modelId=");
       expect(inter.response.statusCode).to.equal(200);
       expect(inter.response.headers["content-type"]).to.equal("text/html");
       expect(inter.response.body).to.contain("Inserted");

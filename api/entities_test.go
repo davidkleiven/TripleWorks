@@ -639,6 +639,31 @@ func TestConnectDanglingLines(t *testing.T) {
 	_, err = store.db.NewInsert().Model(&lines).Exec(ctx)
 	require.NoError(t, err)
 
+	entities := []models.Entity{
+		{
+			Mrid:    bv.Mrid,
+			ModelId: 1,
+		},
+		{
+			Mrid:    line1.Mrid,
+			ModelId: 1,
+		},
+		{
+			Mrid:    line2.Mrid,
+			ModelId: 1,
+		},
+		{
+			Mrid:    substation.Mrid,
+			ModelId: 1,
+		},
+		{
+			Mrid:    substationTrd.Mrid,
+			ModelId: 1,
+		},
+	}
+	_, err = store.db.NewInsert().Model(&entities).Exec(ctx)
+	require.NoError(t, err)
+
 	t.Run("success", func(t *testing.T) {
 		req := httptest.NewRequest("POST", "/connect-dangling", nil)
 		rec := httptest.NewRecorder()

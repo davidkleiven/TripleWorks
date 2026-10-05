@@ -1,6 +1,6 @@
 module com.github/davidkleiven/tripleworks
 
-go 1.26.6
+go 1.27.0
 
 require (
 	cloud.google.com/go/storage v1.68.0
