@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"iter"
 	"log/slog"
@@ -228,8 +229,9 @@ type ConnectivityNodeToMove struct {
 }
 
 type ConNodeMoveCtx struct {
-	ToMove   []ConnectivityNodeToMove
-	Original []models.ConnectivityNode
+	ToMove               []ConnectivityNodeToMove
+	Original             []models.ConnectivityNode
+	RequestedSubstations map[uuid.UUID]struct{}
 }
 
 type LineReconnector struct {
@@ -246,10 +248,17 @@ func (l *LineReconnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Map(func(bool) []string {
 			return r.PostForm["substation-mrid"]
 		}).
-		Apply(func(substations []string) ([]ConnectivityNodeToMove, error) {
-			if len(substations) == 0 {
-				return nil, nil
+		Apply(func(substations []string) ([]uuid.UUID, error) {
+			result := make([]uuid.UUID, 0, len(substations))
+			var combinedErr error
+			for _, substation := range substations {
+				id, err := uuid.Parse(substation)
+				combinedErr = errors.Join(combinedErr, err)
+				result = append(result, id)
 			}
+			return result, combinedErr
+		}).
+		Apply(func(substations []uuid.UUID) (ConNodeMoveCtx, error) {
 			var conNodesToMove []ConnectivityNodeToMove
 			err := l.db.NewSelect().
 				TableExpr("v_ac_line_segments_latest as lines").
@@ -262,12 +271,15 @@ func (l *LineReconnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				Where("lines.mrid = ?", lineMrid).
 				Where("v_new.substation_mrid IN (?)", bun.List(substations)).
 				Scan(ctx, &conNodesToMove)
-			return conNodesToMove, err
-		}).
-		Apply(func(toMove []ConnectivityNodeToMove) (ConNodeMoveCtx, error) {
-			if len(toMove) == 0 {
-				return ConNodeMoveCtx{}, nil
+
+			requestedSubstations := make(map[uuid.UUID]struct{})
+			for _, substation := range substations {
+				requestedSubstations[substation] = struct{}{}
 			}
+			return ConNodeMoveCtx{ToMove: conNodesToMove, RequestedSubstations: requestedSubstations}, err
+		}).
+		Apply(func(moveCtx ConNodeMoveCtx) (ConNodeMoveCtx, error) {
+			toMove := moveCtx.ToMove
 			mrids := make([]string, 0, len(toMove))
 			seen := make(map[string]struct{})
 			for _, item := range toMove {
@@ -279,10 +291,8 @@ func (l *LineReconnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			var conNodes []models.ConnectivityNode
 			err := l.db.NewSelect().TableExpr("v_connectivity_nodes_latest").Where("mrid IN (?)", bun.List(mrids)).Scan(ctx, &conNodes)
-			return ConNodeMoveCtx{
-				ToMove:   toMove,
-				Original: conNodes,
-			}, err
+			moveCtx.Original = conNodes
+			return moveCtx, err
 
 		})
 
@@ -292,24 +302,36 @@ func (l *LineReconnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Remove cases where candidate substation is among one of current substations
+	// currentSubstations: substations occupied by an end of the line, either
+	// originally or because a node was just placed there. dontMove: nodes that
+	// stay where they are, either because they already sit in a requested
+	// substation or because they were moved earlier in this request
 	currentSubstations := make(map[uuid.UUID]struct{})
+	dontMove := make(map[uuid.UUID]struct{})
 	for _, toMove := range conNodesToMove.Value.ToMove {
 		currentSubstations[toMove.CurrentSubMrid] = struct{}{}
+
+		if _, ok := conNodesToMove.Value.RequestedSubstations[toMove.CurrentSubMrid]; ok {
+			// Node already sits in one of the substations the user picked,
+			// so leave it there
+			dontMove[toMove.Mrid] = struct{}{}
+		}
 	}
 
 	byMrids := pkg.IndexBy(conNodesToMove.Value.Original, func(c models.ConnectivityNode) uuid.UUID { return c.Mrid })
 
-	movedNodes := make(map[uuid.UUID]struct{})
 	newConNodes := make([]models.ConnectivityNode, 0, len(byMrids))
+	movedCnNames := make([]string, 0, len(byMrids))
 	for _, move := range conNodesToMove.Value.ToMove {
 		if _, ok := currentSubstations[move.SubstationMrid]; ok {
 			// Substation is already one of the ends of the line. A line should
 			// never connect the same substation twice
 			continue
 		}
-		if _, ok := movedNodes[move.Mrid]; ok {
-			// Connectivity node already has a new home in this request
+
+		if _, ok := dontMove[move.Mrid]; ok {
+			// Node is already where it should end up: left in place or moved
+			// earlier in this request
 			continue
 		}
 
@@ -318,8 +340,9 @@ func (l *LineReconnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		node.Id = 0
 		node.ConnectivityNodeContainerMrid = move.VoltageLevelMrid
 		currentSubstations[move.SubstationMrid] = struct{}{}
-		movedNodes[move.Mrid] = struct{}{}
+		dontMove[move.Mrid] = struct{}{}
 		newConNodes = append(newConNodes, node)
+		movedCnNames = append(movedCnNames, node.Name)
 	}
 
 	if len(newConNodes) == 0 {
@@ -328,7 +351,7 @@ func (l *LineReconnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	commit := models.Commit{
-		Message: fmt.Sprintf("Move %d connectivity nodes to new substations", len(newConNodes)),
+		Message: fmt.Sprintf("Move %s connectivity nodes to new substations", strings.Join(movedCnNames, ", ")),
 		Author:  UserFromCtx(ctx),
 	}
 	items := func(yield func(v any) bool) {
