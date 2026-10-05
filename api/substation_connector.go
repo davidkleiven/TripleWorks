@@ -15,6 +15,8 @@ import (
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/pkg"
 	"com.github/davidkleiven/tripleworks/repository"
+	"github.com/google/uuid"
+	"github.com/uptrace/bun"
 )
 
 type SubstationConnectorBody struct {
@@ -216,4 +218,131 @@ func SetSelectedSubstation(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 
 	fmt.Fprintf(w, `<span class="tag is-primary is-light">%s</span><span class="is-size-7 has-text-grey-light">%s</span><input name="substation-mrid" type="hidden" value="%s"/>`, name, mrid, mrid)
+}
+
+type ConnectivityNodeToMove struct {
+	Mrid             uuid.UUID `bun:"mrid"`
+	VoltageLevelMrid uuid.UUID `bun:"vl_mrid"`
+	SubstationMrid   uuid.UUID `bun:"substation_mrid"`
+	CurrentSubMrid   uuid.UUID `bun:"current_substation_mrid"`
+}
+
+type ConNodeMoveCtx struct {
+	ToMove   []ConnectivityNodeToMove
+	Original []models.ConnectivityNode
+}
+
+type LineReconnector struct {
+	db      *bun.DB
+	Timeout time.Duration
+}
+
+func (l *LineReconnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), l.Timeout)
+	defer cancel()
+	lineMrid := r.PathValue("mrid")
+
+	conNodesToMove := pkg.Result[bool]{Err: r.ParseForm()}.
+		Map(func(bool) []string {
+			return r.PostForm["substation-mrid"]
+		}).
+		Apply(func(substations []string) ([]ConnectivityNodeToMove, error) {
+			if len(substations) == 0 {
+				return nil, nil
+			}
+			var conNodesToMove []ConnectivityNodeToMove
+			err := l.db.NewSelect().
+				TableExpr("v_ac_line_segments_latest as lines").
+				ColumnExpr("c.mrid, v_new.mrid as vl_mrid, v_new.substation_mrid, v.substation_mrid as current_substation_mrid").
+				Join("INNER JOIN v_terminals_latest t ON t.conducting_equipment_mrid = lines.mrid").
+				Join("INNER JOIN v_connectivity_nodes_latest c ON t.connectivity_node_mrid = c.mrid").
+				Join("INNER JOIN v_voltage_levels_latest v ON c.connectivity_node_container_mrid = v.mrid").
+				Join("INNER JOIN v_substations_latest s ON v.substation_mrid = s.mrid").
+				Join("INNER JOIN v_voltage_levels_latest v_new ON v_new.base_voltage_mrid = lines.base_voltage_mrid").
+				Where("lines.mrid = ?", lineMrid).
+				Where("v_new.substation_mrid IN (?)", bun.List(substations)).
+				Scan(ctx, &conNodesToMove)
+			return conNodesToMove, err
+		}).
+		Apply(func(toMove []ConnectivityNodeToMove) (ConNodeMoveCtx, error) {
+			if len(toMove) == 0 {
+				return ConNodeMoveCtx{}, nil
+			}
+			mrids := make([]string, 0, len(toMove))
+			seen := make(map[string]struct{})
+			for _, item := range toMove {
+				if _, ok := seen[item.Mrid.String()]; !ok {
+					mrids = append(mrids, item.Mrid.String())
+					seen[item.Mrid.String()] = struct{}{}
+				}
+			}
+
+			var conNodes []models.ConnectivityNode
+			err := l.db.NewSelect().TableExpr("v_connectivity_nodes_latest").Where("mrid IN (?)", bun.List(mrids)).Scan(ctx, &conNodes)
+			return ConNodeMoveCtx{
+				ToMove:   toMove,
+				Original: conNodes,
+			}, err
+
+		})
+
+	if conNodesToMove.Err != nil {
+		slog.Error("Could not find connectivity nodes to move", "error", conNodesToMove.Err)
+		http.Error(w, "Could not move connectivity nodes: "+conNodesToMove.Err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Remove cases where candidate substation is among one of current substations
+	currentSubstations := make(map[uuid.UUID]struct{})
+	for _, toMove := range conNodesToMove.Value.ToMove {
+		currentSubstations[toMove.CurrentSubMrid] = struct{}{}
+	}
+
+	byMrids := pkg.IndexBy(conNodesToMove.Value.Original, func(c models.ConnectivityNode) uuid.UUID { return c.Mrid })
+
+	movedNodes := make(map[uuid.UUID]struct{})
+	newConNodes := make([]models.ConnectivityNode, 0, len(byMrids))
+	for _, move := range conNodesToMove.Value.ToMove {
+		if _, ok := currentSubstations[move.SubstationMrid]; ok {
+			// Substation is already one of the ends of the line. A line should
+			// never connect the same substation twice
+			continue
+		}
+		if _, ok := movedNodes[move.Mrid]; ok {
+			// Connectivity node already has a new home in this request
+			continue
+		}
+
+		node, ok := byMrids[move.Mrid]
+		pkg.Assert(ok, "Connectivity node must be present")
+		node.Id = 0
+		node.ConnectivityNodeContainerMrid = move.VoltageLevelMrid
+		currentSubstations[move.SubstationMrid] = struct{}{}
+		movedNodes[move.Mrid] = struct{}{}
+		newConNodes = append(newConNodes, node)
+	}
+
+	if len(newConNodes) == 0 {
+		w.Write([]byte("Nothing to move"))
+		return
+	}
+
+	commit := models.Commit{
+		Message: fmt.Sprintf("Move %d connectivity nodes to new substations", len(newConNodes)),
+		Author:  UserFromCtx(ctx),
+	}
+	items := func(yield func(v any) bool) {
+		for i := range newConNodes {
+			if !yield(&newConNodes[i]) {
+				return
+			}
+		}
+	}
+	if err := pkg.InsertAll(ctx, l.db, commit, items, pkg.NoOpOnInsert); err != nil {
+		slog.ErrorContext(ctx, "Could not move connectivity nodes", "error", err, "num", len(newConNodes))
+		http.Error(w, "Could not move connectivity nodes: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	slog.InfoContext(ctx, "Updated voltage levels for connectivity nodes", "num", len(newConNodes))
+	fmt.Fprintf(w, "Successfully moved %d connectivity nodes", len(newConNodes))
 }

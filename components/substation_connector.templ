@@ -31,6 +31,14 @@ templ SubstationConnectionWorkbench(p SubstationSelectorParams) {
 			hx-target="#status-message"
 			hx-swap="innerHTML"
 		>Connect</button>
+		<button
+			id="move-substations-btn"
+			class="button is-primary ml-2"
+			hx-post={ "/move/" + p.LineMrid }
+			hx-include={"[name='substation-mrid']" }
+			hx-target="#status-message"
+			hx-swap="innerHTML"
+		>Move</button>
 	</div>
 }
 

@@ -2,15 +2,18 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"com.github/davidkleiven/tripleworks/models"
+	"com.github/davidkleiven/tripleworks/pkg"
 	"com.github/davidkleiven/tripleworks/repository"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -105,6 +108,9 @@ func TestSubstationConnectorWorkbench(t *testing.T) {
 		req := httptest.NewRequest("GET", "/wb/"+items[0].Mrid.String(), nil)
 		mux.ServeHTTP(rec, req)
 		require.Equal(t, http.StatusOK, rec.Code)
+		require.Contains(t, rec.Body.String(), "id=\"connect-substations-btn\"")
+		require.Contains(t, rec.Body.String(), "id=\"move-substations-btn\"")
+		require.Contains(t, rec.Body.String(), "/move/"+items[0].Mrid.String())
 	})
 
 	t.Run("failure on unknown component", func(t *testing.T) {
@@ -221,4 +227,162 @@ func TestSubstationConnector(t *testing.T) {
 		require.Contains(t, rec.Body.String(), "Could not connect")
 	})
 
+}
+
+func TestMoveLine(t *testing.T) {
+	reconnect := func(store *EntityStore) *http.ServeMux {
+		mux := http.NewServeMux()
+		mux.Handle("/move/{mrid}", &LineReconnector{db: store.db, Timeout: time.Second})
+		return mux
+	}
+	move := func(t *testing.T, mux *http.ServeMux, line uuid.UUID, substations ...string) *httptest.ResponseRecorder {
+		form := url.Values{}
+		for _, substation := range substations {
+			form.Add("substation-mrid", substation)
+		}
+		req := httptest.NewRequest("POST", "/move/"+line.String(), bytes.NewBufferString(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+		return rec
+	}
+
+	t.Run("moves both connectivity nodes", func(t *testing.T) {
+		store := setupStore(t)
+		fx := seedMoveFixture(t, store)
+
+		move(t, reconnect(store), fx.Line, fx.Substations["c"].String(), fx.Substations["d"].String())
+
+		require.ElementsMatch(t,
+			[]uuid.UUID{fx.Substations["c"], fx.Substations["d"]},
+			lineSubstations(t, store, fx.Line),
+		)
+		require.Equal(t, seededConNodes+2, countRows(t, store, "connectivity_nodes"))
+		require.Equal(t, 2, countRows(t, store, "commits"))
+	})
+
+	t.Run("moves only one connectivity node", func(t *testing.T) {
+		store := setupStore(t)
+		fx := seedMoveFixture(t, store)
+
+		move(t, reconnect(store), fx.Line, fx.Substations["c"].String())
+
+		spans := lineSubstations(t, store, fx.Line)
+		require.Len(t, spans, 2)
+		require.Contains(t, spans, fx.Substations["c"])
+		stayed := slices.DeleteFunc(slices.Clone(spans), func(m uuid.UUID) bool {
+			return m == fx.Substations["c"]
+		})
+		require.Subset(t, []uuid.UUID{fx.Substations["a"], fx.Substations["b"]}, stayed)
+		require.Equal(t, seededConNodes+1, countRows(t, store, "connectivity_nodes"))
+	})
+
+	t.Run("no inserts when moving to the current substations", func(t *testing.T) {
+		store := setupStore(t)
+		fx := seedMoveFixture(t, store)
+
+		rec := move(t, reconnect(store), fx.Line, fx.Substations["a"].String(), fx.Substations["b"].String())
+		require.Contains(t, rec.Body.String(), "Nothing to move")
+
+		require.ElementsMatch(t,
+			[]uuid.UUID{fx.Substations["a"], fx.Substations["b"]},
+			lineSubstations(t, store, fx.Line),
+		)
+		require.Equal(t, seededConNodes, countRows(t, store, "connectivity_nodes"))
+		require.Equal(t, 1, countRows(t, store, "commits"))
+	})
+
+	t.Run("line never connects the same substation", func(t *testing.T) {
+		store := setupStore(t)
+		fx := seedMoveFixture(t, store)
+
+		substation := fx.Substations["c"].String()
+		move(t, reconnect(store), fx.Line, substation, substation)
+
+		spans := lineSubstations(t, store, fx.Line)
+		require.Len(t, spans, 2)
+		require.Contains(t, spans, fx.Substations["c"])
+		require.NotEqual(t, spans[0], spans[1], "Both ends of the line are at the same substation")
+		require.Equal(t, seededConNodes+1, countRows(t, store, "connectivity_nodes"))
+	})
+}
+
+// moveFixture is a line connected between substation "a" and "b" with
+// substation "c" and "d" available as move targets
+type moveFixture struct {
+	Line        uuid.UUID
+	Substations map[string]uuid.UUID
+}
+
+const seededConNodes = 2
+
+func seedMoveFixture(t *testing.T, store *EntityStore) moveFixture {
+	t.Helper()
+	ctx := context.Background()
+
+	var (
+		bv   models.BaseVoltage
+		line models.ACLineSegment
+		fx   = moveFixture{Substations: map[string]uuid.UUID{}}
+	)
+
+	bv.Mrid = uuid.New()
+	bv.NominalVoltage = 132
+	line.Mrid = uuid.New()
+	line.BaseVoltageMrid = bv.Mrid
+	fx.Line = line.Mrid
+
+	items := []any{&bv}
+	voltageLevels := map[string]uuid.UUID{}
+	for _, name := range []string{"a", "b", "c", "d"} {
+		sub := models.Substation{Mrid: uuid.New(), Name: "Substation " + strings.ToUpper(name)}
+		vl := models.VoltageLevel{Mrid: uuid.New(), BaseVoltageMrid: bv.Mrid, SubstationMrid: sub.Mrid}
+
+		fx.Substations[name] = sub.Mrid
+		voltageLevels[name] = vl.Mrid
+		items = append(items, &sub, &vl)
+	}
+
+	conNodeA := models.ConnectivityNode{Mrid: uuid.New(), ConnectivityNodeContainerMrid: voltageLevels["a"]}
+	conNodeB := models.ConnectivityNode{Mrid: uuid.New(), ConnectivityNodeContainerMrid: voltageLevels["b"]}
+
+	t1 := models.Terminal{
+		Mrid:                    uuid.New(),
+		SequenceNumber:          1,
+		ConductingEquipmentMrid: line.Mrid,
+		ConnectivityNodeMrid:    conNodeA.Mrid,
+	}
+	t2 := models.Terminal{
+		Mrid:                    uuid.New(),
+		SequenceNumber:          2,
+		ConductingEquipmentMrid: line.Mrid,
+		ConnectivityNodeMrid:    conNodeB.Mrid,
+	}
+
+	items = append(items, &line, &conNodeA, &conNodeB, &t1, &t2)
+	require.NoError(t, pkg.InsertAll(ctx, store.db, models.Commit{Message: "Seed move fixture"}, slices.Values(items), pkg.NoOpOnInsert))
+	return fx
+}
+
+func lineSubstations(t *testing.T, store *EntityStore, line uuid.UUID) []uuid.UUID {
+	t.Helper()
+	var mrids []uuid.UUID
+	err := store.db.NewSelect().
+		TableExpr("v_terminals_latest t").
+		ColumnExpr("s.mrid as substation_mrid").
+		Join("INNER JOIN v_connectivity_nodes_latest c ON t.connectivity_node_mrid = c.mrid").
+		Join("INNER JOIN v_voltage_levels_latest v ON c.connectivity_node_container_mrid = v.mrid").
+		Join("INNER JOIN v_substations_latest s ON v.substation_mrid = s.mrid").
+		Where("t.conducting_equipment_mrid = ?", line).
+		Scan(context.Background(), &mrids)
+	require.NoError(t, err)
+	return mrids
+}
+
+func countRows(t *testing.T, store *EntityStore, table string) int {
+	t.Helper()
+	count, err := store.db.NewSelect().TableExpr(table).Count(context.Background())
+	require.NoError(t, err)
+	return count
 }
