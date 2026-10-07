@@ -20,6 +20,7 @@ templ SimplePage() {
 				<div hx-get="/models" hx-trigger="load"></div>
 			</div>
 			@LineCard()
+			@SubstationCard()
 		</div>
 		@PageScript()
 	</body>
@@ -54,9 +55,42 @@ templ LineCard() {
 	</div>
 }
 
+templ SubstationCard() {
+	<div class="card mb-3">
+		<div class="card-header">
+			<div class="card-title">New substation</div>
+		</div>
+		<div class="card-body">
+			<form id="substation-form">
+				<div class="mb-3">
+					<label class="form-label" for="name-input">Name</label>
+					<input type="text" class="form-control" id="name-input" name="name" required/>
+				</div>
+				<div class="mb-3">
+					<label class="form-label" for="region-input">Region</label>
+					<input type="text" class="form-control" id="region-input" name="region" required/>
+				</div>
+				<div class="mb-3">
+					<label class="form-label" for="long-input">Longitude</label>
+					<input type="number" step="0.01" class="form-control" id="long-input" name="x" required/>
+				</div>
+				<div class="mb-3">
+					<label class="form-label" for="lat-input">Latitude</label>
+					<input type="number" step="0.01" class="form-control" id="lat-input" name="y" required/>
+				</div>
+				<button id="submit-substation" class="btn btn-primary w-100" type="submit">Submit</button>
+			</form>
+		</div>
+	</div>
+}
+
 templ PageScript() {
 	<script>
-		const endPointMap = new Map([["line-form", "/upload/lines"]]);
+		const endPointMap = new Map([
+			["line-form", "/upload/lines"],
+			["substation-form", "/upload/substations"],
+		]);
+		const numberFields = ["length", "voltage", "x", "y"];
 
 		function setStatus(text) {
 			document.getElementById("status-bar").textContent = text;
@@ -65,8 +99,10 @@ templ PageScript() {
 			const form = document.getElementById(formId);
 			const formData = new FormData(form);
 			const data = Object.fromEntries(formData.entries());
-			for (const key of ["length", "voltage"]) {
-				data[key] = Number(data[key]);
+			for (const key of numberFields) {
+				if (key in data) {
+					data[key] = Number(data[key]);
+				}
 			}
 			const jsonPayload = JSON.stringify(data) + "\n";
 			try {
@@ -94,5 +130,12 @@ templ PageScript() {
 			e.preventDefault();
 			submitFormAsJsonl("line-form");
 		});
+
+		document
+			.getElementById("substation-form")
+			.addEventListener("submit", (e) => {
+				e.preventDefault();
+				submitFormAsJsonl("substation-form");
+			});
 	</script>
 }
