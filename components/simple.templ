@@ -9,11 +9,16 @@ templ SimplePage() {
 			rel="stylesheet"
 			href="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/css/tabler.min.css"
 		/>
+		<script src="https://unpkg.com/htmx.org@2.0.7"></script>
 	</head>
 	<body>
 		<div class="container-xl mt3">
 			<h1 class="h2 mb-3">Simple object creator</h1>
 			<div id="status-bar">Idle</div>
+			<div class="mb-3">
+				<label class="form-label" for="model-selection">Model</label>
+				<div hx-get="/models" hx-trigger="load"></div>
+			</div>
 			@LineCard()
 		</div>
 		@PageScript()
@@ -67,6 +72,8 @@ templ PageScript() {
 			try {
 				const url = new URL(endPointMap.get(formId), location.href);
 				url.searchParams.set("commit", "true");
+				const modelId = document.getElementById("model-selection")?.value;
+				if (modelId) url.searchParams.set("modelId", modelId);
 				const resp = await fetch(url, {
 					method: "POST",
 					headers: { "Content-Type": "application/x-ndjson" },

@@ -292,7 +292,7 @@ func (e *EntityStore) SimpleUpload(w http.ResponseWriter, r *http.Request) {
 	hundredMb := int64(100 << 20)
 	kind := r.PathValue("kind")
 	doCommit := r.URL.Query().Get("commit")
-	modelId := intOrDefault(r.URL.Query().Get("model-id"), 0)
+	modelId := intOrDefault(r.URL.Query().Get("modelId"), 0)
 
 	r.Body = http.MaxBytesReader(w, r.Body, hundredMb)
 	defer r.Body.Close()
