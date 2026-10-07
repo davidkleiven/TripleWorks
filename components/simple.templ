@@ -65,7 +65,8 @@ templ PageScript() {
 			}
 			const jsonPayload = JSON.stringify(data) + "\n";
 			try {
-				const url = endPointMap.get(formId);
+				const url = new URL(endPointMap.get(formId), location.href);
+				url.searchParams.set("commit", "true");
 				const resp = await fetch(url, {
 					method: "POST",
 					headers: { "Content-Type": "application/x-ndjson" },
