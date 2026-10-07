@@ -16,9 +16,9 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/parquet-go/parquet-go v0.32.0
 	github.com/stretchr/testify v1.12.1
-	github.com/uptrace/bun v1.2.18
+	github.com/uptrace/bun v1.3.0
 	github.com/uptrace/bun/dialect/pgdialect v1.2.18
-	github.com/uptrace/bun/dialect/sqlitedialect v1.2.18
+	github.com/uptrace/bun/dialect/sqlitedialect v1.3.0
 	golang.org/x/sync v0.23.0
 	gonum.org/v1/gonum v0.17.0
 	gonum.org/v1/plot v0.17.0
