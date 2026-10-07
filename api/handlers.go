@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"com.github/davidkleiven/tripleworks/components"
 	"com.github/davidkleiven/tripleworks/migrations"
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/pkg"
@@ -180,6 +181,9 @@ func Setup(mux *http.ServeMux, config *pkg.Config) (http.Handler, func() error) 
 	mux.HandleFunc("/auth/{provider}", HandleSignIn)
 	mux.HandleFunc("/auth/{provider}/callback", MakeHandleAuthCallback(gothic.CompleteUserAuth, userStore, auth.JwtSecret, auth.JwtTtl))
 	mux.Handle("/patch-form", http.HandlerFunc(PatchForm))
+	mux.HandleFunc("/simple", func(w http.ResponseWriter, r *http.Request) {
+		pkg.LogIfError("Render simple page", components.SimplePage().Render(r.Context(), w))
+	})
 
 	// Trigger the ptdf updater on startup
 	return userIdentifier(mux), func() error {
