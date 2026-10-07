@@ -3,7 +3,7 @@ COVEROUT ?= coverage.html
 .PHONY: build-templates e2e-cleanup release
 
 build-templates:
-	templ generate
+	go tool templ generate
 
 test: build-templates
 	go test -failfast -coverprofile=coverage.out -covermode=atomic ./...
