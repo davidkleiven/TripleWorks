@@ -1,0 +1,90 @@
+package components
+
+templ SimplePage() {
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<title>TripleWorks Simple Editor</title>
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/css/tabler.min.css"
+		/>
+	</head>
+	<body>
+		<div class="container-xl mt3">
+			<h1 class="h2 mb-3">Simple object creator</h1>
+			<div id="status-bar">Idle</div>
+			@LineCard()
+		</div>
+		@PageScript()
+	</body>
+}
+
+templ LineCard() {
+	<div class="card mb-3">
+		<div class="card-header">
+			<div class="card-title">New Line</div>
+		</div>
+		<div class="card-body">
+			<form id="line-form">
+				<div class="mb-3">
+					<label class="form-label" for="from-input">From substation</label>
+					<input type="text" class="form-control" id="from-input" name="from" required/>
+				</div>
+				<div class="mb-3">
+					<label class="form-label" for="to-input">To substation</label>
+					<input type="text" class="form-control" id="to-input" name="to" required/>
+				</div>
+				<div class="mb-3">
+					<label class="form-label" for="length-input">Length (km)</label>
+					<input type="number" class="form-control" id="length-input" name="length" required/>
+				</div>
+				<div class="mb-3">
+					<label class="form-label" for="voltage-input">Voltage (kV)</label>
+					<input type="number" class="form-control" id="voltage-input" name="voltage" required/>
+				</div>
+				<button id="submit-line" class="btn btn-primary w-100" type="submit">Submit</button>
+			</form>
+		</div>
+	</div>
+}
+
+templ PageScript() {
+	<script>
+		const endPointMap = new Map([["line-form", "/upload/lines"]]);
+
+		function setStatus(text) {
+			document.getElementById("status-bar").textContent = text;
+		}
+		async function submitFormAsJsonl(formId) {
+			const form = document.getElementById(formId);
+			const formData = new FormData(form);
+			const data = Object.fromEntries(formData.entries());
+			for (const key of ["length", "voltage"]) {
+				data[key] = Number(data[key]);
+			}
+			const jsonPayload = JSON.stringify(data) + "\n";
+			try {
+				const url = endPointMap.get(formId);
+				const resp = await fetch(url, {
+					method: "POST",
+					headers: { "Content-Type": "application/x-ndjson" },
+					body: jsonPayload,
+				});
+				const text = await resp.text();
+				if (resp.ok) {
+					setStatus("Successfully created item");
+				} else {
+					setStatus(text);
+				}
+			} catch (e) {
+				console.log(e);
+				setStatus(String(e));
+			}
+		}
+		document.getElementById("line-form").addEventListener("submit", (e) => {
+			e.preventDefault();
+			submitFormAsJsonl("line-form");
+		});
+	</script>
+}
