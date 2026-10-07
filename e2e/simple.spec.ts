@@ -39,4 +39,23 @@ test.describe("simple line page", () => {
     // The line name is derived from the substation pair and the voltage.
     expect(await lines.text()).toContain("Substation A-Substation B (400 kV)");
   });
+
+  test("creates substations", async ({ page, request }) => {
+    await page.goto("/simple");
+    await expect(page.locator("#status-bar")).toHaveText("Idle");
+
+    const upload = responseFor(page, "POST", /\/upload\/substations.*/);
+    await page.selectOption("#model-selection", "1");
+    await page.fill("#name-input", "New substation");
+    await page.fill("#region-input", "NO2");
+    await page.fill("#long-input", "56.23");
+    await page.fill("#lat-input", "6.27");
+    await page.click("#submit-substation");
+
+    const response = await upload;
+    expect(response.status()).toBe(200);
+    const lines = await request.get("/entities?kind=Substation");
+    expect(lines.status()).toBe(200);
+    expect(await lines.text()).toContain("New substation");
+  });
 });
