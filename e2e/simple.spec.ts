@@ -7,6 +7,7 @@ test.describe("simple line page", () => {
     await expect(page.locator("#status-bar")).toHaveText("Idle");
 
     const upload = responseFor(page, "POST", /\/upload\/lines.*/);
+    await page.selectOption("#model-selection", "1");
     await page.fill("#from-input", "Substation A");
     await page.fill("#to-input", "Substation B");
     await page.fill("#length-input", "10");
@@ -15,6 +16,9 @@ test.describe("simple line page", () => {
 
     const response = await upload;
     expect(response.status()).toBe(200);
+
+    // The chosen model travels as a query parameter, next to commit.
+    expect(new URL(response.url()).searchParams.get("modelId")).toBe("1");
 
     // The page posts a single ndjson record, so assert on the decoded payload
     // instead of matching raw text.
