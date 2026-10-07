@@ -2,11 +2,11 @@ import { expect, test } from "@playwright/test";
 import { responseFor } from "./helpers";
 
 test.describe("simple line page", () => {
-  test("creates a line and reports success", async ({ page }) => {
+  test("creates a line and reports success", async ({ page, request }) => {
     await page.goto("/simple");
     await expect(page.locator("#status-bar")).toHaveText("Idle");
 
-    const upload = responseFor(page, "POST", /^\/upload\/lines/);
+    const upload = responseFor(page, "POST", /\/upload\/lines.*/);
     await page.fill("#from-input", "Substation A");
     await page.fill("#to-input", "Substation B");
     await page.fill("#length-input", "10");
@@ -27,5 +27,12 @@ test.describe("simple line page", () => {
     });
 
     await expect(page.locator("#status-bar")).toContainText("Successfully");
+
+    // A 200 only proves the upload was accepted; the line is only persisted
+    // when the request carries commit=true, so look it up afterwards.
+    const lines = await request.get("/entities?kind=ACLineSegment");
+    expect(lines.status()).toBe(200);
+    // The line name is derived from the substation pair and the voltage.
+    expect(await lines.text()).toContain("Substation A-Substation B (400 kV)");
   });
 });
