@@ -8,6 +8,9 @@ updates:
       prefix: 'fix'
       include: 'scope'
   open-pull-requests-limit: 10
+  groups:
+    all-go-updates:
+      patterns: ["*"]
 - package-ecosystem: "github-actions"
   directory: "/"
   schedule:
@@ -21,3 +24,6 @@ updates:
     include: 'scope'
   open-pull-requests-limit: 10
   versioning-strategy: increase
+  groups:
+    all-npm-updates:
+      patterns: ["*"]
