@@ -702,7 +702,7 @@ func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Reques
 	assignments := make([][]int, 0, len(danglingLines))
 
 	// Exact matches: both ends are recoverable from the name.
-	var fuzzyLines []models.ACLineSegment
+	fuzzyLines := make([]models.ACLineSegment, 0, len(danglingLines))
 	fuzzyNames := make([]string, 0, len(danglingLines))
 	for _, line := range danglingLines {
 		if ends, ok := pkg.SplitEnds(line.Name, substationIndex); ok {
