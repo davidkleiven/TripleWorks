@@ -396,7 +396,7 @@ func (e *EntityStore) Commits(w http.ResponseWriter, r *http.Request) {
 	triggeredByHtmx := r.Header.Get(HxRequest) != ""
 
 	var commits []models.Commit
-	err := e.db.NewSelect().Model(&commits).OrderBy("createdTime", bun.OrderDesc).Scan(ctx)
+	err := e.db.NewSelect().Model(&commits).OrderBy("created_at", bun.OrderDesc).Scan(ctx)
 	if err != nil {
 		slog.ErrorContext(ctx, "Could not fetch commits", "error", err)
 		http.Error(w, "Could not fetch commits: "+err.Error(), http.StatusInternalServerError)
