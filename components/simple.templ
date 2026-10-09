@@ -51,6 +51,13 @@ templ LineCard() {
 				</div>
 				<button id="submit-line" class="btn btn-primary w-100" type="submit">Submit</button>
 			</form>
+			<hr/>
+			<label class="form-label" for="line-file">Upload many from file</label>
+			<input type="file" id="line-file" class="form-control" accept=".jsonl,.ndjson"/>
+			<div class="form-hint">
+				One JSON record per line, e.g.
+				<code>{`{"from":"Substation A","to":"Substation B","length":10,"voltage":400}`}</code>
+			</div>
 		</div>
 	</div>
 }
@@ -80,6 +87,13 @@ templ SubstationCard() {
 				</div>
 				<button id="submit-substation" class="btn btn-primary w-100" type="submit">Submit</button>
 			</form>
+			<hr/>
+			<label class="form-label" for="substation-file">Upload many from file</label>
+			<input type="file" id="substation-file" class="form-control" accept=".jsonl,.ndjson"/>
+			<div class="form-hint">
+				One JSON record per line, e.g.
+				<code>{`{"name":"Substation C","region":"NO2","x":10.5,"y":60.1}`}</code>
+			</div>
 		</div>
 	</div>
 }
@@ -88,14 +102,38 @@ templ PageScript() {
 	<script>
 		const endPointMap = new Map([
 			["line-form", "/upload/lines"],
+			["line-file", "/upload/lines"],
 			["substation-form", "/upload/substations"],
+			["substation-file", "/upload/substations"],
 		]);
 		const numberFields = ["length", "voltage", "x", "y"];
 
 		function setStatus(text) {
 			document.getElementById("status-bar").textContent = text;
 		}
-		async function submitFormAsJsonl(formId) {
+		async function post(endpoint, jsonl, successText) {
+			try {
+				const url = new URL(endpoint, location.href);
+				url.searchParams.set("commit", "true");
+				const modelId = document.getElementById("model-selection")?.value;
+				if (modelId) url.searchParams.set("modelId", modelId);
+				const resp = await fetch(url, {
+					method: "POST",
+					headers: { "Content-Type": "application/x-ndjson" },
+					body: jsonl,
+				});
+				const text = await resp.text();
+				if (resp.ok) {
+					setStatus(successText);
+				} else {
+					setStatus(text);
+				}
+			} catch (e) {
+				console.log(e);
+				setStatus(String(e));
+			}
+		}
+		function submitFormAsJsonl(formId) {
 			const form = document.getElementById(formId);
 			const formData = new FormData(form);
 			const data = Object.fromEntries(formData.entries());
@@ -104,27 +142,22 @@ templ PageScript() {
 					data[key] = Number(data[key]);
 				}
 			}
-			const jsonPayload = JSON.stringify(data) + "\n";
-			try {
-				const url = new URL(endPointMap.get(formId), location.href);
-				url.searchParams.set("commit", "true");
-				const modelId = document.getElementById("model-selection")?.value;
-				if (modelId) url.searchParams.set("modelId", modelId);
-				const resp = await fetch(url, {
-					method: "POST",
-					headers: { "Content-Type": "application/x-ndjson" },
-					body: jsonPayload,
-				});
-				const text = await resp.text();
-				if (resp.ok) {
-					setStatus("Successfully created item");
-				} else {
-					setStatus(text);
-				}
-			} catch (e) {
-				console.log(e);
-				setStatus(String(e));
-			}
+			post(endPointMap.get(formId), JSON.stringify(data) + "\n", "Successfully created item");
+		}
+		async function submitFileAsJsonl(fileId) {
+			const input = document.getElementById(fileId);
+			const file = input.files?.[0];
+			if (!file) return;
+			const text = await file.text();
+			// A blank line fails to unmarshal server-side, so drop it. Line
+			// numbers in error messages therefore refer to the filtered records.
+			const records = text.split("\n").filter((line) => line.trim() !== "");
+			input.value = "";
+			post(
+				endPointMap.get(fileId),
+				records.join("\n") + "\n",
+				`Successfully created ${records.length} items from ${file.name}`,
+			);
 		}
 		document.getElementById("line-form").addEventListener("submit", (e) => {
 			e.preventDefault();
@@ -136,6 +169,16 @@ templ PageScript() {
 			.addEventListener("submit", (e) => {
 				e.preventDefault();
 				submitFormAsJsonl("substation-form");
+			});
+
+		document.getElementById("line-file").addEventListener("change", () => {
+			submitFileAsJsonl("line-file");
+		});
+
+		document
+			.getElementById("substation-file")
+			.addEventListener("change", () => {
+				submitFileAsJsonl("substation-file");
 			});
 	</script>
 }

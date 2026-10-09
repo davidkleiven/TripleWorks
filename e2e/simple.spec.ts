@@ -59,3 +59,103 @@ test.describe("simple line page", () => {
     expect(await lines.text()).toContain("New substation");
   });
 });
+
+test.describe("simple page file upload", () => {
+  test("creates many lines from a jsonl file", async ({ page, request }) => {
+    await page.goto("/simple");
+    await expect(page.locator("#status-bar")).toHaveText("Idle");
+
+    const upload = responseFor(page, "POST", /\/upload\/lines.*/);
+    await page.selectOption("#model-selection", "1");
+
+    // Names must not collide with the single-item tests: the server silently
+    // drops records whose mrids already exist in the model.
+    const body = [
+      { from: "Bulk Sub A", to: "Bulk Sub B", length: 10, voltage: 400 },
+      { from: "Bulk Sub C", to: "Bulk Sub D", length: 20, voltage: 220 },
+    ]
+      .map((record) => JSON.stringify(record))
+      .join("\n");
+
+    await page.setInputFiles("#line-file", {
+      name: "lines.jsonl",
+      mimeType: "application/x-ndjson",
+      buffer: Buffer.from(body),
+    });
+
+    const response = await upload;
+    expect(response.status()).toBe(200);
+    expect(new URL(response.url()).searchParams.get("modelId")).toBe("1");
+
+    // The whole file travels as one ndjson request.
+    expect(response.request().postData()).toBe(body + "\n");
+
+    await expect(page.locator("#status-bar")).toContainText(
+      "Successfully created 2 items",
+    );
+
+    const lines = await request.get("/entities?kind=ACLineSegment");
+    expect(lines.status()).toBe(200);
+    expect(await lines.text()).toContain("Bulk Sub A-Bulk Sub B (400 kV)");
+    expect(await lines.text()).toContain("Bulk Sub C-Bulk Sub D (220 kV)");
+  });
+
+  test("creates many substations from a jsonl file", async ({
+    page,
+    request,
+  }) => {
+    await page.goto("/simple");
+    await expect(page.locator("#status-bar")).toHaveText("Idle");
+
+    const upload = responseFor(page, "POST", /\/upload\/substations.*/);
+    await page.selectOption("#model-selection", "1");
+
+    const body = [
+      { name: "Bulk Sub E", region: "NO2", x: 10.5, y: 60.1 },
+      { name: "Bulk Sub F", region: "NO2", x: 11.5, y: 61.1 },
+    ]
+      .map((record) => JSON.stringify(record))
+      .join("\n");
+
+    await page.setInputFiles("#substation-file", {
+      name: "substations.jsonl",
+      mimeType: "application/x-ndjson",
+      buffer: Buffer.from(body),
+    });
+
+    const response = await upload;
+    expect(response.status()).toBe(200);
+    await expect(page.locator("#status-bar")).toContainText(
+      "Successfully created 2 items",
+    );
+
+    const substations = await request.get("/entities?kind=Substation");
+    expect(substations.status()).toBe(200);
+    expect(await substations.text()).toContain("Bulk Sub E");
+    expect(await substations.text()).toContain("Bulk Sub F");
+  });
+
+  test("reports the server error when a record is malformed", async ({
+    page,
+  }) => {
+    await page.goto("/simple");
+    await expect(page.locator("#status-bar")).toHaveText("Idle");
+
+    const upload = responseFor(page, "POST", /\/upload\/substations.*/);
+    await page.selectOption("#model-selection", "1");
+
+    await page.setInputFiles("#substation-file", {
+      name: "broken.jsonl",
+      mimeType: "application/x-ndjson",
+      buffer: Buffer.from(
+        '{"name":"Good Sub","region":"NO2","x":1,"y":2}\nnot json\n',
+      ),
+    });
+
+    const response = await upload;
+    expect(response.status()).toBe(400);
+    await expect(page.locator("#status-bar")).toContainText(
+      "Could not unmarshal line",
+    );
+  });
+});
