@@ -184,6 +184,9 @@ func Setup(mux *http.ServeMux, config *pkg.Config) (http.Handler, func() error) 
 	mux.HandleFunc("/simple", func(w http.ResponseWriter, r *http.Request) {
 		pkg.LogIfError("Render simple page", components.SimplePage().Render(r.Context(), w))
 	})
+	mux.HandleFunc("/history", func(w http.ResponseWriter, r *http.Request) {
+		pkg.LogIfError("Render history page", components.CommitPage().Render(r.Context(), w))
+	})
 
 	// Trigger the ptdf updater on startup
 	return userIdentifier(mux), func() error {
