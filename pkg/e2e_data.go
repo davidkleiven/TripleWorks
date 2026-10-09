@@ -123,9 +123,10 @@ func IdentifiedPositionPoint(x, y, z float64, seqNo int, locationMrid uuid.UUID)
 }
 
 type E2EData struct {
-	Model  models.Model
-	Commit models.Commit
-	Data   []any
+	Model       models.Model
+	Commit      models.Commit
+	EmptyCommit models.Commit
+	Data        []any
 }
 
 func MakeE2eData() *E2EData {
@@ -176,9 +177,9 @@ func MakeE2eData() *E2EData {
 	var entities []*models.Entity
 	for _, item := range concreteKinds {
 		entities = append(entities, &models.Entity{
-			Mrid:        item.GetMrid(),
-			ModelEntity: models.ModelEntity{ModelId: 1},
-			EntityType:  StructName(item),
+			Mrid:       item.GetMrid(),
+			ModelId:    1,
+			EntityType: StructName(item),
 		})
 	}
 
@@ -202,10 +203,18 @@ func MakeE2eData() *E2EData {
 		data = append(data, pp)
 	}
 
+	emptyCommit := models.Commit{
+		Id:        2,
+		Message:   "Empty commit for deletion test",
+		Author:    "TripleWorks",
+		CreatedAt: time.Now(),
+	}
+
 	return &E2EData{
-		Model:  model,
-		Commit: commit,
-		Data:   data,
+		Model:       model,
+		Commit:      commit,
+		EmptyCommit: emptyCommit,
+		Data:        data,
 	}
 }
 
@@ -222,4 +231,7 @@ func InsertE2eData(data *E2EData, inserter repository.Inserter) {
 
 	err := InsertAllInserter(context.Background(), inserter, data.Commit, slices.Values(data.Data), onInsert)
 	slog.Info("Inserted e2e data", "numRecords", numInserted, "errModelInsert", err1, "errEntityInsert", err)
+
+	err = InsertAllInserter(context.Background(), inserter, data.EmptyCommit, func(yield func(any) bool) {}, onInsert)
+	slog.Info("Inserted e2e data (empty commit)", "errEntityInsert", err)
 }

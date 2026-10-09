@@ -1,0 +1,53 @@
+package components
+
+import (
+	"com.github/davidkleiven/tripleworks/models"
+	"fmt"
+	"time"
+)
+
+templ CommitPage() {
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<title>TripleWorks Commit History</title>
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/css/tabler.min.css"
+		/>
+		<script src="https://unpkg.com/htmx.org@4.0.0"></script>
+	</head>
+	<body>
+		<div class="container-xl mt-3">
+			<h2 class="h2 mb-3">Commits</h2>
+			<div id="commit-list" class="table-responsive mb-3" hx-get="/commits" hx-trigger={ "load, " + EventCommitDeleted } hx-target="this" hx-swap="innerHTML"></div>
+		</div>
+	</body>
+}
+
+templ CommitList(commits []models.Commit) {
+	<table class="table table-vcenter">
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>Message</th>
+				<th>Author</th>
+				<th>CreatedAt</th>
+				<th class="w-1"></th>
+			</tr>
+		</thead>
+		<tbody>
+			for _, commit := range commits {
+				<tr>
+					<td>{ commit.Id }</td>
+					<td>{ commit.Message }</td>
+					<td>{ commit.Author }</td>
+					<td>{ commit.CreatedAt.Format(time.RFC3339) }</td>
+					<td>
+						<button class="btn btn-outline-danger" hx-delete={ fmt.Sprintf("/commit/%d", commit.Id) }>Delete</button>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}

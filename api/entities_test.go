@@ -532,6 +532,16 @@ func TestGetCommits(t *testing.T) {
 		req := httptest.NewRequest("GET", "/commits", nil)
 		store.Commits(rec, req)
 		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, rec.Header().Get("Content-Type"), "application/json")
+	})
+
+	t.Run("success htmx triggered", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/commits", nil)
+		req.Header.Set(HxRequest, "1")
+		store.Commits(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, rec.Header().Get("Content-Type"), "text/html")
 	})
 
 	t.Run("failure", func(t *testing.T) {

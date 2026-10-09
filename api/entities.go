@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"com.github/davidkleiven/tripleworks/components"
 	"com.github/davidkleiven/tripleworks/models"
 	"com.github/davidkleiven/tripleworks/pkg"
 	"com.github/davidkleiven/tripleworks/repository"
@@ -394,15 +395,24 @@ func (e *EntityStore) Commits(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), e.timeout)
 	defer cancel()
 
+	triggeredByHtmx := r.Header.Get(HxRequest) != ""
+
 	var commits []models.Commit
-	err := e.db.NewSelect().Model(&commits).Scan(ctx)
+	err := e.db.NewSelect().Model(&commits).OrderBy("createdTime", bun.OrderDesc).Scan(ctx)
 	if err != nil {
 		slog.ErrorContext(ctx, "Could not fetch commits", "error", err)
 		http.Error(w, "Could not fetch commits: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	pkg.PanicOnErr(json.NewEncoder(w).Encode(&commits))
-	w.Header().Set("Content-Type", "application/json")
+
+	if triggeredByHtmx {
+		w.Header().Set("Content-Type", "text/html")
+		err := components.CommitList(commits).Render(r.Context(), w)
+		pkg.LogIfError("Render commit list", err)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		pkg.PanicOnErr(json.NewEncoder(w).Encode(&commits))
+	}
 }
 
 func (e *EntityStore) DeleteCommit(w http.ResponseWriter, r *http.Request) {
@@ -451,6 +461,7 @@ func (e *EntityStore) DeleteCommit(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to delete commit: "+txErr.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set(HxTrigger, components.EventCommitDeleted)
 	fmt.Fprintf(w, "Successfully deleted commit %d", commitId)
 }
 
