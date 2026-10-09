@@ -689,6 +689,7 @@ func TestConnectDanglingLines(t *testing.T) {
 		numTerminals := 0
 		substationTargets := make(map[string]struct{})
 		conNodeContainers := make(map[string]struct{})
+		seqNos := make(map[string][]string)
 
 		for it.Next() {
 			stmt := it.Statement()
@@ -713,6 +714,10 @@ func TestConnectDanglingLines(t *testing.T) {
 			if strings.HasSuffix(stmt.Predicate.Value, "ConnectivityNode.ConnectivityNodeContainer>") {
 				conNodeContainers[stmt.Object.Value] = struct{}{}
 			}
+
+			if strings.HasSuffix(stmt.Predicate.Value, "ACDCTerminal.sequenceNumber>") {
+				seqNos[stmt.Subject.Value] = append(seqNos[stmt.Subject.Value], stmt.Object.Value)
+			}
 		}
 
 		// Two con nodes
@@ -721,6 +726,80 @@ func TestConnectDanglingLines(t *testing.T) {
 		require.Equal(t, 2, numVoltageLevels, "Should create one voltage level")
 		require.Equal(t, 2, len(substationTargets), "Should point to one substation")
 		require.Equal(t, 2, len(conNodeContainers), "Should be only one connectivity node container")
+
+		// Each line resolves to two different substations, so its terminals must be
+		// numbered 1 and 2 rather than both 1.
+		require.Len(t, seqNos, 4, "Each of the 4 terminals should carry a sequence number")
+		numbers := make(map[string]int)
+		for _, seqNo := range seqNos {
+			require.Len(t, seqNo, 1, "A terminal should have exactly one sequence number")
+			// the object is a typed literal, e.g. `"2"^^<...#integer>`
+			number, _, found := strings.Cut(seqNo[0], `"^^`)
+			require.True(t, found, fmt.Sprintf("unexpected literal %q", seqNo[0]))
+			numbers[strings.Trim(number, `"`)]++
+		}
+		require.Equal(t, 2, numbers["1"], "Each line should have exactly one terminal numbered 1")
+		require.Equal(t, 2, numbers["2"], "Each line should have exactly one terminal numbered 2")
+	})
+
+	t.Run("self-loop is skipped", func(t *testing.T) {
+		store := setupStore(t)
+		var (
+			bv     models.BaseVoltage
+			line   models.ACLineSegment
+			sub    models.Substation
+			sub2   models.Substation
+			trd    models.Substation
+			line2b models.ACLineSegment
+		)
+		bv.Mrid = uuid.New()
+		bv.NominalVoltage = 22.0
+
+		// "Selbu - Selbu" starts and ends at the same substation
+		line.BaseVoltageMrid = bv.Mrid
+		line.Name = "Selbu - Selbu"
+		line.Mrid = uuid.New()
+
+		sub.Mrid = uuid.New()
+		sub.Name = "Selbu"
+		sub2.Mrid = uuid.New()
+		sub2.Name = "Brottem"
+		trd.Mrid = uuid.New()
+		trd.Name = "Trondheim"
+		line2b.BaseVoltageMrid = bv.Mrid
+		line2b.Name = "Trondheim - Brottem"
+		line2b.Mrid = uuid.New()
+
+		ctx := context.Background()
+		_, err := store.db.NewInsert().Model(&bv).Exec(ctx)
+		require.NoError(t, err)
+		_, err = store.db.NewInsert().Model(&[]models.Substation{sub, sub2, trd}).Exec(ctx)
+		require.NoError(t, err)
+		_, err = store.db.NewInsert().Model(&[]models.ACLineSegment{line, line2b}).Exec(ctx)
+		require.NoError(t, err)
+		var entities []models.Entity
+		for _, m := range []uuid.UUID{bv.Mrid, line.Mrid, line2b.Mrid, sub.Mrid, sub2.Mrid, trd.Mrid} {
+			entities = append(entities, models.Entity{Mrid: m, ModelId: 1})
+		}
+		_, err = store.db.NewInsert().Model(&entities).Exec(ctx)
+		require.NoError(t, err)
+
+		rec := httptest.NewRecorder()
+		store.ConnectDanglingLines(rec, httptest.NewRequest("POST", "/connect-dangling", nil))
+		require.Equal(t, http.StatusOK, rec.Code)
+
+		graph, err := pkg.LoadObjects(rec.Body)
+		require.NoError(t, err)
+
+		it := graph.AllStatements()
+		terminalLines := make(map[string]struct{})
+		for it.Next() {
+			stmt := it.Statement()
+			if strings.HasSuffix(stmt.Predicate.Value, "Terminal.ConductingEquipment>") {
+				terminalLines[stmt.Subject.Value] = struct{}{}
+			}
+		}
+		require.Len(t, terminalLines, 2, "Only the non self-loop line should be connected")
 	})
 
 	t.Run("success htmx triggered", func(t *testing.T) {

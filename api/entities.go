@@ -12,10 +12,8 @@ import (
 	"log/slog"
 	"net/http"
 	"reflect"
-	"regexp"
 	"slices"
 	"strconv"
-	"strings"
 	"time"
 
 	"com.github/davidkleiven/tripleworks/components"
@@ -689,25 +687,41 @@ func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Reques
 	unconnecteLines := pkg.DanglingLines(lines, terminals)
 
 	substationaNames := make([]string, len(substations))
-	lineNames := make([]string, 0, len(lines))
-	lines = lines[:0] // Clear old
-	parenthesisExpr := regexp.MustCompile(`\([^)]+\)`)
-	voltageExpr := regexp.MustCompile(`(?i)[0-9\s]+kv`)
 	for i, sub := range substations {
-		name := parenthesisExpr.ReplaceAllString(sub.Name, "")
-		name = voltageExpr.ReplaceAllString(name, "")
-		substationaNames[i] = name
-	}
-	for line := range unconnecteLines {
-		name := parenthesisExpr.ReplaceAllLiteralString(line.Name, "")
-		name = voltageExpr.ReplaceAllString(name, "")
-		name = strings.ReplaceAll(name, "-", " ")
-		lineNames = append(lineNames, name)
-		lines = append(lines, line)
+		substationaNames[i] = pkg.NormalizeLinePart(sub.Name)
 	}
 
+	// Line names are built as "from-to (V kV)", so the two ends are normally
+	// recoverable exactly. Only fall back to fuzzy scoring for the names that
+	// are not, and drop self-loops (from == to) entirely.
+	substationIndex := pkg.SubstationIndex(substationaNames)
+	danglingLines := slices.Collect(unconnecteLines)
 	selector := pkg.TopSelector{Num: 2}
-	assignments := selector.Select(lineNames, substationaNames, pkg.NameSimilarity)
+
+	lines = lines[:0] // Clear old
+	assignments := make([][]int, 0, len(danglingLines))
+
+	// Exact matches: both ends are recoverable from the name.
+	var fuzzyLines []models.ACLineSegment
+	fuzzyNames := make([]string, 0, len(danglingLines))
+	for _, line := range danglingLines {
+		if ends, ok := pkg.SplitEnds(line.Name, substationIndex); ok {
+			if ends.From == ends.To {
+				continue // self-loop
+			}
+			assignments = append(assignments, []int{ends.From, ends.To})
+			lines = append(lines, line)
+			continue
+		}
+		fuzzyLines = append(fuzzyLines, line)
+		fuzzyNames = append(fuzzyNames, pkg.NormalizeLinePart(line.Name))
+	}
+
+	// Fallback for the names that could not be split exactly.
+	for i, subIdx := range selector.Select(fuzzyNames, substationaNames, pkg.NameSimilarity) {
+		assignments = append(assignments, subIdx)
+		lines = append(lines, fuzzyLines[i])
+	}
 
 	results := make([]iter.Seq[any], 0, len(lines)*2)
 	lines = pkg.MustSlice(lines)
@@ -715,6 +729,10 @@ func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Reques
 	lines = pkg.RequireSameLength(assignments, lines)
 	for lineIdx := range assignments {
 		line := lines[lineIdx]
+		// ConnectLineToSubstation derives the terminal sequence number from the
+		// terminals it is handed, so the first terminal created here has to be
+		// fed back in for the second substation to get sequence number 2.
+		lineTerminals := terminals
 		for _, subIdx := range assignments[lineIdx] {
 			sub := substations[subIdx]
 			vls, ok := vlsPerSubstation[sub.Mrid]
@@ -726,13 +744,14 @@ func (e *EntityStore) ConnectDanglingLines(w http.ResponseWriter, r *http.Reques
 				Substation:    sub,
 				Line:          line,
 				VoltageLevels: vls,
-				Terminals:     terminals,
+				Terminals:     lineTerminals,
 			}
 			result := pkg.Must(pkg.ConnectLineToSubstation(params))
 
 			if result.VoltageLevel != nil {
 				vlsPerSubstation[sub.Mrid] = append(vlsPerSubstation[sub.Mrid], *result.VoltageLevel)
 			}
+			lineTerminals = append(lineTerminals, result.Terminal)
 			results = append(results, result.All(modelId))
 		}
 	}
