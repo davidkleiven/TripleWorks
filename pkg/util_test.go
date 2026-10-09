@@ -188,3 +188,61 @@ func TestClipLower(t *testing.T) {
 	require.Equal(t, 1, ClipLower(1, 0))
 	require.Equal(t, 2, ClipLower(1, 2))
 }
+
+func TestSplitEnds(t *testing.T) {
+	substations := []string{
+		"Blomjoten Transformatorstasjon/Kilbotn2",
+		"Ballangen",
+		"Tunnsjødal_vicinity",
+		"Tunnsjødal_vicinity5",
+		"Læsø",
+		"Nuken",
+	}
+	index := SubstationIndex(substations)
+
+	for i, test := range []struct {
+		Line string
+		Want FromTo
+		OK   bool
+	}{
+		{
+			Line: "Ballangen - Blomjoten Transformatorstasjon/Kilbotn2 (132 kV)",
+			Want: FromTo{From: 1, To: 0},
+			OK:   true,
+		},
+		{
+			// slash inside a name must not be taken as the separator
+			Line: "Blomjoten Transformatorstasjon/Kilbotn2-Ballangen (132 kV)",
+			Want: FromTo{From: 0, To: 1},
+			OK:   true,
+		},
+		{
+			// near-duplicate ends
+			Line: "Tunnsjødal_vicinity-Tunnsjødal_vicinity5 (22 kV)",
+			Want: FromTo{From: 2, To: 3},
+			OK:   true,
+		},
+		{
+			// self-loop resolves, but From == To so the caller skips it
+			Line: "Læsø-Læsø (250 kV)",
+			Want: FromTo{From: 4, To: 4},
+			OK:   true,
+		},
+		{
+			Line: "Læsø - Nuken (300 kV)",
+			Want: FromTo{From: 4, To: 5},
+			OK:   true,
+		},
+		{
+			// neither end is a known substation
+			Line: "Hey-From (400 kV)",
+			OK:   false,
+		},
+	} {
+		got, ok := SplitEnds(test.Line, index)
+		require.Equal(t, test.OK, ok, fmt.Sprintf("Test: #%d %v", i, test.Line))
+		if test.OK {
+			require.Equal(t, test.Want, got, fmt.Sprintf("Test: #%d %v", i, test.Line))
+		}
+	}
+}

@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"reflect"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -393,4 +394,57 @@ func LogIfError(msg string, err error) {
 	if err != nil {
 		slog.Error(msg, "error", err)
 	}
+}
+
+// FromTo holds the indices of the two substations a line runs between.
+type FromTo struct {
+	From, To int
+}
+
+// SubstationIndex maps a normalized substation name to its position in the
+// slice it was built from.
+func SubstationIndex(substations []string) map[string]int {
+	index := make(map[string]int, len(substations))
+	for i, name := range substations {
+		index[NormalizeLinePart(name)] = i
+	}
+	return index
+}
+
+// NormalizeLinePart folds a name to the form used to look up line ends.
+func NormalizeLinePart(name string) string {
+	return strings.Join(Tokenize(Normalizename(name)), " ")
+}
+
+var (
+	lineParenthesisExpr = regexp.MustCompile(`\([^)]+\)`)
+	lineVoltageExpr     = regexp.MustCompile(`(?i)[0-9\s]+kv`)
+)
+
+// SplitEnds recovers the two substations a line runs between from its name.
+// Line names are built as "from-to (V kV)" (see jsonl_import.go), so both ends
+// are usually recoverable exactly. Every dash is tried as the separator because
+// names may themselves contain dashes and slashes.
+//
+// Returns false when no separator yields two known substations, so the caller can
+// fall back to fuzzy matching. A line that starts and ends at the same
+// substation resolves with From == To; callers should skip those rather than
+// connect both terminals to one substation.
+func SplitEnds(name string, index map[string]int) (FromTo, bool) {
+	name = lineVoltageExpr.ReplaceAllString(lineParenthesisExpr.ReplaceAllString(name, ""), "")
+	for i, char := range name {
+		if char != '-' {
+			continue
+		}
+		from, to := NormalizeLinePart(name[:i]), NormalizeLinePart(name[i+1:])
+		if from == "" || to == "" {
+			continue
+		}
+		fromIdx, fromOk := index[from]
+		toIdx, toOk := index[to]
+		if fromOk && toOk {
+			return FromTo{From: fromIdx, To: toIdx}, true
+		}
+	}
+	return FromTo{}, false
 }
