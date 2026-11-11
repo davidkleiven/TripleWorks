@@ -99,6 +99,7 @@ func FormTypes() map[string]any {
 		"LoadBreakSwitch":                &models.LoadBreakSwitch{},
 		"LoadGroup":                      &models.LoadGroup{},
 		"LoadResponseCharacteristic":     &models.LoadResponseCharacteristic{},
+		"Location":                       &models.Location{},
 		"Money":                          &models.Money{},
 		"NonConformLoad":                 &models.NonConformLoad{},
 		"NonConformLoadGroup":            &models.NonConformLoadGroup{},
